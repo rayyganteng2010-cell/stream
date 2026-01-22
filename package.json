@@ -1,0 +1,21 @@
+{
+  "name": "raystream-web",
+  "version": "10.0.0",
+  "description": "RAYSTREAM - Modern Donghua Streaming Platform",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve .",
+    "dev": "serve ."
+  },
+  "keywords": [
+    "anime",
+    "donghua",
+    "streaming",
+    "raystream"
+  ],
+  "author": "Ray",
+  "license": "MIT",
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}
