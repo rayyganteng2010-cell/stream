@@ -1,237 +1,177 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail - RAYSTREAM</title>
-    <style>
-        :root { --bg: #050505; --card: #141414; --primary: #06b6d4; --text: #fff; }
-        body { margin:0; font-family:'Segoe UI', sans-serif; background:var(--bg); color:var(--text); padding-bottom:60px; }
-
-        /* PLAYER AREA */
-        .player-box { position:sticky; top:0; width:100%; aspect-ratio:16/9; background:#000; z-index:100; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-        iframe { width:100%; height:100%; border:none; }
-        .fs-btn { position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.6); padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; color:#fff; backdrop-filter:blur(4px); }
-
-        /* INFO & CONTENT */
-        .box { padding:20px; }
-        .main-title { font-size:18px; font-weight:800; margin-bottom:5px; line-height:1.3; text-shadow:0 2px 4px rgba(0,0,0,0.5); }
-        .sub-info { color:#aaa; font-size:12px; margin-bottom:15px; font-weight:500; }
-        .tag { display:inline-block; background:rgba(255,255,255,0.1); padding:4px 10px; border-radius:4px; font-size:11px; margin-right:5px; border:1px solid rgba(255,255,255,0.1); }
-
-        /* BUTTONS */
-        .actions { display:flex; gap:10px; margin-bottom:20px; }
-        .btn { flex:1; background:#222; border:1px solid #333; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:0.2s; }
-        .btn:active { transform:scale(0.96); }
-        .btn.hl { background:var(--primary); color:#000; border:none; box-shadow:0 0 15px rgba(6,182,212,0.2); }
-
-        /* EPISODE GRID */
-        .ep-sec { font-weight:700; margin-bottom:12px; font-size:14px; border-left:3px solid var(--primary); padding-left:10px; }
-        .ep-grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; }
-        .ep-btn { background:var(--card); border:1px solid #222; color:#888; text-align:center; padding:12px 0; border-radius:8px; font-size:12px; text-decoration:none; font-weight:700; transition:0.2s; }
-        .ep-btn:hover { background:#222; color:#fff; }
-        .ep-btn.active { background:var(--primary); color:#000; border-color:var(--primary); box-shadow:0 4px 10px rgba(6,182,212,0.3); }
-
-        /* DOWNLOAD MODAL */
-        .modal { position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(5px); }
-        .modal.show { display:flex; }
-        .modal-c { background:#151515; width:100%; max-width:400px; padding:25px; border-radius:20px; border:1px solid #333; max-height:80vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.8); }
-        .dl-row { margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px; }
-        .dl-res { font-weight:800; color:var(--primary); font-size:14px; margin-bottom:8px; }
-        .dl-a { display:inline-block; background:#222; color:#ccc; padding:6px 12px; border-radius:6px; margin:0 5px 5px 0; text-decoration:none; font-size:11px; border:1px solid #333; }
-
-        .back-float { position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); padding:8px 12px; border-radius:50%; cursor:pointer; z-index:110; color:#fff; font-weight:bold; }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>RayStream - Detail</title>
+  <link rel="stylesheet" href="/ui.css">
 </head>
 <body>
+  <div class="container">
+    <div style="padding:14px 14px 10px; display:flex; align-items:center; gap:10px;">
+      <a href="/" style="font-weight:900; font-size:18px;">←</a>
+      <div id="titleTop" style="font-weight:900; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+    </div>
 
-<div id="app"></div>
+    <div class="videoWrap" id="topMedia" style="display:none;">
+      <iframe id="topFrame" allowfullscreen></iframe>
+    </div>
 
-<div id="dlModal" class="modal" onclick="if(event.target===this)this.classList.remove('show')">
-    <div class="modal-c" id="dlBody"></div>
-</div>
+    <div class="hero" id="heroBox" style="margin-top:10px;">
+      <img id="poster" src="" alt="">
+      <div class="overlay"></div>
+      <div class="content">
+        <div class="title" id="title">Loading...</div>
+        <div class="sub" id="sub"></div>
 
-<script src="config.js"></script>
-<script>
-    // Ambil URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const rawUrl = urlParams.get('url');
+        <div class="badgeRow" id="badges"></div>
 
-    async function init() {
-        if(!rawUrl) return;
-        document.getElementById('app').innerHTML = `<div style="text-align:center;padding:100px;color:#666;">Memuat Data...</div>`;
+        <div class="btnRow">
+          <button class="btn" id="btnWatch">Tonton Sekarang</button>
+          <button class="btn primary" id="btnSub">Subscribe</button>
+        </div>
+      </div>
+    </div>
 
-        // --- PROXY LOGIC ---
-        // Kita ubah URL asli "https://www.sankavollerei.com/anime/donghua/..." 
-        // Menjadi internal proxy "/sanka-api/..." agar tidak kena CORS
-        let fetchUrl = rawUrl;
-        if(rawUrl.includes('sankavollerei.com/anime/donghua')) {
-            fetchUrl = rawUrl.replace('https://www.sankavollerei.com/anime/donghua', '/sanka-api');
-        }
+    <div class="sectionTitle" id="epTitle">Episode List</div>
+    <div class="pills" id="epPills"></div>
 
-        try {
-            const res = await fetch(fetchUrl);
-            if(!res.ok) throw new Error("Gagal mengambil data");
-            
-            const json = await res.json();
-            // Data biasanya dibungkus dalam 'data'
-            const data = json.data || json; 
+    <div class="sectionTitle">Recommended</div>
+    <div class="grid3" id="recGrid"></div>
 
-            // DETEKSI TIPE HALAMAN BERDASARKAN URL
-            if (rawUrl.includes('/episode/')) {
-                renderPlayer(data);
-            } else {
-                renderInfo(data);
-            }
-            
-            saveHist(data, rawUrl);
+    <div class="sectionTitle">Sinopsis</div>
+    <div class="card" style="margin:0 14px; padding:14px;">
+      <div id="syn" style="color:var(--muted); font-size:13px; line-height:1.55;"></div>
+    </div>
 
-        } catch(e) {
-            console.error(e);
-            document.getElementById('app').innerHTML = `<div style="text-align:center;padding:50px;color:#ef4444">Error: ${e.message}<br><small>Pastikan vercel.json sudah diupdate.</small></div>`;
-        }
-    }
+    <div class="err" id="err"></div>
+  </div>
 
-    // --- RENDER HALAMAN NONTON (EPISODE) ---
-    function renderPlayer(data) {
-        // Cari Stream URL (Prioritas: main_url -> servers[0])
-        let streamUrl = "";
-        const streams = data.streaming || {};
-        
-        if (streams.main_url) streamUrl = streams.main_url.url;
-        else if (streams.servers && streams.servers.length > 0) streamUrl = streams.servers[0].url;
+  <div class="bottomNav">
+    <div class="row">
+      <a class="navItem" href="/"><div class="navDot"></div><div>Home</div></a>
+      <a class="navItem" href="/jadwal"><div class="navDot"></div><div>Jadwal</div></a>
+      <a class="navItem" href="/riwayat"><div class="navDot"></div><div>Riwayat</div></a>
+    </div>
+  </div>
 
-        // List Episode (Sidebar/Bawah)
-        const eps = data.episodes_list || [];
-        let epHtml = "";
-        eps.forEach(ep => {
-            const num = formatEp(ep.episode || ep.title);
-            // Reconstruct URL asli dari slug/href jika perlu, atau pakai anichinUrl kalau ada
-            const link = ep.anichinUrl || ep.url;
-            const isActive = link === rawUrl ? 'active' : '';
-            
-            if(link) {
-                epHtml += `<a href="detail.html?url=${encodeURIComponent(link)}" class="ep-btn ${isActive}">${num}</a>`;
-            }
-        });
+  <script src="/config.js"></script>
+  <script>
+    const el = (id)=>document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    const animeId = params.get("id");
+    const searchQ = params.get("search");
 
-        // Simpan Download Data
-        window.dlData = data.download_url;
-
-        // Navigasi Prev/Next
-        const nav = data.navigation || {};
-        let navHtml = `
-            ${nav.previous_episode ? `<a href="detail.html?url=${encodeURIComponent(nav.previous_episode.anichinUrl)}" class="btn">Prev</a>` : ''}
-            <a href="index.html" class="btn">Home</a>
-            ${nav.next_episode ? `<a href="detail.html?url=${encodeURIComponent(nav.next_episode.anichinUrl)}" class="btn">Next</a>` : ''}
-        `;
-
-        document.getElementById('app').innerHTML = `
-            <div class="player-box" id="pArea">
-                <div class="back-float" onclick="window.location.href='index.html'">⬅</div>
-                <iframe src="${streamUrl}" allowfullscreen></iframe>
-                <div class="fs-btn" onclick="toggleFS()">⛶ Fullscreen</div>
+    function posterCard(it){
+      return `
+        <div class="posterCard" data-id="${esc(it.animeId||"")}">
+          <img src="${esc(it.poster||"")}" alt="">
+          <div class="pbody">
+            <div class="ptitle">${esc(it.title||"")}</div>
+            <div class="pmeta">
+              <span>${esc(it.type||it.episodes||"")}</span>
+              <span>${esc(it.score||"")}</span>
             </div>
-            
-            <div class="box">
-                <div class="main-title">${data.title || data.episode || 'Episode'}</div>
-                <div class="sub-info">RAYSTREAM • ${data.status || 'HD'}</div>
-                
-                <div class="actions">
-                    <div class="btn hl" onclick="showDl()">⬇ Download</div>
-                </div>
-
-                <div style="display:flex; gap:10px; margin-bottom:20px;">${navHtml}</div>
-
-                <div class="ep-sec">Daftar Episode</div>
-                <div class="ep-grid">${epHtml}</div>
-            </div>
-        `;
+          </div>
+        </div>
+      `;
     }
 
-    // --- RENDER HALAMAN INFO (SERIES) ---
-    function renderInfo(data) {
-        // List Episode
-        const eps = data.episodes_list || [];
-        let epHtml = "";
-        eps.forEach(ep => {
-            const num = formatEp(ep.episode);
-            const link = ep.anichinUrl || ep.url;
-            if(link) {
-                epHtml += `<a href="detail.html?url=${encodeURIComponent(link)}" class="ep-btn">${num}</a>`;
-            }
-        });
-
-        // Genres
-        let genres = "";
-        if(data.genres) data.genres.forEach(g => genres += `<span class="tag">${g.name}</span>`);
-
-        document.getElementById('app').innerHTML = `
-            <div class="player-box" style="background:url('${data.poster}') center/cover;">
-                <div class="back-float" onclick="window.location.href='index.html'">⬅</div>
-                <div style="width:100%;height:100%;background:linear-gradient(to top, #050505, transparent);display:flex;align-items:end;padding:20px;">
-                    <div class="main-title" style="text-shadow:0 4px 10px #000; font-size:24px;">${data.title}</div>
-                </div>
-            </div>
-            <div class="box">
-                <div class="sub-info" style="color:var(--primary);font-weight:bold;">${data.status} • ${data.type}</div>
-                <div style="margin-bottom:15px;">${genres}</div>
-                
-                <p style="font-size:13px;color:#ccc;line-height:1.6;margin-top:0">${data.synopsis || 'Sinopsis tidak tersedia.'}</p>
-                
-                <div class="ep-sec">Semua Episode</div>
-                <div class="ep-grid">${epHtml}</div>
-            </div>
-        `;
+    function bindPosterCards(root){
+      root.querySelectorAll(".posterCard").forEach(c=>{
+        c.onclick = ()=> {
+          const id = c.getAttribute("data-id");
+          if(id) location.href = `/detail?id=${encodeURIComponent(id)}`;
+        };
+      });
     }
 
-    // --- MODAL DOWNLOAD ---
-    function showDl() {
-        const d = window.dlData;
-        const b = document.getElementById('dlBody');
-        b.innerHTML = "<h3 style='margin-top:0'>Download</h3>";
-        
-        if(!d) { b.innerHTML += "<p>Link tidak tersedia.</p>"; }
-        else {
-            // Parsing object download_url (flexible key check)
-            for(const [key, val] of Object.entries(d)) {
-                // Bersihkan key, misal "download_url_360p" jadi "360P"
-                const resName = key.replace(/download_url_/i, '').replace(/_/g, ' ').toUpperCase(); 
-                
-                let links = "";
-                // Val bisa berupa object { "Gdrive": "url" }
-                if(typeof val === 'object') {
-                    for(const [srv, url] of Object.entries(val)) {
-                        links += `<a href="${url}" target="_blank" class="dl-a">${srv}</a>`;
-                    }
-                }
-                b.innerHTML += `<div class="dl-row"><div class="dl-res">${resName}</div>${links}</div>`;
-            }
-        }
-        document.getElementById('dlModal').classList.add('show');
+    async function loadSearch(){
+      el("titleTop").innerText = "Search";
+      el("title").innerText = `Hasil: ${searchQ}`;
+      el("sub").innerText = "";
+      el("badges").innerHTML = `<span class="badge dim">search</span>`;
+      el("btnWatch").style.display = "none";
+      el("btnSub").style.display = "none";
+      el("epTitle").innerText = "Result";
+      el("epPills").style.display = "none";
+      el("syn").innerText = "";
+
+      const r = await fetch(`${API_BASE}/anime/samehadaku/search?query=${encodeURIComponent(searchQ)}`);
+      const j = await r.json();
+      if(!r.ok || j.status!=="success") throw new Error(j.message || "API error");
+
+      const list = j?.data?.animeList || [];
+      el("recGrid").innerHTML = list.slice(0, 24).map(posterCard).join("");
+      bindPosterCards(el("recGrid"));
     }
 
-    function toggleFS() {
-        const el = document.getElementById('pArea');
-        if(!document.fullscreenElement) el.requestFullscreen(); else document.exitFullscreen();
+    async function loadDetail(){
+      const r = await fetch(`${API_BASE}/anime/samehadaku/anime/${encodeURIComponent(animeId)}`);
+      const j = await r.json();
+      if(!r.ok || j.status!=="success") throw new Error(j.message || "API error");
+
+      const d = j.data || {};
+      el("titleTop").innerText = d.title || animeId;
+      el("title").innerText = d.title || animeId;
+      el("poster").src = d.poster || "";
+      el("sub").innerText = `${d.status || ""} • ${d.type || ""} • ${d.season || ""}`.replace(/\s•\s•\s/g," • ").trim();
+
+      // badges kayak screenshot
+      const badges = [];
+      badges.push(`<span class="badge dim">donghua</span>`);
+      if(d.status) badges.push(`<span class="badge dim">${esc(d.status.toLowerCase())}</span>`);
+      if(d.season) badges.push(`<span class="badge dim">${esc(d.season.match(/\d{4}/)?.[0] || d.season)}</span>`);
+      (d.genreList || []).slice(0,6).forEach(g=> badges.push(`<span class="badge">${esc(g.title||"")}</span>`));
+      el("badges").innerHTML = badges.join("");
+
+      // synopsis paragraphs
+      const paras = d?.synopsis?.paragraphs || [];
+      el("syn").innerText = paras.length ? paras.join("\n\n") : "-";
+
+      // episode pills: ambil 20 episode terbaru (paling atas di response biasanya descending)
+      const eps = d.episodeList || [];
+      const pillsWrap = el("epPills");
+      pillsWrap.innerHTML = "";
+      eps.slice(0, 20).forEach((ep, idx)=>{
+        const p = document.createElement("div");
+        p.className = "pill" + (idx===0 ? " active" : "");
+        p.innerText = ep.title;
+        p.onclick = ()=> location.href = `/episode?id=${encodeURIComponent(ep.episodeId)}`;
+        pillsWrap.appendChild(p);
+      });
+
+      // tombol "Tonton Sekarang" ke episode pertama di list
+      el("btnWatch").onclick = ()=>{
+        const first = eps[0];
+        if(first?.episodeId) location.href = `/episode?id=${encodeURIComponent(first.episodeId)}`;
+      };
+      el("btnSub").onclick = ()=> {
+        // dummy subscribe, kalau mau: simpan ke localStorage
+        alert("Subscribe disimpen lokal dulu. Kalau mau beneran, bikin endpoint sendiri.");
+      };
+
+      // Recommended: pakai home.movie/recent sebagai rekomendasi quick (biar UI ada)
+      // Kalau kamu punya endpoint rekomendasi khusus, ganti ini.
+      try{
+        const rh = await fetch(`${API_BASE}/anime/samehadaku/home`);
+        const hj = await rh.json();
+        const rec = (hj?.data?.movie?.animeList || hj?.data?.recent?.animeList || []).slice(0, 6);
+        el("recGrid").innerHTML = rec.map(x=>posterCard(x)).join("");
+        bindPosterCards(el("recGrid"));
+      }catch(e){}
     }
 
-    function saveHist(data, url) {
-        let h = JSON.parse(localStorage.getItem('ach_hist') || '[]');
-        
-        // Ambil data seadanya buat history
-        const title = data.title || (data.donghua_details ? data.donghua_details.title : 'Episode');
-        const img = data.poster || (data.donghua_details ? data.donghua_details.poster : '');
-        const ep = data.episode || '??';
-
-        h = h.filter(x => x.url !== url);
-        h.unshift({ title, poster: img, url, ep, date: new Date().toLocaleDateString() });
-        
-        if(h.length > 20) h.pop();
-        localStorage.setItem('ach_hist', JSON.stringify(h));
-    }
-
-    init();
-</script>
+    (async ()=>{
+      el("err").innerText = "";
+      try{
+        if(searchQ) return await loadSearch();
+        if(!animeId) throw new Error("anime id kosong");
+        await loadDetail();
+      }catch(e){
+        el("err").innerText = "Gagal load detail: " + (e?.message || e);
+      }
+    })();
+  </script>
 </body>
 </html>
