@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>RayStream - Home</title>
+  <link rel="stylesheet" href="/ui.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header"> </div>
+
+    <div class="searchbar">
+      <input id="q" placeholder="Cari donghua..." />
+    </div>
+
+    <div class="hero" id="hero">
+      <img id="heroImg" src="" alt="">
+      <div class="overlay"></div>
+      <div class="content">
+        <div class="title" id="heroTitle">Loading...</div>
+        <div class="sub" id="heroSub"> </div>
+      </div>
+    </div>
+
+    <div class="sectionTitle">Populer</div>
+    <div class="grid3" id="popularGrid"></div>
+
+    <div class="sectionTitle">Latest Release</div>
+    <div class="grid3" id="recentGrid"></div>
+
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="bottomNav">
+    <div class="row">
+      <a class="navItem active" href="/"><div class="navDot"></div><div>Home</div></a>
+      <a class="navItem" href="/jadwal"><div class="navDot"></div><div>Jadwal</div></a>
+      <a class="navItem" href="/riwayat"><div class="navDot"></div><div>Riwayat</div></a>
+    </div>
+  </div>
+
+  <script src="/config.js"></script>
+  <script>
+    const el = (id)=>document.getElementById(id);
+
+    function cardHTML(it){
+      const poster = it.poster || "";
+      const title  = it.title || "";
+      const metaA  = it.episodes || it.type || "";
+      const metaB  = it.releasedOn || it.score || "";
+      return `
+        <div class="posterCard" data-id="${esc(it.animeId||"")}" data-href="${esc(it.href||"")}">
+          <img src="${esc(poster)}" alt="">
+          <div class="pbody">
+            <div class="ptitle">${esc(title)}</div>
+            <div class="pmeta">
+              <span>${esc(metaA)}</span>
+              <span>${esc(metaB)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindCards(root){
+      root.querySelectorAll(".posterCard").forEach(card=>{
+        card.onclick = ()=>{
+          const animeId = card.getAttribute("data-id");
+          if(!animeId) return;
+          window.location.href = `/detail?id=${encodeURIComponent(animeId)}`;
+        };
+      });
+    }
+
+    async function loadHome(){
+      el("err").innerText = "";
+      try{
+        const r = await fetch(`${API_BASE}/anime/samehadaku/home`);
+        const j = await r.json();
+        if(!r.ok || j.status!=="success") throw new Error(j.message || "API error");
+
+        const data = j.data || {};
+        const recent = data?.recent?.animeList || [];
+        const top10  = data?.top10?.animeList || []; // biasanya ga ada poster
+        const movies = data?.movie?.animeList || [];
+
+        // Hero ambil dari recent[0] (mirip banner gede)
+        const h = recent[0] || movies[0] || {};
+        el("heroImg").src = h.poster || "";
+        el("heroTitle").innerText = h.title || "RayStream";
+        el("heroSub").innerText = h.releasedOn ? `Update ${h.releasedOn}` : (h.episodes ? `${h.episodes} Episode` : "");
+
+        el("hero").onclick = ()=>{
+          if(h.animeId) window.location.href = `/detail?id=${encodeURIComponent(h.animeId)}`;
+        };
+
+        // "Populer" pakai movies dulu kalau ada posternya, fallback recent
+        const popular = (movies.length ? movies : recent).slice(0, 6);
+        el("popularGrid").innerHTML = popular.map(cardHTML).join("");
+        bindCards(el("popularGrid"));
+
+        el("recentGrid").innerHTML = recent.slice(0, 12).map(cardHTML).join("");
+        bindCards(el("recentGrid"));
+
+      }catch(e){
+        el("err").innerText = "Gagal load home: " + (e?.message || e);
+      }
+    }
+
+    // search minimal: redirect ke endpoint search via page detail list (biar gak bikin banyak file)
+    el("q").addEventListener("keydown", (ev)=>{
+      if(ev.key === "Enter"){
+        const q = el("q").value.trim();
+        if(!q) return;
+        window.location.href = `/detail?search=${encodeURIComponent(q)}`;
+      }
+    });
+
+    loadHome();
+  </script>
+</body>
+</html>
