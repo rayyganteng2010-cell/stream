@@ -5,72 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Anime</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .header-bg {
-            position: relative;
-            height: 250px;
-            overflow: hidden;
-        }
-        .header-bg img.backdrop {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.3;
-            filter: blur(5px);
-        }
-        .header-content {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px;
-            background: linear-gradient(to top, #121212, transparent);
-            display: flex;
-            align-items: flex-end;
-            gap: 15px;
-            box-sizing: border-box;
-        }
-        .poster-card {
-            width: 100px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-    </style>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
-<header>
-    <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">&larr; BACK</div>
-    <div class="logo">DETAIL</div>
+<header style="background:transparent; position:absolute; border:none;">
+    <div class="logo" onclick="history.back()" style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:50%;">
+        <i data-lucide="arrow-left" style="color:white;"></i>
+    </div>
 </header>
 
-<div id="loading" style="text-align:center; padding:50px;">
-    <p>Loading Data...</p>
+<div style="position:relative; height:300px;">
+    <img id="heroImg" src="" style="width:100%; height:100%; object-fit:cover; opacity:0.6;">
+    <div style="position:absolute; bottom:0; left:0; width:100%; background:linear-gradient(to top, var(--bg-main), transparent); height:150px;"></div>
+    
+    <div style="position:absolute; bottom:20px; left:20px; right:20px; display:flex; align-items:flex-end; gap:15px;">
+        <img id="posterImg" src="" style="width:100px; border-radius:8px; box-shadow:0 5px 15px rgba(0,0,0,0.5);">
+        <div>
+            <h2 id="title" style="margin:0; font-size:1.2rem; line-height:1.2; text-shadow:2px 2px 4px black;">Loading...</h2>
+            <p id="meta" style="font-size:0.8rem; color:#ccc; margin-top:5px;"></p>
+        </div>
+    </div>
 </div>
 
-<div id="seriesContainer" style="display:none;">
-    <div class="header-bg">
-        <img id="posterBackdrop" class="backdrop" src="">
-        <div class="header-content">
-            <img id="posterFront" class="poster-card" src="">
-            <div>
-                <h2 id="title" style="margin:0; font-size:1.1rem; line-height:1.2;">Title</h2>
-                <div id="metaInfo" style="font-size:0.75rem; color:#aaa; margin-top:5px;"></div>
-            </div>
-        </div>
+<div style="padding:20px;">
+    <div id="genres" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;"></div>
+    
+    <div style="background:var(--bg-card); padding:15px; border-radius:var(--radius); margin-bottom:20px;">
+        <h4 style="margin:0 0 10px 0;">Sinopsis</h4>
+        <p id="synopsis" style="font-size:0.85rem; color:#aaa; line-height:1.6; margin:0;">...</p>
     </div>
 
-    <div style="padding:15px;">
-        <div id="genres" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;"></div>
-        
-        <h3 style="margin:0 0 10px 0; font-size:1rem;">Sinopsis</h3>
-        <div style="background:#1e1e1e; padding:12px; border-radius:8px; font-size:0.85rem; color:#ccc; line-height:1.6; margin-bottom:20px;">
-            <p id="synopsis" style="margin:0;">...</p>
-        </div>
-
-        <h3 style="margin-bottom:10px; font-size:1rem;">All Episodes</h3>
-        <div id="epsList" class="eps-grid" style="grid-template-columns: repeat(4, 1fr);"></div>
-    </div>
+    <h3 style="margin-bottom:15px;">Episodes</h3>
+    <div id="epsGrid" class="grid" style="grid-template-columns: repeat(4, 1fr); padding:0;"></div>
 </div>
 
 <script>
@@ -79,70 +46,32 @@
     const seriesUrl = urlParams.get('url');
 
     async function loadSeries() {
-        if(!seriesUrl) return alert("URL tidak ditemukan");
-
+        if(!seriesUrl) return;
         try {
-            // Fetch API Series
-            // Pastikan URL yang masuk sini sudah URL Series (hasil bersih-bersih dari index.html)
             const res = await fetch(`${API_BASE}/series?url=${seriesUrl}`);
             const json = await res.json();
 
-            // Validasi data: Kalau judulnya "Anichin - Nonton..." berarti salah ambil data
-            if (json.title.includes("Anichin - Nonton")) {
-                alert("Gagal mengambil data series. URL mungkin salah atau API terblokir.");
-                return;
-            }
-            
-            // 1. Render Header
+            // Populate Data
             document.getElementById('title').innerText = json.title;
-            document.getElementById('posterBackdrop').src = json.poster;
-            document.getElementById('posterFront').src = json.poster;
-            
-            // Meta Info (Status, Studio, dll dari object info)
-            const infoText = `${json.info.status} • ${json.info.type} • ${json.info.studio}`;
-            document.getElementById('metaInfo').innerText = infoText;
+            document.getElementById('meta').innerText = `${json.info.status} • ${json.info.type}`;
+            document.getElementById('heroImg').src = json.poster;
+            document.getElementById('posterImg').src = json.poster;
+            document.getElementById('synopsis').innerText = json.short_description || json.synopsis;
 
-            // 2. Render Genre
-            const genreContainer = document.getElementById('genres');
-            genreContainer.innerHTML = json.genres.map(g => 
-                `<span style="background:var(--primary); color:white; padding:3px 8px; border-radius:4px; font-size:0.7rem;">${g.name}</span>`
+            // Genres
+            document.getElementById('genres').innerHTML = json.genres.map(g => 
+                `<span style="background:var(--bg-element); padding:4px 10px; border-radius:20px; font-size:0.7rem;">${g.name}</span>`
             ).join('');
 
-            // 3. Render Sinopsis
-            // Prioritas: short_description -> synopsis -> "No synopsis"
-            const desc = json.short_description || json.synopsis || "Sinopsis tidak tersedia.";
-            document.getElementById('synopsis').innerText = desc;
+            // Episode Grid
+            document.getElementById('epsGrid').innerHTML = json.episodes_list.map(ep => {
+                const num = ep.episode.match(/Episode\s+(\d+)/i)?.[1] || "Ep";
+                return `<button class="btn" style="background:var(--bg-element);" onclick="window.location.href='stream.html?url=${ep.anichinUrl}'">${num}</button>`;
+            }).join('');
 
-            // 4. Render Episodes
-            // API mengembalikan episode terbaru di atas, kita render apa adanya
-            const epsContainer = document.getElementById('epsList');
-            if (json.episodes_list && json.episodes_list.length > 0) {
-                epsContainer.innerHTML = json.episodes_list.map(ep => {
-                    // Regex ambil angka episode (misal: "Episode 124")
-                    const match = ep.episode.match(/Episode\s+(\d+)/i);
-                    const epNum = match ? match[1] : "?";
-                    
-                    // Button klik menuju stream.html dengan URL Episode
-                    return `<button class="eps-btn" onclick="goToStream('${ep.anichinUrl}')">${epNum}</button>`;
-                }).join('');
-            } else {
-                epsContainer.innerHTML = "<p style='color:#777; width:100%;'>Episode tidak ditemukan.</p>";
-            }
-
-            // Tampilkan container
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('seriesContainer').style.display = 'block';
-
-        } catch (e) {
-            console.error(e);
-            document.getElementById('loading').innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
-        }
+            lucide.createIcons();
+        } catch(e) { console.log(e); }
     }
-
-    function goToStream(url) {
-        window.location.href = `stream.html?url=${url}`;
-    }
-
     loadSeries();
 </script>
 </body>
