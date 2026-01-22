@@ -5,24 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Anime</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .header-bg {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+        }
+        .header-bg img.backdrop {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.3;
+            filter: blur(5px);
+        }
+        .header-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(to top, #121212, transparent);
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            box-sizing: border-box;
+        }
+        .poster-card {
+            width: 100px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+    </style>
 </head>
 <body>
 
 <header>
-    <div class="logo" onclick="history.back()" style="cursor:pointer;">&larr; BACK</div>
-    <div class="logo">ANICHIN</div>
+    <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">&larr; BACK</div>
+    <div class="logo">DETAIL</div>
 </header>
 
-<div id="loading" style="text-align:center; padding:20px;">Loading Series...</div>
+<div id="loading" style="text-align:center; padding:50px;">
+    <p>Loading Data...</p>
+</div>
 
 <div id="seriesContainer" style="display:none;">
-    <div style="position:relative;">
-        <img id="poster" src="" style="width:100%; height:250px; object-fit:cover; opacity:0.3; position:absolute; z-index:-1;">
-        <div style="padding:20px; display:flex; gap:15px; align-items:flex-end; padding-top:100px; background: linear-gradient(to bottom, transparent, #121212);">
-            <img id="posterFront" src="" style="width:100px; border-radius:5px; box-shadow: 0 0 10px black;">
+    <div class="header-bg">
+        <img id="posterBackdrop" class="backdrop" src="">
+        <div class="header-content">
+            <img id="posterFront" class="poster-card" src="">
             <div>
-                <h2 id="title" style="margin:0; font-size:1.2rem;">Title</h2>
-                <p id="status" style="margin:5px 0; color:var(--primary); font-size:0.8rem;">Ongoing</p>
+                <h2 id="title" style="margin:0; font-size:1.1rem; line-height:1.2;">Title</h2>
+                <div id="metaInfo" style="font-size:0.75rem; color:#aaa; margin-top:5px;"></div>
             </div>
         </div>
     </div>
@@ -30,20 +63,15 @@
     <div style="padding:15px;">
         <div id="genres" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;"></div>
         
-        <div style="background:#1e1e1e; padding:10px; border-radius:5px; font-size:0.85rem; color:#ccc; margin-bottom:15px;">
-            <p id="synopsis" style="margin:0; line-height:1.5;">...</p>
+        <h3 style="margin:0 0 10px 0; font-size:1rem;">Sinopsis</h3>
+        <div style="background:#1e1e1e; padding:12px; border-radius:8px; font-size:0.85rem; color:#ccc; line-height:1.6; margin-bottom:20px;">
+            <p id="synopsis" style="margin:0;">...</p>
         </div>
 
-        <h3>All Episodes</h3>
+        <h3 style="margin-bottom:10px; font-size:1rem;">All Episodes</h3>
         <div id="epsList" class="eps-grid" style="grid-template-columns: repeat(4, 1fr);"></div>
     </div>
 </div>
-
-<nav class="bottom-nav">
-    <a href="index.html" class="nav-item">Home</a>
-    <a href="schedule.html" class="nav-item">Jadwal</a>
-    <a href="history.html" class="nav-item">History</a>
-</nav>
 
 <script>
     const API_BASE = "https://anichin-seven.vercel.app/api";
@@ -51,45 +79,63 @@
     const seriesUrl = urlParams.get('url');
 
     async function loadSeries() {
-        if(!seriesUrl) return alert("URL Error");
-        
+        if(!seriesUrl) return alert("URL tidak ditemukan");
+
         try {
-            // Panggil API Series
+            // Fetch API Series
+            // Pastikan URL yang masuk sini sudah URL Series (hasil bersih-bersih dari index.html)
             const res = await fetch(`${API_BASE}/series?url=${seriesUrl}`);
             const json = await res.json();
-            
-            // Render Info Utama
-            document.getElementById('title').innerText = json.title;
-            document.getElementById('status').innerText = json.info.status;
-            document.getElementById('poster').src = json.poster;
-            document.getElementById('posterFront').src = json.poster;
-            document.getElementById('synopsis').innerText = json.short_description || json.synopsis;
 
-            // Render Genre
+            // Validasi data: Kalau judulnya "Anichin - Nonton..." berarti salah ambil data
+            if (json.title.includes("Anichin - Nonton")) {
+                alert("Gagal mengambil data series. URL mungkin salah atau API terblokir.");
+                return;
+            }
+            
+            // 1. Render Header
+            document.getElementById('title').innerText = json.title;
+            document.getElementById('posterBackdrop').src = json.poster;
+            document.getElementById('posterFront').src = json.poster;
+            
+            // Meta Info (Status, Studio, dll dari object info)
+            const infoText = `${json.info.status} • ${json.info.type} • ${json.info.studio}`;
+            document.getElementById('metaInfo').innerText = infoText;
+
+            // 2. Render Genre
             const genreContainer = document.getElementById('genres');
             genreContainer.innerHTML = json.genres.map(g => 
-                `<span style="background:#333; padding:2px 8px; border-radius:4px; font-size:0.7rem;">${g.name}</span>`
+                `<span style="background:var(--primary); color:white; padding:3px 8px; border-radius:4px; font-size:0.7rem;">${g.name}</span>`
             ).join('');
 
-            // Render Episode List (Dari API Series ini datanya lengkap)
-            const epsContainer = document.getElementById('epsList');
-            // Kita reverse biar episode terbaru di atas (opsional, tergantung selera)
-            // json.episodes_list biasanya urut dari baru ke lama
-            
-            epsContainer.innerHTML = json.episodes_list.map(ep => {
-                // Ambil nomor episode dari string (misal: "Renegade Immortal Episode 124...")
-                // Regex sederhana untuk ambil angka setelah kata Episode
-                const epNum = ep.episode.match(/Episode\s+(\d+)/i) ? ep.episode.match(/Episode\s+(\d+)/i)[1] : ep.episode;
-                
-                return `<button class="eps-btn" onclick="goToStream('${ep.anichinUrl}')">${epNum}</button>`;
-            }).join('');
+            // 3. Render Sinopsis
+            // Prioritas: short_description -> synopsis -> "No synopsis"
+            const desc = json.short_description || json.synopsis || "Sinopsis tidak tersedia.";
+            document.getElementById('synopsis').innerText = desc;
 
+            // 4. Render Episodes
+            // API mengembalikan episode terbaru di atas, kita render apa adanya
+            const epsContainer = document.getElementById('epsList');
+            if (json.episodes_list && json.episodes_list.length > 0) {
+                epsContainer.innerHTML = json.episodes_list.map(ep => {
+                    // Regex ambil angka episode (misal: "Episode 124")
+                    const match = ep.episode.match(/Episode\s+(\d+)/i);
+                    const epNum = match ? match[1] : "?";
+                    
+                    // Button klik menuju stream.html dengan URL Episode
+                    return `<button class="eps-btn" onclick="goToStream('${ep.anichinUrl}')">${epNum}</button>`;
+                }).join('');
+            } else {
+                epsContainer.innerHTML = "<p style='color:#777; width:100%;'>Episode tidak ditemukan.</p>";
+            }
+
+            // Tampilkan container
             document.getElementById('loading').style.display = 'none';
             document.getElementById('seriesContainer').style.display = 'block';
 
         } catch (e) {
             console.error(e);
-            document.getElementById('loading').innerText = "Gagal memuat data.";
+            document.getElementById('loading').innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
         }
     }
 
