@@ -5,34 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stream Donghua</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script> </head>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
 <body>
 
-<div class="video-wrapper">
-    <iframe id="iframePlayer" src="" allowfullscreen></iframe>
-</div>
+<div id="toast-container"></div>
 
-<div style="padding: 20px;">
-    <h1 id="epTitle" style="font-size: 1.1rem; margin: 0 0 10px 0; line-height: 1.4;">Loading...</h1>
-    
-    <div style="display:flex; gap:10px; margin-bottom: 20px;">
-        <button id="btnPrev" class="btn" style="flex:1; display:none;" onclick="">&laquo; Prev</button>
-        <button class="btn" style="flex:1; background:#333;" onclick="window.location.href='index.html'">Home</button>
-        <button id="btnNext" class="btn" style="flex:1; display:none;" onclick="">Next &raquo;</button>
+<header>
+    <i data-lucide="arrow-left" onclick="history.back()" style="cursor:pointer; color:var(--primary);"></i>
+    <div class="logo" style="font-size:1.1rem;">STREAM</div>
+    <div></div> </header>
+
+<div class="container" style="padding-top: 0;">
+    <div class="video-container-responsive">
+        <iframe id="iframePlayer" src="" allowfullscreen></iframe>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <p style="font-size:0.8rem; color:var(--text-sec); margin-bottom:8px;">Ganti Server:</p>
-        <div id="serverList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-    </div>
-
-    <div style="background: var(--bg-card); padding: 15px; border-radius: var(--radius);">
-        <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleDl()">
-            <span style="font-weight:bold;">Download</span>
-            <i data-lucide="chevron-down"></i>
+    <div style="margin-top: 20px;">
+        <h1 id="epTitle" style="font-size: 1.1rem; margin-bottom: 15px; line-height: 1.4; font-weight: 700;">Loading...</h1>
+        
+        <div style="display:flex; gap:10px; margin-bottom: 25px;">
+            <button id="btnPrev" class="btn" style="flex:1; display:none;">&laquo; Prev</button>
+            <button class="btn" style="flex:1; background: #222;" onclick="window.location.href='series.html?slug=' + getSlugFromUrl()">Series Info</button>
+            <button id="btnNext" class="btn" style="flex:1; display:none;">Next &raquo;</button>
         </div>
-        <div id="dlContainer" style="display:none; margin-top:15px; border-top:1px solid #333; padding-top:10px;">
+
+        <div style="background: var(--bg-card); padding: 15px; border-radius: var(--radius-md); margin-bottom: 20px;">
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px; font-weight:600;">SERVER STREAMING:</p>
+            <div id="serverList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+        </div>
+
+        <div style="background: var(--bg-card); padding: 15px; border-radius: var(--radius-md);">
+            <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleDl()">
+                <span style="font-weight:600; display:flex; align-items:center; gap:8px;"><i data-lucide="download"></i> Download Episode</span>
+                <i data-lucide="chevron-down" id="dlIcon" style="transition:0.3s;"></i>
             </div>
+            <div id="dlContainer" style="display:none; margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                </div>
+        </div>
     </div>
 </div>
 
@@ -41,26 +51,54 @@
     const urlParams = new URLSearchParams(window.location.search);
     const animeUrl = urlParams.get('url');
 
+    // --- FUNGSI TOAST ALERT MODERN ---
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        // Ikon berdasarkan tipe
+        const icon = type === 'error' ? 'alert-circle' : (type === 'success' ? 'check-circle' : 'info');
+        toast.innerHTML = `<i data-lucide="${icon}" style="width:18px;"></i> <span>${message}</span>`;
+        
+        container.appendChild(toast);
+        lucide.createIcons(); // Render ikon di dalam toast
+
+        // Hapus otomatis setelah 3 detik
+        setTimeout(() => {
+            toast.style.animation = 'toastOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Helper untuk tombol "Series Info"
+    function getSlugFromUrl() {
+        if (!animeUrl) return '';
+        let clean = animeUrl.replace(/\/$/, '');
+        let segment = clean.substring(clean.lastIndexOf('/') + 1);
+        return segment.replace(/-episode-\d+.*$/i, '');
+    }
+
     async function loadStream() {
-        if (!animeUrl) return alert("URL Error");
+        if (!animeUrl) {
+            showToast("URL Episode tidak valid", 'error');
+            return;
+        }
 
         try {
-            // Fetch Detail API
             const res = await fetch(`${API_BASE}/detail?url=${animeUrl}`);
             const json = await res.json();
 
-            // 1. Set Title & Default Player
-            document.getElementById('epTitle').innerText = json.episode;
-            // Ambil URL default (biasanya stream utama)
-            changePlayer(json.streaming.main_url.url);
+            if (!json.status || json.status !== "success") throw new Error("Gagal memuat data API");
 
-            // 2. Render Servers
-            const srvContainer = document.getElementById('serverList');
-            srvContainer.innerHTML = json.streaming.servers.map(srv => 
-                `<button class="btn" style="font-size:0.75rem; padding:5px 10px;" onclick="changePlayer('${srv.url}')">${srv.name}</button>`
+            document.getElementById('epTitle').innerText = json.episode;
+            changePlayer(json.streaming.main_url.url, null); // Load default
+
+            // Render Servers
+            document.getElementById('serverList').innerHTML = json.streaming.servers.map((srv, i) => 
+                `<button class="btn ${i===0 ? 'btn-primary' : ''} server-btn" style="font-size:0.75rem; padding:8px 12px;" onclick="changePlayer('${srv.url}', this)">${srv.name}</button>`
             ).join('');
 
-            // 3. Render Navigation (Prev/Next)
+            // Render Nav Prev/Next
             if (json.navigation.previous_episode) {
                 const btn = document.getElementById('btnPrev');
                 btn.style.display = 'block';
@@ -72,52 +110,52 @@
                 btn.onclick = () => window.location.href = `stream.html?url=${json.navigation.next_episode.anichinUrl}`;
             }
 
-            // 4. Render Downloads
-            const dlContainer = document.getElementById('dlContainer');
+            // Render Downloads
             let dlHtml = "";
             for (const [res, links] of Object.entries(json.download_url)) {
-                // Bersihkan nama key (misal: download_url_360p -> 360P)
                 const label = res.replace('download_url_', '').toUpperCase();
-                dlHtml += `<div style="margin-bottom:8px;">
-                    <span style="color:var(--primary); font-size:0.75rem;">${label}</span>
-                    <div style="display:flex; gap:10px; margin-top:4px;">`;
-                
+                dlHtml += `<div style="margin-bottom:12px;">
+                    <span style="color:var(--primary); font-size:0.75rem; font-weight:700;">${label}</span>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:5px;">`;
                 for (const [provider, url] of Object.entries(links)) {
-                    dlHtml += `<a href="${url}" target="_blank" style="color:#aaa; text-decoration:none; font-size:0.75rem; border:1px solid #444; padding:2px 8px; border-radius:4px;">${provider}</a>`;
+                    dlHtml += `<a href="${url}" target="_blank" class="btn btn-outline" style="font-size:0.7rem; padding:4px 10px;">${provider}</a>`;
                 }
                 dlHtml += `</div></div>`;
             }
-            dlContainer.innerHTML = dlHtml;
+            document.getElementById('dlContainer').innerHTML = dlHtml;
 
-            // 5. Save History
             saveToHistory(json.episode, animeUrl);
-
             lucide.createIcons();
+
         } catch (e) {
             console.error(e);
-            document.getElementById('epTitle').innerText = "Gagal memuat stream.";
+            document.getElementById('epTitle').innerText = "Error memuat stream.";
+            showToast("Gagal memuat data stream. Coba refresh.", 'error');
         }
     }
 
-    function changePlayer(url) {
+    function changePlayer(url, btn) {
         document.getElementById('iframePlayer').src = url;
+        // Update visual tombol aktif
+        if(btn) {
+            document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('btn-primary'));
+            btn.classList.add('btn-primary');
+        }
+        showToast("Server diganti", 'success');
     }
 
     function toggleDl() {
         const el = document.getElementById('dlContainer');
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        const icon = document.getElementById('dlIcon');
+        const isHidden = el.style.display === 'none';
+        el.style.display = isHidden ? 'block' : 'none';
+        icon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
     }
 
     function saveToHistory(title, url) {
         let hist = JSON.parse(localStorage.getItem('my_history')) || [];
-        // Hapus duplikat
         hist = hist.filter(h => h.url !== url);
-        // Tambah baru di atas
-        hist.unshift({
-            title: title,
-            url: url,
-            date: new Date().toLocaleDateString()
-        });
+        hist.unshift({ title: title, url: url, date: new Date().toLocaleDateString() });
         localStorage.setItem('my_history', JSON.stringify(hist));
     }
 
