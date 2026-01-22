@@ -1,145 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anichin Home</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        /* Slider & Home Specific Styles */
-        .slider-container {
-            overflow-x: auto;
-            white-space: nowrap;
-            padding: 15px;
-            scrollbar-width: none;
-            display: flex;
-            gap: 10px;
-        }
-        .slider-container::-webkit-scrollbar { display: none; }
-        .slider-img {
-            width: 85%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: var(--radius);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            flex-shrink: 0;
-        }
-        .section-header {
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .section-header h3 { margin: 0; font-size: 1.1rem; }
-        .refresh-btn { color: var(--primary); font-size: 0.8rem; cursor: pointer; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>𝚁𝙰𝚈𝚂𝚃𝚁𝙴𝙰𝙼 - 𝙽𝙾𝙽𝚃𝙾𝙽</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script>
+    // AUTH GATE: kalau belum login, tendang ke login
+    (function () {
+      const token = localStorage.getItem("auth_token");
+      if (!token) location.replace("./login.html");
+    })();
+  </script>
 </head>
-<body>
 
-<header>
-    <div class="logo">ANICHIN</div>
-    <div id="userStatus"></div> </header>
+<body class="bg">
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand-mini">
+        <div class="logo mini">A</div>
+        <div>
+          <div class="brand-title sm">𝚁𝙰𝚈𝚂𝚃𝚁𝙴𝙰𝙼</div>
+          <div class="brand-sub sm"></div>
+        </div>
+      </div>
 
-<div class="slider-container">
-    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg">
-    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg">
-    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/0c96d013d87134ba7d2c951a889ebf15.jpg">
-</div>
+      <div class="topbar-actions">
+        <div class="search">
+          <input id="q" type="search" placeholder="Cari donghua..." autocomplete="off" />
+          <button id="btnSearch" class="btn">Search</button>
+        </div>
+        <button id="btnLogout" class="btn ghost">Logout</button>
+      </div>
+    </div>
+  </header>
 
-<div class="section-header">
-    <h3>Popular Today</h3>
-    <span class="refresh-btn" onclick="location.reload()">Refresh</span>
-</div>
-<div id="popularData" class="grid">
-    <p style="color:#555; font-size:0.8rem;">Loading popular...</p>
-</div>
+  <main class="container main">
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="update">Update</button>
+        <button class="tab" data-tab="popular">Popular</button>
+        <button class="tab" data-tab="rating">Rating</button>
+        <button class="tab" data-tab="ongoing">Ongoing</button>
+        <button class="tab" data-tab="completed">Completed</button>
+        <button class="tab" data-tab="schedule">Schedule</button>
+        <button class="tab" data-tab="genres">Genres</button>
+      </div>
 
-<div class="section-header">
-    <h3>Latest Release</h3>
-</div>
-<div id="latestData" class="grid" style="margin-bottom: 20px;">
-    <p style="color:#555; font-size:0.8rem;">Loading latest...</p>
-</div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <span id="viewTitle" class="view-title">Update</span>
+          <span id="viewMeta" class="view-meta"></span>
+        </div>
 
-<nav class="bottom-nav">
-    <a href="index.html" class="nav-item active"><i data-lucide="home"></i> Home</a>
-    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i> Jadwal</a>
-    <a href="history.html" class="nav-item"><i data-lucide="history"></i> History</a>
-</nav>
+        <div class="pager">
+          <button id="prevPage" class="btn ghost">Prev</button>
+          <div class="page-pill">Page <span id="pageNo">1</span></div>
+          <button id="nextPage" class="btn ghost">Next</button>
+        </div>
+      </div>
+    </section>
 
-<script>
-    const API_BASE = "https://anichin-seven.vercel.app/api";
+    <section id="content" class="grid"></section>
 
-    /**
-     * Logic Pembersih URL (The Fix)
-     * Input: https://anichin.moe/renegade-immortal-episode-124-sub-indo/
-     * Output: renegade-immortal
-     */
-    function getCleanSlug(href) {
-        if (!href) return '';
-        // 1. Buang trailing slash (/) di akhir
-        href = href.replace(/\/$/, '');
-        
-        // 2. Ambil segment terakhir dari URL
-        let segment = href.substring(href.lastIndexOf('/') + 1);
-        
-        // 3. Hapus kata "-episode-" dan angka di belakangnya
-        // Regex: cari "-episode-" case insensitive, lalu hapus sampai akhir string
-        return segment.replace(/-episode-\d+.*$/i, '');
-    }
+    <section id="genresPanel" class="genres hidden"></section>
+  </main>
 
-    async function loadHome() {
-        try {
-            // 1. Get Popular
-            const resPop = await fetch(`${API_BASE}/popular`);
-            const dataPop = await resPop.json();
-            
-            document.getElementById('popularData').innerHTML = dataPop.data.slice(0, 6).map(item => {
-                const slug = getCleanSlug(item.href);
-                return `
-                <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
-                    <img src="${item.poster}" loading="lazy">
-                    <p>${item.title}</p>
-                    <div style="position:absolute; top:5px; right:5px; background:var(--primary); color:black; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold;">
-                        Ep ${item.current_episode}
-                    </div>
-                </div>
-            `}).join('');
+  <div id="toast" class="toast hidden"></div>
 
-            // 2. Get Latest
-            const resLat = await fetch(`${API_BASE}/list?page=1`);
-            const dataLat = await resLat.json();
-
-            document.getElementById('latestData').innerHTML = dataLat.data.slice(0, 9).map(item => {
-                const slug = getCleanSlug(item.href);
-                return `
-                <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
-                    <img src="${item.poster}" loading="lazy">
-                    <p>${item.title}</p>
-                </div>
-            `}).join('');
-            
-            lucide.createIcons();
-
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    // Check Login User
-    const user = JSON.parse(localStorage.getItem('user_info'));
-    if(user) {
-        document.getElementById('userStatus').innerHTML = `
-            <img src="${user.picture}" style="width:32px; height:32px; border-radius:50%; border:2px solid var(--primary);">
-        `;
-    } else {
-        document.getElementById('userStatus').innerHTML = `
-            <a href="login.html" style="color:var(--primary); text-decoration:none; font-size:0.9rem; font-weight:bold;">Login</a>
-        `;
-    }
-
-    loadHome();
-</script>
+  <script src="./app.js"></script>
 </body>
-</html>
+            </html>
