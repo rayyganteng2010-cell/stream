@@ -41,38 +41,71 @@
 </div>
 
 <script>
-    const API_BASE = "https://anichin-seven.vercel.app/api";
+        const API_BASE = "https://anichin-seven.vercel.app/api";
     const urlParams = new URLSearchParams(window.location.search);
-    const seriesUrl = urlParams.get('url');
+    
+    // Support dua cara: ?url=... (legacy) atau ?slug=... (baru)
+    const slug = urlParams.get('slug');
+    const fullUrl = urlParams.get('url');
 
     async function loadSeries() {
-        if(!seriesUrl) return;
-        try {
-            const res = await fetch(`${API_BASE}/series?url=${seriesUrl}`);
-            const json = await res.json();
+        if(!slug && !fullUrl) return alert("Data tidak ditemukan");
+        
+        // Tentukan nilai parameter untuk API
+        // Jika ada slug, kita pakai itu. Jika user bilang "tanpa url juga bisa",
+        // kita coba kirim slug langsung ke API.
+        let paramValue = "";
+        
+        if (slug) {
+            // Opsi 1: Kirim slug mentah (sesuai request kamu)
+            // Contoh API Call: /api/series?url=Renegade-Immortal
+            paramValue = slug; 
+            
+            // Opsi 2 (Cadangan): Kalau Opsi 1 gagal, gunakan full url manual
+            // paramValue = `https://anichin.moe/${slug}/`; 
+        } else {
+            paramValue = fullUrl;
+        }
 
-            // Populate Data
+        try {
+            console.log("Requesting: " + paramValue); // Cek console buat debug
+            const res = await fetch(`${API_BASE}/series?url=${paramValue}`);
+            const json = await res.json();
+            
+            // ... (Kode render title, poster, dll sama seperti sebelumnya) ...
+            // Pastikan copy bagian render dari jawaban sebelumnya
+            
+            // Render Header
             document.getElementById('title').innerText = json.title;
-            document.getElementById('meta').innerText = `${json.info.status} • ${json.info.type}`;
             document.getElementById('heroImg').src = json.poster;
             document.getElementById('posterImg').src = json.poster;
             document.getElementById('synopsis').innerText = json.short_description || json.synopsis;
+            
+            // Render Info
+            if(json.info) {
+                 document.getElementById('meta').innerText = `${json.info.status} • ${json.info.type}`;
+            }
 
-            // Genres
+            // Render Genres
             document.getElementById('genres').innerHTML = json.genres.map(g => 
                 `<span style="background:var(--bg-element); padding:4px 10px; border-radius:20px; font-size:0.7rem;">${g.name}</span>`
             ).join('');
 
-            // Episode Grid
+            // Render Episode Grid
             document.getElementById('epsGrid').innerHTML = json.episodes_list.map(ep => {
                 const num = ep.episode.match(/Episode\s+(\d+)/i)?.[1] || "Ep";
                 return `<button class="btn" style="background:var(--bg-element);" onclick="window.location.href='stream.html?url=${ep.anichinUrl}'">${num}</button>`;
             }).join('');
 
             lucide.createIcons();
-        } catch(e) { console.log(e); }
+
+        } catch(e) { 
+            console.log(e);
+            alert("Gagal load series. Coba refresh.");
+        }
     }
     loadSeries();
+
 </script>
 </body>
 </html>
