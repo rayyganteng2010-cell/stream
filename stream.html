@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nonton Donghua</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+
+<div class="video-container">
+    <iframe id="videoPlayer" src="" allowfullscreen></iframe>
+</div>
+
+<div style="padding: 15px;">
+    <h2 id="animeTitle" style="margin:0;">Loading...</h2>
+    <p id="animeStatus" style="color:#aaa; font-size:0.8rem;">Status: -</p>
+    
+    <div style="background:#333; padding:10px; border-radius:5px; margin: 10px 0; font-size:0.9rem;">
+        <p id="synopsis" style="margin:0;">...</p>
+    </div>
+</div>
+
+<h3 style="padding-left:15px;">Episode</h3>
+<div id="epsList" class="eps-grid"></div>
+
+<h3 style="padding-left:15px; color: var(--primary);">Rekomendasi Popular</h3>
+<div id="replacementPopular" class="grid"></div>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item">Home</a>
+    <a href="schedule.html" class="nav-item">Jadwal</a>
+    <a href="history.html" class="nav-item">History</a>
+</nav>
+
+<script>
+    const API_BASE = "https://anichin-seven.vercel.app/api";
+    const urlParams = new URLSearchParams(window.location.search);
+    const animeUrl = urlParams.get('url'); // URL parameter dari halaman depan
+
+    // 1. Load Detail Anime & Player
+    async function loadStream() {
+        if(!animeUrl) return;
+
+        try {
+            // Endpoint detail
+            const res = await fetch(`${API_BASE}/detail?url=${animeUrl}`);
+            const json = await res.json();
+            const data = json.data; // Sesuaikan struktur response asli lu
+
+            // Render Info
+            document.getElementById('animeTitle').innerText = data.title || "Unknown";
+            document.getElementById('videoPlayer').src = data.stream_url || ""; // Asumsi ada field stream_url
+            document.getElementById('synopsis').innerText = data.synopsis || "No synopsis";
+
+            // Save to Drive History (Triggered here)
+            saveToDriveHistory(data.title, data.poster, "Ep ??", animeUrl);
+
+            // Render Episodes (Dummy Logic - sesuaikan field API lu)
+            // Karena dokumentasi API detail tidak lengkap structurenya, ini contoh:
+            const epsContainer = document.getElementById('epsList');
+            // Mocking episode list logic
+            // data.episodes.forEach...
+            
+        } catch (e) { console.error("Stream Error", e); }
+    }
+
+    // 2. Load Popular (Pengganti Komentar)
+    async function loadPopularReplacement() {
+        try {
+            const res = await fetch(`${API_BASE}/popular`);
+            const data = await res.json();
+            const el = document.getElementById("replacementPopular");
+            
+            // Tampilkan 6 popular anime sebagai rekomendasi
+            el.innerHTML = data.data.slice(0, 6).map(d => `
+                <div class="card" onclick="window.location.href='stream.html?url=${d.href}'">
+                    <img src="${d.poster}">
+                    <p>${d.title}</p>
+                </div>
+            `).join("");
+        } catch(e) { console.log(e); }
+    }
+
+    // 3. Logic Simpan ke Google Drive (Konsep)
+    function saveToDriveHistory(title, poster, eps, url) {
+        // Logika: 
+        // 1. Cek Auth Token GAPI.
+        // 2. Download 'history.json' dari Drive.
+        // 3. Append data baru.
+        // 4. Update file di Drive.
+        // Implementasi penuh butuh GAPI client init yang panjang. 
+        // Untuk sekarang, kita simpan di LocalStorage agar jalan dulu, 
+        // nanti di 'history.html' baru kita coba sync.
+        
+        let currentHistory = JSON.parse(localStorage.getItem('temp_history')) || [];
+        // Hapus duplicate kalau ada
+        currentHistory = currentHistory.filter(h => h.url !== url);
+        // Add new (di paling atas)
+        currentHistory.unshift({
+            title: title,
+            poster: poster,
+            progress: "30%", // Mock progress
+            last_eps: eps,
+            url: url,
+            date: new Date().toISOString()
+        });
+        localStorage.setItem('temp_history', JSON.stringify(currentHistory));
+    }
+
+    loadStream();
+    loadPopularReplacement();
+</script>
+</body>
+</html>
