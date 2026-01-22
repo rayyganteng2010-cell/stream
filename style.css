@@ -1,56 +1,134 @@
-/* style.css */
 :root {
-    --bg-color: #121212;
-    --card-bg: #1e1e1e;
-    --primary: #00aaff; /* Biru Anichin */
-    --text: #ffffff;
-    --text-sec: #aaaaaa;
+    --bg-main: #0a0a0a;       /* Hitam pekat */
+    --bg-card: #161616;       /* Abu sangat gelap */
+    --bg-element: #252525;    /* Elemen interaktif */
+    --primary: #00aaff;       /* Biru Anichin */
+    --text-main: #ffffff;
+    --text-sec: #a0a0a0;
+    --radius: 12px;
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text);
-    font-family: sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
-    padding-bottom: 70px; /* Space untuk bottom nav */
+    padding-bottom: 80px; /* Space untuk bottom nav */
 }
 
 /* Header */
-header { padding: 15px; background: var(--card-bg); display: flex; justify-content: space-between; align-items: center; }
-.logo { font-weight: bold; font-size: 1.2rem; color: var(--primary); }
+header {
+    background: rgba(10, 10, 10, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 15px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+.logo { font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; color: var(--primary); cursor: pointer; }
 
-/* Grid Layout */
+/* Components */
 .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 kolom seperti screenshot */
-    gap: 10px;
-    padding: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 15px;
+}
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.2s;
+}
+.card:active { transform: scale(0.98); }
+.card img { width: 100%; height: 150px; object-fit: cover; }
+.card p {
+    font-size: 0.75rem;
+    padding: 8px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #ddd;
 }
 
-.card { background: var(--card-bg); border-radius: 8px; overflow: hidden; position: relative; }
-.card img { width: 100%; height: 140px; object-fit: cover; }
-.card p { font-size: 0.8rem; padding: 5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Buttons */
+.btn {
+    background: var(--bg-element);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+.btn-primary { background: var(--primary); color: #000; }
+.btn-outline { border: 1px solid var(--primary); background: transparent; color: var(--primary); }
+.btn:active { opacity: 0.8; }
 
-/* Bottom Navbar (Fixed) */
+/* Bottom Nav */
 .bottom-nav {
     position: fixed;
     bottom: 0;
+    left: 0;
     width: 100%;
-    background: var(--card-bg);
+    background: rgba(22, 22, 22, 0.95);
+    backdrop-filter: blur(10px);
     display: flex;
     justify-content: space-around;
-    padding: 10px 0;
+    padding: 12px 0;
     border-top: 1px solid #333;
+    z-index: 1000;
 }
-.nav-item { text-decoration: none; color: var(--text-sec); font-size: 0.8rem; text-align: center; }
+.nav-item {
+    text-decoration: none;
+    color: #666;
+    text-align: center;
+    font-size: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.nav-item svg { width: 22px; height: 22px; fill: currentColor; }
 .nav-item.active { color: var(--primary); }
 
-/* Specific: History Progress Bar */
-.progress-container { background: #333; height: 4px; width: 100%; margin-top: 5px; }
-.progress-bar { height: 100%; background: var(--primary); }
-
 /* Specific: Player */
-.video-container { width: 100%; background: black; }
-iframe { width: 100%; height: 250px; border: none; }
-.eps-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; padding: 10px; }
-.eps-btn { background: #333; color: #fff; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
+.video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    height: 0;
+    background: #000;
+}
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Specific: Schedule Tabs */
+.day-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 15px;
+    scrollbar-width: none;
+}
+.day-tab {
+    white-space: nowrap;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: var(--bg-element);
+    font-size: 0.85rem;
+    color: #888;
+}
+.day-tab.active { background: var(--primary); color: #000; }
