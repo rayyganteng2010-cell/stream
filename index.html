@@ -1,73 +1,144 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>𝚁𝙰𝚈𝚂𝚃𝚁𝙴𝙰𝙼 - 𝙽𝙾𝙽𝚃𝙾𝙽</title>
-  <link rel="stylesheet" href="./style.css" />
-  <script>
-    // AUTH GATE: kalau belum login, tendang ke login
-    (function () {
-      const token = localStorage.getItem("auth_token");
-      if (!token) location.replace("./login.html");
-    })();
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>𝚁𝙰𝚈𝚂𝚃𝚁𝙴𝙰𝙼-𝙽𝙾𝙽𝚃𝙾𝙽 𝙶𝚁𝙰𝚃𝙸𝚂</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // WAJIB LOGIN CHECK (Paling Atas)
+        // Jika tidak ada data user, tendang ke login.html
+        if (!localStorage.getItem('user_info')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <style>
+        .slider-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 20px 15px;
+            display: flex;
+            gap: 15px;
+            scrollbar-width: none;
+        }
+        .slider-container::-webkit-scrollbar { display: none; }
+        .slider-img {
+            width: 85%;
+            max-width: 400px; /* Batas lebar di desktop */
+            height: 180px;
+            object-fit: cover;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+            scroll-snap-align: center;
+        }
+        .section-header {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .section-header h3 { margin: 0; font-size: 1.2rem; font-weight: 700; }
+        .refresh-btn { 
+            color: var(--primary); 
+            font-size: 0.8rem; 
+            background: rgba(0, 170, 255, 0.1); 
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            cursor: pointer;
+        }
+    </style>
 </head>
+<body>
 
-<body class="bg">
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <div class="brand-mini">
-        <div class="logo mini">A</div>
-        <div>
-          <div class="brand-title sm">𝚁𝙰𝚈𝚂𝚃𝚁𝙴𝙰𝙼</div>
-          <div class="brand-sub sm"></div>
-        </div>
-      </div>
+<header>
+    <div class="logo">𝚁𝚊𝚢𝚂𝚝𝚛𝚎𝚊𝚖</div>
+    <div id="userStatus"></div>
+</header>
 
-      <div class="topbar-actions">
-        <div class="search">
-          <input id="q" type="search" placeholder="Cari donghua..." autocomplete="off" />
-          <button id="btnSearch" class="btn">Search</button>
-        </div>
-        <button id="btnLogout" class="btn ghost">Logout</button>
-      </div>
-    </div>
-  </header>
+<div class="slider-container">
+    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg">
+    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg">
+    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/0c96d013d87134ba7d2c951a889ebf15.jpg">
+</div>
 
-  <main class="container main">
-    <section class="panel">
-      <div class="tabs">
-        <button class="tab active" data-tab="update">Update</button>
-        <button class="tab" data-tab="popular">Popular</button>
-        <button class="tab" data-tab="rating">Rating</button>
-        <button class="tab" data-tab="ongoing">Ongoing</button>
-        <button class="tab" data-tab="completed">Completed</button>
-        <button class="tab" data-tab="schedule">Schedule</button>
-        <button class="tab" data-tab="genres">Genres</button>
-      </div>
+<div class="section-header">
+    <h3>Popular Today</h3>
+    <span class="refresh-btn" onclick="location.reload()">Refresh</span>
+</div>
+<div id="popularData" class="grid">
+    <div class="card skeleton" style="height:200px;"></div>
+    <div class="card skeleton" style="height:200px;"></div>
+    <div class="card skeleton" style="height:200px;"></div>
+</div>
 
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <span id="viewTitle" class="view-title">Update</span>
-          <span id="viewMeta" class="view-meta"></span>
-        </div>
+<div class="section-header">
+    <h3>Latest Release</h3>
+</div>
+<div id="latestData" class="grid">
+    <div class="card skeleton" style="height:200px;"></div>
+</div>
 
-        <div class="pager">
-          <button id="prevPage" class="btn ghost">Prev</button>
-          <div class="page-pill">Page <span id="pageNo">1</span></div>
-          <button id="nextPage" class="btn ghost">Next</button>
-        </div>
-      </div>
-    </section>
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item active"><i data-lucide="home"></i> Home</a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i> Jadwal</a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i> History</a>
+</nav>
 
-    <section id="content" class="grid"></section>
+<script>
+    const API_BASE = "https://anichin-seven.vercel.app/api";
 
-    <section id="genresPanel" class="genres hidden"></section>
-  </main>
+    function getCleanSlug(href) {
+        if (!href) return '';
+        href = href.replace(/\/$/, '');
+        let segment = href.substring(href.lastIndexOf('/') + 1);
+        return segment.replace(/-episode-\d+.*$/i, '');
+    }
 
-  <div id="toast" class="toast hidden"></div>
+    async function loadHome() {
+        try {
+            // Popular
+            const resPop = await fetch(`${API_BASE}/popular`);
+            const dataPop = await resPop.json();
+            
+            document.getElementById('popularData').innerHTML = dataPop.data.slice(0, 6).map(item => {
+                const slug = getCleanSlug(item.href);
+                // "Ep" SUDAH DIHAPUS DI SINI
+                return `
+                <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
+                    <img src="${item.poster}" loading="lazy">
+                    <p>${item.title}</p>
+                </div>
+            `}).join('');
 
-  <script src="./app.js"></script>
+            // Latest
+            const resLat = await fetch(`${API_BASE}/list?page=1`);
+            const dataLat = await resLat.json();
+
+            document.getElementById('latestData').innerHTML = dataLat.data.slice(0, 12).map(item => {
+                const slug = getCleanSlug(item.href);
+                return `
+                <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
+                    <img src="${item.poster}" loading="lazy">
+                    <p>${item.title}</p>
+                </div>
+            `}).join('');
+            
+            lucide.createIcons();
+        } catch (e) { console.error(e); }
+    }
+
+    // Tampilkan Avatar User
+    const user = JSON.parse(localStorage.getItem('user_info'));
+    if(user) {
+        document.getElementById('userStatus').innerHTML = `
+            <img src="${user.picture}" style="width:36px; height:36px; border-radius:50%; border:2px solid var(--primary); cursor:pointer;" onclick="window.location.href='history.html'">
+        `;
+    }
+
+    loadHome();
+</script>
 </body>
-            </html>
+</html>
