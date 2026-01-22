@@ -2,7 +2,7 @@
 const API_BASE = "https://anichin-seven.vercel.app";
 
 // --- PASTIKAN CLIENT ID INI BENAR DARI GOOGLE CLOUD CONSOLE ---
-const CLIENT_ID = "879575887567-076iou55sct92iddv4feid04dflotgc5.apps.googleusercontent.com"; 
+const CLIENT_ID = "879575887567-dpebn221ucih4hs73lu8mbbl528lb89o.apps.googleusercontent.com"; 
 
 // Fungsi Cek Login yang Lebih Aman (Support Vercel Clean URL)
 function checkAuth() {
