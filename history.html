@@ -2,61 +2,58 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>History Tontonan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
 <header>
     <div class="logo">HISTORY</div>
-    <button onclick="syncToDrive()" style="background:var(--primary); border:none; color:white; padding:5px 10px; border-radius:5px;">Sync Drive</button>
+    <button class="btn btn-outline" onclick="clearHist()" style="padding:5px 10px; font-size:0.7rem;">Clear All</button>
 </header>
 
-<div style="padding: 15px;">
-    <h3 style="margin-bottom: 10px;">Hari Ini</h3>
-    <div id="historyList"></div>
-</div>
+<div id="list" style="padding:15px; display:flex; flex-direction:column; gap:10px;"></div>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item">Home</a>
-    <a href="schedule.html" class="nav-item">Jadwal</a>
-    <a href="history.html" class="nav-item active">History</a>
+    <a href="index.html" class="nav-item"><i data-lucide="home"></i> Home</a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i> Jadwal</a>
+    <a href="history.html" class="nav-item active"><i data-lucide="history"></i> History</a>
 </nav>
 
 <script>
-    // Load History
-    function loadHistory() {
-        // Ambil data (dari localStorage simulasinya, atau Drive nanti)
-        const historyData = JSON.parse(localStorage.getItem('temp_history')) || [];
-        const container = document.getElementById('historyList');
+    function loadHist() {
+        const data = JSON.parse(localStorage.getItem('my_history')) || [];
+        const container = document.getElementById('list');
 
-        if(historyData.length === 0) {
-            container.innerHTML = "<p style='text-align:center; color:#555;'>Belum ada history.</p>";
+        if(data.length === 0) {
+            container.innerHTML = `<p style="text-align:center; color:#555; margin-top:50px;">Belum ada history tontonan.</p>`;
             return;
         }
 
-        container.innerHTML = historyData.map(item => `
-            <div style="display:flex; background:#1e1e1e; margin-bottom:10px; border-radius:10px; padding:10px; align-items:center;">
-                <img src="${item.poster}" style="width:60px; height:60px; object-fit:cover; border-radius:8px; margin-right:10px;">
+        container.innerHTML = data.map(item => `
+            <div style="background:var(--bg-card); padding:10px; border-radius:var(--radius); display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="window.location.href='stream.html?url=${item.url}'">
+                <div style="background:#222; width:50px; height:50px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <i data-lucide="play" style="width:20px; color:var(--primary);"></i>
+                </div>
                 <div style="flex:1;">
-                    <h4 style="margin:0; font-size:0.9rem;">${item.title}</h4>
-                    <span style="font-size:0.7rem; background:var(--primary); padding:2px 5px; border-radius:4px; color:white;">${item.last_eps}</span>
-                    
-                    <div class="progress-container">
-                        <div class="progress-bar" style="width: ${item.progress};"></div>
-                    </div>
+                    <h4 style="margin:0; font-size:0.9rem; color:#fff; line-height:1.2;">${item.title}</h4>
+                    <span style="font-size:0.75rem; color:var(--text-sec);">${item.date}</span>
                 </div>
             </div>
         `).join('');
+        lucide.createIcons();
     }
 
-    // Placeholder Function untuk Sync ke Google Drive
-    function syncToDrive() {
-        alert("Fitur Sync Drive butuh API Client ID & API Key yang valid di console Google Cloud.");
-        // Di sini logika GAPI.client.drive.files.update digunakan untuk mengupload JSON local ke Cloud.
+    function clearHist() {
+        if(confirm("Hapus semua history?")) {
+            localStorage.removeItem('my_history');
+            loadHist();
+        }
     }
 
-    loadHistory();
+    loadHist();
 </script>
 </body>
 </html>
