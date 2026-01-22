@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>History Tontonan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <div class="logo">HISTORY</div>
+    <button onclick="syncToDrive()" style="background:var(--primary); border:none; color:white; padding:5px 10px; border-radius:5px;">Sync Drive</button>
+</header>
+
+<div style="padding: 15px;">
+    <h3 style="margin-bottom: 10px;">Hari Ini</h3>
+    <div id="historyList"></div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item">Home</a>
+    <a href="schedule.html" class="nav-item">Jadwal</a>
+    <a href="history.html" class="nav-item active">History</a>
+</nav>
+
+<script>
+    // Load History
+    function loadHistory() {
+        // Ambil data (dari localStorage simulasinya, atau Drive nanti)
+        const historyData = JSON.parse(localStorage.getItem('temp_history')) || [];
+        const container = document.getElementById('historyList');
+
+        if(historyData.length === 0) {
+            container.innerHTML = "<p style='text-align:center; color:#555;'>Belum ada history.</p>";
+            return;
+        }
+
+        container.innerHTML = historyData.map(item => `
+            <div style="display:flex; background:#1e1e1e; margin-bottom:10px; border-radius:10px; padding:10px; align-items:center;">
+                <img src="${item.poster}" style="width:60px; height:60px; object-fit:cover; border-radius:8px; margin-right:10px;">
+                <div style="flex:1;">
+                    <h4 style="margin:0; font-size:0.9rem;">${item.title}</h4>
+                    <span style="font-size:0.7rem; background:var(--primary); padding:2px 5px; border-radius:4px; color:white;">${item.last_eps}</span>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: ${item.progress};"></div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Placeholder Function untuk Sync ke Google Drive
+    function syncToDrive() {
+        alert("Fitur Sync Drive butuh API Client ID & API Key yang valid di console Google Cloud.");
+        // Di sini logika GAPI.client.drive.files.update digunakan untuk mengupload JSON local ke Cloud.
+    }
+
+    loadHistory();
+</script>
+</body>
+</html>
