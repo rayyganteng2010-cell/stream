@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nonton Donghua</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+        .server-btn { border: 1px solid var(--primary); background: transparent; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-right: 5px; margin-bottom: 5px; }
+        .server-btn.active { background: var(--primary); }
+        .nav-btn { background: #333; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; flex: 1; text-align: center; text-decoration: none;}
+        .download-box { background: #1e1e1e; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.8rem; }
+        .dl-link { display: block; padding: 5px; border-bottom: 1px solid #333; color: var(--text-sec); text-decoration: none; }
+        .dl-link b { color: var(--primary); }
+    </style>
 </head>
 <body>
 
@@ -14,19 +21,29 @@
 </div>
 
 <div style="padding: 15px;">
-    <h2 id="animeTitle" style="margin:0;">Loading...</h2>
-    <p id="animeStatus" style="color:#aaa; font-size:0.8rem;">Status: -</p>
+    <h2 id="epTitle" style="margin:0; font-size:1rem; line-height:1.4;">Loading...</h2>
     
-    <div style="background:#333; padding:10px; border-radius:5px; margin: 10px 0; font-size:0.9rem;">
-        <p id="synopsis" style="margin:0;">...</p>
+    <div style="display:flex; gap:10px; margin-top:15px;">
+        <a id="btnPrev" class="nav-btn" style="display:none;">&laquo; Prev</a>
+        <a href="javascript:history.back()" class="nav-btn" style="background:#444;">Series</a>
+        <a id="btnNext" class="nav-btn" style="display:none;">Next &raquo;</a>
+    </div>
+
+    <hr style="border-color:#333; margin: 15px 0;">
+
+    <p style="margin:0 0 5px 0; font-size:0.8rem; color:#aaa;">Ganti Server:</p>
+    <div id="serverList" style="display:flex; flex-wrap:wrap;"></div>
+
+    <div style="margin-top:15px;">
+        <button onclick="toggleDownload()" style="width:100%; background:#333; border:none; color:white; padding:8px; border-radius:5px;">
+            📥 Download Episode
+        </button>
+        <div id="downloadContainer" class="download-box" style="display:none;"></div>
     </div>
 </div>
 
-<h3 style="padding-left:15px;">Episode</h3>
-<div id="epsList" class="eps-grid"></div>
-
-<h3 style="padding-left:15px; color: var(--primary);">Rekomendasi Popular</h3>
-<div id="replacementPopular" class="grid"></div>
+<h3 style="padding-left:15px; color: var(--primary); margin-top:20px;">Rekomendasi</h3>
+<div id="replacementPopular" class="grid" style="margin-bottom:20px;"></div>
 
 <nav class="bottom-nav">
     <a href="index.html" class="nav-item">Home</a>
@@ -37,76 +54,108 @@
 <script>
     const API_BASE = "https://anichin-seven.vercel.app/api";
     const urlParams = new URLSearchParams(window.location.search);
-    const animeUrl = urlParams.get('url'); // URL parameter dari halaman depan
+    const animeUrl = urlParams.get('url'); 
 
-    // 1. Load Detail Anime & Player
     async function loadStream() {
         if(!animeUrl) return;
 
         try {
-            // Endpoint detail
+            // Kita pakai endpoint detail (sesuai struktur JSON pertama lu)
+            // Asumsi endpointnya: /detail?url=...
             const res = await fetch(`${API_BASE}/detail?url=${animeUrl}`);
             const json = await res.json();
-            const data = json.data; // Sesuaikan struktur response asli lu
-
-            // Render Info
-            document.getElementById('animeTitle').innerText = data.title || "Unknown";
-            document.getElementById('videoPlayer').src = data.stream_url || ""; // Asumsi ada field stream_url
-            document.getElementById('synopsis').innerText = data.synopsis || "No synopsis";
-
-            // Save to Drive History (Triggered here)
-            saveToDriveHistory(data.title, data.poster, "Ep ??", animeUrl);
-
-            // Render Episodes (Dummy Logic - sesuaikan field API lu)
-            // Karena dokumentasi API detail tidak lengkap structurenya, ini contoh:
-            const epsContainer = document.getElementById('epsList');
-            // Mocking episode list logic
-            // data.episodes.forEach...
             
-        } catch (e) { console.error("Stream Error", e); }
+            if(json.status !== "success") return alert("Gagal mengambil data");
+
+            // 1. Set Title & Player Default
+            document.getElementById('epTitle').innerText = json.episode;
+            const defaultStream = json.streaming.main_url.url;
+            document.getElementById('videoPlayer').src = defaultStream;
+
+            // 2. Render Server Buttons
+            const serverContainer = document.getElementById('serverList');
+            serverContainer.innerHTML = json.streaming.servers.map(srv => `
+                <button class="server-btn" onclick="changeServer('${srv.url}', this)">${srv.name}</button>
+            `).join('');
+            
+            // Tandai server pertama aktif
+            if(serverContainer.firstChild) serverContainer.firstChild.classList.add('active');
+
+            // 3. Render Navigation (Prev/Next)
+            if(json.navigation.previous_episode) {
+                const btn = document.getElementById('btnPrev');
+                btn.href = `stream.html?url=${json.navigation.previous_episode.anichinUrl}`;
+                btn.style.display = 'block';
+            }
+            if(json.navigation.next_episode) {
+                const btn = document.getElementById('btnNext');
+                btn.href = `stream.html?url=${json.navigation.next_episode.anichinUrl}`;
+                btn.style.display = 'block';
+            }
+
+            // 4. Render Download Links
+            const dlContainer = document.getElementById('downloadContainer');
+            let dlHtml = "";
+            const dlData = json.download_url;
+            
+            // Loop object download (download_url_360p, etc)
+            for (const [res, links] of Object.entries(dlData)) {
+                // res = "download_url_360p"
+                const resName = res.replace('download_url_', '').toUpperCase(); 
+                dlHtml += `<div style="margin-bottom:5px; border-bottom:1px solid #444; padding-bottom:5px;">
+                           <span style="color:var(--primary); font-size:0.75rem;">${resName}</span><br>`;
+                
+                // Loop provider (Mirrored, Terabox)
+                for (const [provider, url] of Object.entries(links)) {
+                     dlHtml += `<a href="${url}" target="_blank" style="color:#ccc; font-size:0.7rem; margin-right:10px; text-decoration:none;">[ ${provider} ]</a>`;
+                }
+                dlHtml += `</div>`;
+            }
+            dlContainer.innerHTML = dlHtml;
+
+            // 5. Save History (Lokal Storage dulu)
+            saveHistory(json.episode, "https://via.placeholder.com/150", animeUrl); // Poster ga ada di JSON episode, pake placeholder atau fetch series dulu kalau mau niat.
+
+        } catch (e) { 
+            console.error(e); 
+            document.getElementById('epTitle').innerText = "Error loading video.";
+        }
     }
 
-    // 2. Load Popular (Pengganti Komentar)
-    async function loadPopularReplacement() {
-        try {
-            const res = await fetch(`${API_BASE}/popular`);
-            const data = await res.json();
-            const el = document.getElementById("replacementPopular");
-            
-            // Tampilkan 6 popular anime sebagai rekomendasi
-            el.innerHTML = data.data.slice(0, 6).map(d => `
-                <div class="card" onclick="window.location.href='stream.html?url=${d.href}'">
-                    <img src="${d.poster}">
-                    <p>${d.title}</p>
-                </div>
-            `).join("");
-        } catch(e) { console.log(e); }
+    function changeServer(url, btn) {
+        document.getElementById('videoPlayer').src = url;
+        // Update UI tombol active
+        document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     }
 
-    // 3. Logic Simpan ke Google Drive (Konsep)
-    function saveToDriveHistory(title, poster, eps, url) {
-        // Logika: 
-        // 1. Cek Auth Token GAPI.
-        // 2. Download 'history.json' dari Drive.
-        // 3. Append data baru.
-        // 4. Update file di Drive.
-        // Implementasi penuh butuh GAPI client init yang panjang. 
-        // Untuk sekarang, kita simpan di LocalStorage agar jalan dulu, 
-        // nanti di 'history.html' baru kita coba sync.
-        
+    function toggleDownload() {
+        const box = document.getElementById('downloadContainer');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function saveHistory(title, poster, url) {
         let currentHistory = JSON.parse(localStorage.getItem('temp_history')) || [];
-        // Hapus duplicate kalau ada
         currentHistory = currentHistory.filter(h => h.url !== url);
-        // Add new (di paling atas)
         currentHistory.unshift({
             title: title,
-            poster: poster,
-            progress: "30%", // Mock progress
-            last_eps: eps,
+            poster: poster, 
+            progress: "seen",
             url: url,
             date: new Date().toISOString()
         });
         localStorage.setItem('temp_history', JSON.stringify(currentHistory));
+    }
+
+    // Load Popular (Sama kayak sebelumnya)
+    async function loadPopularReplacement() {
+        const res = await fetch(`${API_BASE}/popular`);
+        const data = await res.json();
+        document.getElementById("replacementPopular").innerHTML = data.data.slice(0, 6).map(d => `
+            <div class="card" onclick="window.location.href='stream.html?url=${d.href}'">
+                <img src="${d.poster}"><p>${d.title}</p>
+            </div>
+        `).join("");
     }
 
     loadStream();
