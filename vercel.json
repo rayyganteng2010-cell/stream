@@ -5,26 +5,7 @@
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
   ],
@@ -33,6 +14,10 @@
     { "source": "/login", "destination": "/login.html" },
     { "source": "/schedule", "destination": "/schedule.html" },
     { "source": "/search", "destination": "/search.html" },
-    { "source": "/detail", "destination": "/detail.html" }
+    { "source": "/detail", "destination": "/detail.html" },
+    { 
+      "source": "/sanka-api/:match*", 
+      "destination": "https://www.sankavollerei.com/anime/donghua/:match*" 
+    }
   ]
 }
