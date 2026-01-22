@@ -7,12 +7,20 @@
     <style>
         :root { --bg: #050505; --card: #141414; --primary: #06b6d4; --text: #fff; }
         body { margin:0; font-family:'Segoe UI', sans-serif; background:var(--bg); color:var(--text); padding-bottom:70px; }
-        .day-header { padding:10px 15px; background:#111; color:var(--primary); font-weight:bold; font-size:14px; position:sticky; top:0; z-index:10; border-bottom:1px solid #222; }
-        .list-item { display:flex; gap:12px; padding:12px 15px; border-bottom:1px solid #1a1a1a; cursor:pointer; align-items:center; }
-        .list-item img { width:45px; height:60px; object-fit:cover; border-radius:4px; background:#222; }
-        .time { font-size:11px; color:#888; margin-top:4px; display:block; }
         
-        .nav { position:fixed; bottom:0; width:100%; background:rgba(5,5,5,0.9); backdrop-filter:blur(10px); border-top:1px solid #222; display:flex; height:60px; align-items:center; justify-content:space-around; z-index:100; }
+        .header { padding:15px; position:sticky; top:0; background:rgba(5,5,5,0.9); backdrop-filter:blur(10px); z-index:10; border-bottom:1px solid #222; }
+        .h-title { font-size:18px; font-weight:800; color:var(--primary); margin:0; }
+
+        .day-box { margin:20px 15px; }
+        .day-head { background:#111; color:#fff; padding:8px 15px; font-weight:bold; border-radius:6px; border-left:4px solid var(--primary); font-size:14px; margin-bottom:10px; }
+        
+        .item { display:flex; gap:10px; padding:10px; background:var(--card); margin-bottom:8px; border-radius:8px; cursor:pointer; }
+        .item img { width:50px; height:70px; object-fit:cover; border-radius:4px; background:#222; }
+        .i-info { display:flex; flex-direction:column; justify-content:center; }
+        .i-title { font-size:13px; font-weight:600; line-height:1.2; margin-bottom:4px; }
+        .i-meta { font-size:11px; color:#888; }
+
+        .nav { position:fixed; bottom:0; width:100%; background:rgba(10,10,10,0.95); backdrop-filter:blur(10px); border-top:1px solid #222; display:flex; height:60px; align-items:center; justify-content:space-around; z-index:100; }
         .nav a { color:#666; text-decoration:none; font-size:10px; display:flex; flex-direction:column; align-items:center; gap:3px; }
         .nav a.active { color:var(--primary); }
         .nav svg { width:22px; height:22px; fill:currentColor; }
@@ -20,7 +28,8 @@
 </head>
 <body>
 
-<div id="schedList">Loading...</div>
+<div class="header"><h1 class="h-title">Jadwal Rilis</h1></div>
+<div id="schedList" style="padding-top:10px;"></div>
 
 <div class="nav">
     <a href="index.html"><svg><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</a>
@@ -30,38 +39,40 @@
 
 <script src="config.js"></script>
 <script>
-    async function loadSched() {
-        try {
-            const res = await fetch(API_BASE + '/api/schedule');
-            const json = await res.json();
-            // Struktur: json.schedule = [ {day: "Monday", donghua_list: []}, ... ]
-            
-            const cont = document.getElementById('schedList');
-            cont.innerHTML = "";
+    setActiveNav('navSched');
 
-            json.schedule.forEach(dayItem => {
-                let listHtml = "";
-                dayItem.donghua_list.forEach(anime => {
-                    listHtml += `
-                    <div class="list-item" onclick="window.location.href='detail.html?url=${encodeURIComponent(anime.anichinUrl)}'">
-                        <img src="${anime.poster}" loading="lazy">
-                        <div>
-                            <div style="font-size:13px;font-weight:600;line-height:1.2;">${anime.title}</div>
-                            <span class="time">${anime.release_time} • ${anime.episode}</span>
-                        </div>
-                    </div>`;
-                });
+    async function load() {
+        const data = await fetchAPI('/api/schedule');
+        const cont = document.getElementById('schedList');
+        
+        if(!data || !data.schedule) {
+            cont.innerHTML = "<div style='text-align:center;padding:20px;color:#666'>Jadwal kosong.</div>";
+            return;
+        }
 
-                cont.innerHTML += `
-                <div>
-                    <div class="day-header">${dayItem.day}</div>
-                    ${listHtml}
+        // data.schedule adalah Array
+        data.schedule.forEach(dayItem => {
+            let listHtml = "";
+            dayItem.donghua_list.forEach(i => {
+                const time = i.release_time.replace('at ', '');
+                listHtml += `
+                <div class="item" onclick="window.location.href='detail.html?url=${encodeURIComponent(i.anichinUrl)}'">
+                    <img src="${i.poster}" loading="lazy">
+                    <div class="i-info">
+                        <div class="i-title">${i.title}</div>
+                        <div class="i-meta">Jam ${time} • ${i.episode}</div>
+                    </div>
                 </div>`;
             });
 
-        } catch(e) { document.getElementById('schedList').innerText = "Gagal memuat jadwal."; }
+            cont.innerHTML += `
+            <div class="day-box">
+                <div class="day-head">${dayItem.day}</div>
+                <div>${listHtml}</div>
+            </div>`;
+        });
     }
-    loadSched();
+    load();
 </script>
 </body>
 </html>
