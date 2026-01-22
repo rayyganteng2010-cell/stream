@@ -1,65 +1,42 @@
 // config.js
-const API_BASE = "https://anichin-seven.vercel.app";
-
-// --- PASTIKAN CLIENT ID INI BENAR DARI GOOGLE CLOUD CONSOLE ---
+const API_BASE = "https://donghua-tt55.vercel.app"; 
+const API_SCHED = "https://www.sankavollerei.com";
 const CLIENT_ID = "879575887567-dpebn221ucih4hs73lu8mbbl528lb89o.apps.googleusercontent.com"; 
 
-// Fungsi Cek Login yang Lebih Aman (Support Vercel Clean URL)
 function checkAuth() {
     const path = window.location.pathname;
-    // Cek apakah kita sedang di halaman login (baik /login atau /login.html)
     const isLoginPage = path.includes('login'); 
     const token = localStorage.getItem('gToken');
 
     if (!token && !isLoginPage) {
-        // Jika tidak ada token dan bukan di halaman login -> Tendang ke login
         window.location.href = '/login'; 
     } else if (token && isLoginPage) {
-        // Jika ada token tapi masih di halaman login -> Tendang ke home
         window.location.href = '/';
     }
 }
 
-// Global variable untuk Google Client
-let tokenClient;
-
 function initGoogle() {
     const script = document.createElement('script');
     script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
     script.onload = () => {
-        // Inisialisasi Client Google setelah script load
-        tokenClient = google.accounts.oauth2.initTokenClient({
+        google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: 'https://www.googleapis.com/auth/drive.appdata',
             callback: (response) => {
                 if (response.access_token) {
                     localStorage.setItem('gToken', response.access_token);
-                    // Coba sync, lalu pindah halaman
-                    syncCloud('pull').finally(() => {
-                        window.location.href = '/';
-                    });
+                    syncCloud('pull').then(() => window.location.href = '/');
                 }
             },
-        });
-        
-        // Aktifkan tombol setelah library siap
-        const btn = document.getElementById('gLoginBtn');
-        if(btn) {
-            btn.onclick = () => tokenClient.requestAccessToken();
-            btn.innerText = "Masuk dengan Google (Siap)";
-        }
+        }).requestAccessToken();
     };
     document.head.appendChild(script);
 }
 
-// Fungsi Sync (Tetap Sama)
 async function syncCloud(action = 'push') {
     const token = localStorage.getItem('gToken');
     if (!token) return;
-
-    const fileName = 'raystream_data.json';
+    const fileName = 'raystream_v12.json';
     try {
         const q = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and 'appDataFolder' in parents&spaces=appDataFolder`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -92,36 +69,20 @@ async function syncCloud(action = 'push') {
             }
         }
     } catch (e) {
-        console.error("Sync Error:", e);
-        if(e.status === 401) {
-            localStorage.removeItem('gToken');
-            window.location.href = '/login';
-        }
+        if(e.status === 401) { localStorage.removeItem('gToken'); window.location.href = '/login'; }
     }
-}
-
-// Helper Functions
-function formatEp(title) {
-    if(!title) return '';
-    const match = title.match(/\d+/);
-    return match ? match[0] : title.substring(0, 3);
 }
 
 function setActiveNav(id) {
-    // Tunggu DOM load
     if(document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => hlNav(id));
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.nav a').forEach(el => el.classList.remove('active'));
+            if(document.getElementById(id)) document.getElementById(id).classList.add('active');
+        });
     } else {
-        hlNav(id);
+        document.querySelectorAll('.nav a').forEach(el => el.classList.remove('active'));
+        if(document.getElementById(id)) document.getElementById(id).classList.add('active');
     }
 }
 
-function hlNav(id) {
-    const els = document.querySelectorAll('.nav a');
-    els.forEach(el => el.classList.remove('active'));
-    const target = document.getElementById(id);
-    if(target) target.classList.add('active');
-}
-
-// Jalankan cek auth langsung
 checkAuth();
