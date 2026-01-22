@@ -5,185 +5,141 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anichin Home</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* CSS Tambahan khusus Home agar rapi */
+        /* Slider & Home Specific Styles */
         .slider-container {
             overflow-x: auto;
             white-space: nowrap;
-            padding: 10px;
-            -webkit-overflow-scrolling: touch; /* Smooth scroll di iOS */
-            scrollbar-width: none; /* Hide scrollbar Firefox */
+            padding: 15px;
+            scrollbar-width: none;
+            display: flex;
+            gap: 10px;
         }
-        .slider-container::-webkit-scrollbar {
-            display: none; /* Hide scrollbar Chrome/Safari */
-        }
+        .slider-container::-webkit-scrollbar { display: none; }
         .slider-img {
             width: 85%;
-            height: 160px;
+            height: 180px;
             object-fit: cover;
-            border-radius: 10px;
-            display: inline-block;
-            margin-right: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            flex-shrink: 0;
         }
-        
-        .section-title {
-            padding: 15px 10px 5px 10px;
-            margin: 0;
-            font-size: 1.1rem;
-            font-weight: bold;
+        .section-header {
+            padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .section-title span {
-            color: var(--primary);
-            font-size: 0.8rem;
-        }
-        
-        /* User Avatar di Header */
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--primary);
-        }
+        .section-header h3 { margin: 0; font-size: 1.1rem; }
+        .refresh-btn { color: var(--primary); font-size: 0.8rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="logo">ANICHIN</div>
-    
-    <div id="authSection">
-        <a href="login.html" style="color:var(--primary); text-decoration:none; font-size:0.9rem; font-weight:bold;">Login</a>
-    </div>
-</header>
+    <div id="userStatus"></div> </header>
 
-<section class="slider-container">
+<div class="slider-container">
     <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg">
     <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg">
     <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/0c96d013d87134ba7d2c951a889ebf15.jpg">
-</section>
-
-<h3 class="section-title">Popular Today <span onclick="location.reload()">Refresh</span></h3>
-<div id="popularData" class="grid">
-    <div class="card" style="height:180px;"><p style="padding:50px 0; text-align:center; color:#555;">Loading...</p></div>
-    <div class="card" style="height:180px;"></div>
-    <div class="card" style="height:180px;"></div>
 </div>
 
-<h3 class="section-title">Latest Release</h3>
-<div id="latestData" class="grid">
-    <div class="card" style="height:180px;"><p style="padding:50px 0; text-align:center; color:#555;">Loading...</p></div>
+<div class="section-header">
+    <h3>Popular Today</h3>
+    <span class="refresh-btn" onclick="location.reload()">Refresh</span>
+</div>
+<div id="popularData" class="grid">
+    <p style="color:#555; font-size:0.8rem;">Loading popular...</p>
+</div>
+
+<div class="section-header">
+    <h3>Latest Release</h3>
+</div>
+<div id="latestData" class="grid" style="margin-bottom: 20px;">
+    <p style="color:#555; font-size:0.8rem;">Loading latest...</p>
 </div>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active">
-        <span style="font-size:1.2rem;">🏠</span><br>Home
-    </a>
-    <a href="schedule.html" class="nav-item">
-        <span style="font-size:1.2rem;">📅</span><br>Jadwal
-    </a>
-    <a href="history.html" class="nav-item">
-        <span style="font-size:1.2rem;"> clock</span><br>History
-    </a>
+    <a href="index.html" class="nav-item active"><i data-lucide="home"></i> Home</a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i> Jadwal</a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i> History</a>
 </nav>
 
 <script>
     const API_BASE = "https://anichin-seven.vercel.app/api";
 
     /**
-     * FUNGSI PENTING: Membersihkan URL Episode menjadi URL Series
-     * Masukan: https://anichin.moe/renegade-immortal-episode-124-sub-indo/
-     * Keluaran: https://anichin.moe/renegade-immortal/
-     * Tujuannya agar series.html bisa mengambil data yang benar (bukan data shortlink).
+     * Logic Pembersih URL (The Fix)
+     * Input: https://anichin.moe/renegade-immortal-episode-124-sub-indo/
+     * Output: renegade-immortal
      */
-    function getSeriesUrl(fullUrl) {
-        if (!fullUrl) return '';
-        // Regex: Cari "-episode" diikuti angka, lalu hapus sisa string di belakangnya
-        // Contoh: "judul-anime-episode-12-sub-indo" -> "judul-anime"
-        // Kita juga hapus trailing slash kalau ada biar rapi
-        let clean = fullUrl.replace(/\/$/, ''); // hapus slash terakhir
+    function getCleanSlug(href) {
+        if (!href) return '';
+        // 1. Buang trailing slash (/) di akhir
+        href = href.replace(/\/$/, '');
         
-        if (clean.includes('episode')) {
-             return clean.replace(/-episode-\d+.*$/, '');
-        }
-        return clean;
+        // 2. Ambil segment terakhir dari URL
+        let segment = href.substring(href.lastIndexOf('/') + 1);
+        
+        // 3. Hapus kata "-episode-" dan angka di belakangnya
+        // Regex: cari "-episode-" case insensitive, lalu hapus sampai akhir string
+        return segment.replace(/-episode-\d+.*$/i, '');
     }
 
-    // 1. Fetch Popular
-    async function getPopular() {
+    async function loadHome() {
         try {
-            const res = await fetch(`${API_BASE}/popular`);
-            const data = await res.json();
-            const container = document.getElementById('popularData');
+            // 1. Get Popular
+            const resPop = await fetch(`${API_BASE}/popular`);
+            const dataPop = await resPop.json();
             
-            container.innerHTML = data.data.slice(0, 6).map(anime => {
-                // Bersihkan URL disini!
-                const cleanUrl = getSeriesUrl(anime.href);
-                
+            document.getElementById('popularData').innerHTML = dataPop.data.slice(0, 6).map(item => {
+                const slug = getCleanSlug(item.href);
                 return `
-                <div class="card" onclick="window.location.href='series.html?url=${cleanUrl}'">
-                    <img src="${anime.poster}" alt="${anime.title}" loading="lazy">
-                    <p>${anime.title}</p>
-                    <span style="position:absolute; top:5px; right:5px; background:var(--primary); color:white; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
-                        Ep ${anime.current_episode}
-                    </span>
+                <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
+                    <img src="${item.poster}" loading="lazy">
+                    <p>${item.title}</p>
+                    <div style="position:absolute; top:5px; right:5px; background:var(--primary); color:black; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold;">
+                        Ep ${item.current_episode}
+                    </div>
                 </div>
             `}).join('');
-        } catch (e) { 
-            console.error("Err Popular:", e);
-            document.getElementById('popularData').innerHTML = "<p style='padding:10px; color:red;'>Gagal memuat data popular.</p>";
-        }
-    }
 
-    // 2. Fetch Latest List
-    async function getLatest() {
-        try {
-            const res = await fetch(`${API_BASE}/list?page=1`);
-            const data = await res.json();
-            const container = document.getElementById('latestData');
-            
-            container.innerHTML = data.data.slice(0, 9).map(anime => {
-                // Bersihkan URL disini juga!
-                const cleanUrl = getSeriesUrl(anime.href);
+            // 2. Get Latest
+            const resLat = await fetch(`${API_BASE}/list?page=1`);
+            const dataLat = await resLat.json();
 
+            document.getElementById('latestData').innerHTML = dataLat.data.slice(0, 9).map(item => {
+                const slug = getCleanSlug(item.href);
                 return `
-                <div class="card" onclick="window.location.href='series.html?url=${cleanUrl}'">
-                    <img src="${anime.poster}" loading="lazy">
-                    <p>${anime.title}</p>
+                <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
+                    <img src="${item.poster}" loading="lazy">
+                    <p>${item.title}</p>
                 </div>
             `}).join('');
-        } catch (e) { 
-            console.error("Err Latest:", e); 
+            
+            lucide.createIcons();
+
+        } catch (e) {
+            console.error(e);
         }
     }
 
-    // 3. Cek Status Login (Tampilan Avatar)
-    function checkLogin() {
-        const user = JSON.parse(localStorage.getItem('user_info'));
-        if(user) {
-            document.getElementById('authSection').innerHTML = `
-                <div class="user-profile" onclick="window.location.href='history.html'">
-                    <span style="font-size:0.8rem; text-align:right;">Hi, ${user.given_name}</span>
-                    <img class="avatar" src="${user.picture}" alt="Profile">
-                </div>
-            `;
-        }
+    // Check Login User
+    const user = JSON.parse(localStorage.getItem('user_info'));
+    if(user) {
+        document.getElementById('userStatus').innerHTML = `
+            <img src="${user.picture}" style="width:32px; height:32px; border-radius:50%; border:2px solid var(--primary);">
+        `;
+    } else {
+        document.getElementById('userStatus').innerHTML = `
+            <a href="login.html" style="color:var(--primary); text-decoration:none; font-size:0.9rem; font-weight:bold;">Login</a>
+        `;
     }
 
-    // Jalankan semua fungsi
-    checkLogin();
-    getPopular();
-    getLatest();
+    loadHome();
 </script>
-
 </body>
 </html>
