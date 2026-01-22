@@ -6,6 +6,38 @@
     <title>Jadwal Rilis</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Styling khusus Tab Hari agar tidak menumpuk */
+        .day-tabs {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(22, 22, 22, 0.5);
+            border-bottom: 1px solid #333;
+            scrollbar-width: none; /* Firefox */
+        }
+        .day-tabs::-webkit-scrollbar { display: none; /* Chrome */ }
+        
+        .day-tab {
+            white-space: nowrap;
+            padding: 8px 18px;
+            border-radius: 20px;
+            background: var(--bg-element);
+            font-size: 0.85rem;
+            color: #888;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .day-tab.active {
+            background: var(--primary);
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 170, 255, 0.4);
+        }
+    </style>
 </head>
 <body>
 
@@ -13,10 +45,12 @@
     <div class="logo">SCHEDULE</div>
 </header>
 
-<div id="dayTabs" class="day-tabs"></div>
-
-<div id="scheduleGrid" class="grid" style="margin-top:10px;">
+<div id="dayTabs" class="day-tabs">
     </div>
+
+<div id="scheduleGrid" class="grid" style="margin-top:10px; padding-bottom:20px;">
+    <p style="text-align:center; width:100%; color:#555; margin-top:50px;">Loading jadwal...</p>
+</div>
 
 <nav class="bottom-nav">
     <a href="index.html" class="nav-item"><i data-lucide="home"></i> Home</a>
@@ -27,39 +61,84 @@
 <script>
     const API_BASE = "https://anichin-seven.vercel.app/api";
 
-    async function loadSchedule() {
-        const res = await fetch(`${API_BASE}/schedule`);
-        const data = await res.json();
-        const sched = data.schedule;
-
-        const tabs = document.getElementById('dayTabs');
-        
-        // Render Tabs
-        tabs.innerHTML = sched.map((s, i) => 
-            `<div class="day-tab ${i===0 ? 'active' : ''}" onclick="selectDay(${i}, this)">${s.day}</div>`
-        ).join('');
-
-        window.schedData = sched;
-        selectDay(0, tabs.children[0]); // Select first day
-        lucide.createIcons();
+    /**
+     * Logic Pembersih URL (Sama seperti index.html)
+     * Mengubah URL Episode menjadi Slug Series
+     */
+    function getCleanSlug(href) {
+        if (!href) return '';
+        // 1. Buang trailing slash (/)
+        href = href.replace(/\/$/, '');
+        // 2. Ambil segment terakhir
+        let segment = href.substring(href.lastIndexOf('/') + 1);
+        // 3. Hapus kata "-episode-" dan angka di belakangnya
+        return segment.replace(/-episode-\d+.*$/i, '');
     }
 
+    async function loadSchedule() {
+        try {
+            const res = await fetch(`${API_BASE}/schedule`);
+            const data = await res.json();
+            const sched = data.schedule; // Array: [{day: "Senin", donghua_list: [...]}, ...]
+
+            const tabsContainer = document.getElementById('dayTabs');
+            
+            // 1. Render Tabs Hari
+            tabsContainer.innerHTML = sched.map((s, index) => 
+                `<div class="day-tab ${index === 0 ? 'active' : ''}" onclick="selectDay(${index}, this)">${s.day}</div>`
+            ).join('');
+
+            // Simpan data di global variable agar bisa diakses fungsi selectDay
+            window.schedData = sched;
+            
+            // 2. Load hari pertama secara default
+            if(sched.length > 0) {
+                renderGrid(sched[0].donghua_list);
+            }
+
+            lucide.createIcons();
+
+        } catch (e) {
+            console.error(e);
+            document.getElementById('scheduleGrid').innerHTML = "<p style='text-align:center; color:red;'>Gagal memuat jadwal.</p>";
+        }
+    }
+
+    // Fungsi ganti hari
     function selectDay(index, el) {
-        // Active Class logic
+        // Update tampilan Tab Active
         document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
+        
+        // Scroll tab ke tengah biar enak dilihat (User Experience)
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-        // Render Grid
+        // Render Grid Anime
         const list = window.schedData[index].donghua_list;
-        document.getElementById('scheduleGrid').innerHTML = list.map(item => `
-            <div class="card" onclick="window.location.href='stream.html?url=${item.href}'">
-                <img src="${item.poster}">
+        renderGrid(list);
+    }
+
+    function renderGrid(list) {
+        const grid = document.getElementById('scheduleGrid');
+        
+        if(!list || list.length === 0) {
+            grid.innerHTML = "<p style='color:#777; width:100%; text-align:center;'>Tidak ada jadwal.</p>";
+            return;
+        }
+
+        grid.innerHTML = list.map(item => {
+            // Bersihkan URL agar masuk ke Series Detail
+            const slug = getCleanSlug(item.href);
+
+            return `
+            <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
+                <img src="${item.poster}" loading="lazy">
                 <p>${item.title}</p>
                 <div style="position:absolute; top:5px; right:5px; background:var(--primary); color:black; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold;">
                     Ep ${item.episode}
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     loadSchedule();
