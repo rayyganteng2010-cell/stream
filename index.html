@@ -3,36 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RayStream Home</title>
+    <title>Anichin Home</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS Tambahan khusus Home agar rapi */
+        .slider-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 10px;
+            -webkit-overflow-scrolling: touch; /* Smooth scroll di iOS */
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+        .slider-container::-webkit-scrollbar {
+            display: none; /* Hide scrollbar Chrome/Safari */
+        }
+        .slider-img {
+            width: 85%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 10px;
+            display: inline-block;
+            margin-right: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .section-title {
+            padding: 15px 10px 5px 10px;
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-title span {
+            color: var(--primary);
+            font-size: 0.8rem;
+        }
+        
+        /* User Avatar di Header */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+    </style>
 </head>
 <body>
 
 <header>
-    <div class="logo">RayStream</div>
-    <img id="userAvatar" src="" style="width:30px; border-radius:50%; display:none;">
+    <div class="logo">ANICHIN</div>
+    
+    <div id="authSection">
+        <a href="login.html" style="color:var(--primary); text-decoration:none; font-size:0.9rem; font-weight:bold;">Login</a>
+    </div>
 </header>
 
-<section id="banner" style="overflow-x: auto; white-space: nowrap; padding: 10px;">
-    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg" style="width: 80%; border-radius: 10px; display:inline-block;">
-    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg" style="width: 80%; border-radius: 10px; display:inline-block;">
+<section class="slider-container">
+    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg">
+    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg">
+    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/0c96d013d87134ba7d2c951a889ebf15.jpg">
 </section>
 
-<h3 style="padding-left:10px;">Popular Today</h3>
-<div id="popularData" class="grid"></div>
+<h3 class="section-title">Popular Today <span onclick="location.reload()">Refresh</span></h3>
+<div id="popularData" class="grid">
+    <div class="card" style="height:180px;"><p style="padding:50px 0; text-align:center; color:#555;">Loading...</p></div>
+    <div class="card" style="height:180px;"></div>
+    <div class="card" style="height:180px;"></div>
+</div>
 
-<h3 style="padding-left:10px;">Latest Update</h3>
-<div id="latestData" class="grid"></div>
+<h3 class="section-title">Latest Release</h3>
+<div id="latestData" class="grid">
+    <div class="card" style="height:180px;"><p style="padding:50px 0; text-align:center; color:#555;">Loading...</p></div>
+</div>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active">Home</a>
-    <a href="schedule.html" class="nav-item">Jadwal</a>
-    <a href="history.html" class="nav-item">History</a>
+    <a href="index.html" class="nav-item active">
+        <span style="font-size:1.2rem;">🏠</span><br>Home
+    </a>
+    <a href="schedule.html" class="nav-item">
+        <span style="font-size:1.2rem;">📅</span><br>Jadwal
+    </a>
+    <a href="history.html" class="nav-item">
+        <span style="font-size:1.2rem;"> clock</span><br>History
+    </a>
 </nav>
 
 <script>
-    // API BASE LANGSUNG DISINI
     const API_BASE = "https://anichin-seven.vercel.app/api";
+
+    /**
+     * FUNGSI PENTING: Membersihkan URL Episode menjadi URL Series
+     * Masukan: https://anichin.moe/renegade-immortal-episode-124-sub-indo/
+     * Keluaran: https://anichin.moe/renegade-immortal/
+     * Tujuannya agar series.html bisa mengambil data yang benar (bukan data shortlink).
+     */
+    function getSeriesUrl(fullUrl) {
+        if (!fullUrl) return '';
+        // Regex: Cari "-episode" diikuti angka, lalu hapus sisa string di belakangnya
+        // Contoh: "judul-anime-episode-12-sub-indo" -> "judul-anime"
+        // Kita juga hapus trailing slash kalau ada biar rapi
+        let clean = fullUrl.replace(/\/$/, ''); // hapus slash terakhir
+        
+        if (clean.includes('episode')) {
+             return clean.replace(/-episode-\d+.*$/, '');
+        }
+        return clean;
+    }
 
     // 1. Fetch Popular
     async function getPopular() {
@@ -41,42 +125,65 @@
             const data = await res.json();
             const container = document.getElementById('popularData');
             
-            // Loop data popular (render 3 kolom)
-            container.innerHTML = data.data.slice(0, 6).map(anime => `
-                <div class="card" onclick="window.location.href='stream.html?url=${anime.href}'">
-                    <img src="${anime.poster}" alt="${anime.title}">
+            container.innerHTML = data.data.slice(0, 6).map(anime => {
+                // Bersihkan URL disini!
+                const cleanUrl = getSeriesUrl(anime.href);
+                
+                return `
+                <div class="card" onclick="window.location.href='series.html?url=${cleanUrl}'">
+                    <img src="${anime.poster}" alt="${anime.title}" loading="lazy">
                     <p>${anime.title}</p>
-                    <span style="font-size:0.6rem; color:#00aaff; padding-left:5px;">Ep ${anime.current_episode}</span>
+                    <span style="position:absolute; top:5px; right:5px; background:var(--primary); color:white; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
+                        Ep ${anime.current_episode}
+                    </span>
                 </div>
-            `).join('');
-        } catch (e) { console.log("Err Popular:", e); }
+            `}).join('');
+        } catch (e) { 
+            console.error("Err Popular:", e);
+            document.getElementById('popularData').innerHTML = "<p style='padding:10px; color:red;'>Gagal memuat data popular.</p>";
+        }
     }
 
-    // 2. Fetch Latest (List)
+    // 2. Fetch Latest List
     async function getLatest() {
         try {
             const res = await fetch(`${API_BASE}/list?page=1`);
             const data = await res.json();
             const container = document.getElementById('latestData');
             
-            container.innerHTML = data.data.slice(0, 9).map(anime => `
-                <div class="card" onclick="window.location.href='series.html?url=${anime.href}'">
-                    <img src="${anime.poster}">
+            container.innerHTML = data.data.slice(0, 9).map(anime => {
+                // Bersihkan URL disini juga!
+                const cleanUrl = getSeriesUrl(anime.href);
+
+                return `
+                <div class="card" onclick="window.location.href='series.html?url=${cleanUrl}'">
+                    <img src="${anime.poster}" loading="lazy">
                     <p>${anime.title}</p>
                 </div>
-            `).join('');
-        } catch (e) { console.log("Err Latest:", e); }
+            `}).join('');
+        } catch (e) { 
+            console.error("Err Latest:", e); 
+        }
     }
 
-    // Cek Login User (Optional visual)
-    const user = JSON.parse(localStorage.getItem('user_info'));
-    if(user) {
-        document.getElementById('userAvatar').src = user.picture;
-        document.getElementById('userAvatar').style.display = "block";
+    // 3. Cek Status Login (Tampilan Avatar)
+    function checkLogin() {
+        const user = JSON.parse(localStorage.getItem('user_info'));
+        if(user) {
+            document.getElementById('authSection').innerHTML = `
+                <div class="user-profile" onclick="window.location.href='history.html'">
+                    <span style="font-size:0.8rem; text-align:right;">Hi, ${user.given_name}</span>
+                    <img class="avatar" src="${user.picture}" alt="Profile">
+                </div>
+            `;
+        }
     }
 
+    // Jalankan semua fungsi
+    checkLogin();
     getPopular();
     getLatest();
 </script>
+
 </body>
 </html>
