@@ -3,39 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAYSTREAM Player</title>
+    <title>Detail</title>
     <style>
         :root { --bg: #050505; --card: #141414; --primary: #06b6d4; --text: #fff; }
-        body { margin:0; font-family:'Segoe UI', sans-serif; background:var(--bg); color:var(--text); padding-bottom:50px; }
+        body { margin:0; font-family:'Segoe UI', sans-serif; background:var(--bg); color:var(--text); padding-bottom:60px; }
 
-        .player-area { position:sticky; top:0; width:100%; aspect-ratio:16/9; background:#000; z-index:100; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+        /* PLAYER */
+        .player-box { position:sticky; top:0; width:100%; aspect-ratio:16/9; background:#000; z-index:100; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
         iframe { width:100%; height:100%; border:none; }
-        .fs-btn { position:absolute; bottom:15px; right:15px; background:rgba(0,0,0,0.6); color:#fff; padding:8px; border-radius:8px; cursor:pointer; }
+        .fs-btn { position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.5); color:#fff; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:12px; }
 
-        .content { padding:20px; }
-        .title { font-size:20px; font-weight:800; margin-bottom:8px; line-height:1.3; color:#fff; }
-        .meta { color:#888; font-size:12px; margin-bottom:20px; font-weight:500; }
-        
-        .actions { display:flex; gap:12px; margin-bottom:25px; }
-        .act-btn { flex:1; background:#1a1a1a; color:#fff; border:1px solid #333; padding:12px; border-radius:10px; text-align:center; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s; }
-        .act-btn:active { transform:scale(0.96); background:#222; }
-        .act-btn.primary { background:var(--primary); color:#000; border:none; }
+        /* INFO */
+        .container { padding:20px; }
+        .title { font-size:20px; font-weight:800; line-height:1.2; margin-bottom:5px; }
+        .meta { color:#888; font-size:12px; margin-bottom:15px; }
+        .genre-pill { display:inline-block; background:rgba(255,255,255,0.1); font-size:10px; padding:3px 8px; border-radius:4px; margin-right:5px; }
 
-        .ep-title { font-size:16px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
-        .ep-list { display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none; }
-        .ep-list::-webkit-scrollbar { display:none; }
-        .ep-box { flex-shrink:0; width:55px; height:50px; background:var(--card); border:1px solid #333; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#888; cursor:pointer; text-decoration:none; transition:0.2s; }
-        .ep-box.active { background:var(--primary); color:#000; border-color:var(--primary); box-shadow:0 0 15px rgba(6, 182, 212, 0.4); }
+        /* ACTIONS */
+        .actions { display:flex; gap:10px; margin-bottom:25px; }
+        .btn { flex:1; background:#222; color:#fff; border:1px solid #333; padding:12px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; }
+        .btn.primary { background:var(--primary); color:#000; border:none; }
 
-        .back-float { position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); padding:10px; border-radius:50%; cursor:pointer; z-index:110; color:#fff; transition:0.2s; }
-        .back-float:active { transform:scale(0.9); }
-        
-        /* Modal Style */
+        /* EPISODE LIST */
+        .ep-grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin-top:10px; }
+        .ep-btn { background:var(--card); border:1px solid #333; color:#aaa; text-align:center; padding:10px 0; border-radius:6px; font-size:13px; text-decoration:none; font-weight:600; }
+        .ep-btn.active { background:var(--primary); color:#000; border-color:var(--primary); }
+
+        /* MODAL DOWNLOAD */
         .modal { position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; }
         .modal.show { display:flex; }
-        .modal-box { background:#1a1a1a; width:100%; max-width:400px; padding:25px; border-radius:20px; border:1px solid #333; max-height:80vh; overflow-y:auto; }
-        .dl-res { margin-bottom:10px; font-size:13px; font-weight:bold; color:var(--primary); border-bottom:1px solid #333; padding-bottom:5px; }
-        .dl-links a { display:block; background:#222; color:#fff; padding:10px; border-radius:8px; margin-bottom:8px; text-decoration:none; font-size:12px; border:1px solid #333; text-align:center; }
+        .modal-box { background:#1a1a1a; width:100%; max-width:400px; padding:20px; border-radius:15px; border:1px solid #333; max-height:80vh; overflow-y:auto; }
+        .dl-row { margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px; }
+        .dl-res { font-weight:bold; color:var(--primary); margin-bottom:5px; font-size:14px; }
+        .dl-link { display:inline-block; background:#333; color:#fff; padding:5px 10px; border-radius:5px; font-size:11px; margin-right:5px; text-decoration:none; margin-bottom:5px; }
+
+        .back { position:absolute; top:15px; left:15px; background:rgba(0,0,0,0.6); width:35px; height:35px; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer; z-index:110; color:#fff; }
     </style>
 </head>
 <body>
@@ -53,93 +55,128 @@
 
     async function init() {
         if(!targetUrl) return;
-        document.getElementById('app').innerHTML = `<div style="text-align:center;padding:100px;color:#666;">Memuat RAYSTREAM...</div>`;
+        document.getElementById('app').innerHTML = `<div style="text-align:center;padding:100px;color:#777;">Memuat Data...</div>`;
 
         try {
             const res = await fetch(API_BASE + '/api/detail?url=' + encodeURIComponent(targetUrl));
             const data = await res.json();
+
+            // DETEKSI TIPE: Episode (Nonton) atau Series (Info)
+            // Episode biasanya punya key 'streaming' atau 'episode'
+            // Series punya key 'genres' array
             
-            if(data.streaming || data.stream_url) {
+            if (data.streaming || data.episode) {
                 renderPlayer(data);
             } else {
-                renderInfo(data);
+                renderSeries(data);
             }
+            
             saveHist(data);
+
         } catch(e) { console.error(e); }
     }
 
+    // --- MODE NONTON ---
     function renderPlayer(data) {
-        const stream = data.stream_url || data.streaming.url;
+        // Ambil Streaming URL (Main atau Server)
+        let streamUrl = "";
+        if (data.streaming) {
+            if (data.streaming.main_url) streamUrl = data.streaming.main_url.url;
+            else if (data.streaming.servers && data.streaming.servers.length > 0) streamUrl = data.streaming.servers[0].url;
+        }
+
+        // List Episode Sidebar
         const eps = data.episodes_list || [];
-        
         let epHtml = "";
         eps.forEach(ep => {
-            const num = formatEp(ep.title);
-            const isActive = ep.url === targetUrl ? 'active' : '';
-            epHtml += `<a href="detail.html?url=${encodeURIComponent(ep.url)}" class="ep-box ${isActive}">${num}</a>`;
+            const num = formatEp(ep.episode || ep.title);
+            // Cek URL aktif
+            const isActive = ep.anichinUrl === targetUrl ? 'active' : '';
+            epHtml += `<a href="detail.html?url=${encodeURIComponent(ep.anichinUrl)}" class="ep-btn ${isActive}">${num}</a>`;
         });
 
+        // Setup Download Logic
+        window.currentDl = data.download_url; // Simpan di global buat modal
+
         document.getElementById('app').innerHTML = `
-            <div class="player-area" id="pArea">
-                <div class="back-float" onclick="window.location.href='index.html'">⬅</div>
-                <iframe src="${stream}" allowfullscreen></iframe>
-                <div class="fs-btn" onclick="toggleFS()">⛶</div>
+            <div class="player-box" id="pArea">
+                <div class="back" onclick="window.location.href='index.html'">⬅</div>
+                <iframe src="${streamUrl}" allowfullscreen></iframe>
+                <div class="fs-btn" onclick="toggleFS()">⛶ Fullscreen</div>
             </div>
-            
-            <div class="content">
-                <div class="title">${data.title}</div>
-                <div class="meta">RAYSTREAM • Free Streaming</div>
-
+            <div class="container">
+                <div class="title">${data.episode || 'Episode Title'}</div>
+                <div class="meta">RAYSTREAM • Free Access</div>
+                
                 <div class="actions">
-                    <div class="act-btn primary" onclick="showDl()">
-                        ⬇ Download
-                    </div>
-                    <div class="act-btn" onclick="window.location.href='index.html'">
-                        🏠 Home
-                    </div>
+                    <div class="btn primary" onclick="showDl()">⬇ Download</div>
+                    <div class="btn" onclick="window.location.href='index.html'">🏠 Home</div>
                 </div>
 
-                <div class="ep-title">
-                    Episode List
-                    <span style="font-size:12px; font-weight:normal; color:#666">${eps.length} Eps</span>
-                </div>
-                <div class="ep-list">${epHtml}</div>
+                <div style="font-weight:bold; margin-bottom:5px;">Episode List</div>
+                <div class="ep-grid">${epHtml}</div>
             </div>
         `;
-        
-        // Render Download Modal Data (Dummy/Real Logic)
-        const dlBox = document.getElementById('dlContent');
-        dlBox.innerHTML = "<h3 style='margin-top:0'>Download</h3>";
-        if(data.download_url) {
-             // Logic parsing download here if needed
-             dlBox.innerHTML += `<p>Link download tersedia.</p>`;
-        } else {
-            dlBox.innerHTML += `<p style='color:#666'>Link belum tersedia.</p>`;
-        }
     }
 
-    function renderInfo(data) {
-        const eps = data.episodes || [];
+    // --- MODE INFO SERIES ---
+    function renderSeries(data) {
+        const eps = data.episodes_list || [];
         let epHtml = "";
         eps.forEach(ep => {
-            const num = formatEp(ep.title);
-            epHtml += `<a href="detail.html?url=${encodeURIComponent(ep.url)}" class="ep-box">${num}</a>`;
+            const num = formatEp(ep.episode);
+            epHtml += `<a href="detail.html?url=${encodeURIComponent(ep.anichinUrl)}" class="ep-btn">${num}</a>`;
         });
 
+        let genres = "";
+        if(data.genres) data.genres.forEach(g => genres += `<span class="genre-pill">${g.name}</span>`);
+
         document.getElementById('app').innerHTML = `
-            <div class="player-area" style="background:url('${data.thumbnail}') center/cover;">
-                <div class="back-float" onclick="window.history.back()">⬅</div>
+            <div class="player-box" style="background:url('${data.poster}') center/cover;">
+                <div class="back" onclick="window.location.href='index.html'">⬅</div>
                 <div style="width:100%;height:100%;background:linear-gradient(to top, #050505, transparent);display:flex;align-items:end;padding:20px;">
-                    <h1 style="margin:0;font-size:24px;text-shadow:0 4px 10px rgba(0,0,0,0.8);">${data.title}</h1>
+                    <div class="title">${data.title}</div>
                 </div>
             </div>
-            <div class="content">
-                <div class="meta" style="color:var(--primary); font-weight:bold;">${data.status} • ${data.type}</div>
-                <p style="font-size:14px;color:#ccc;line-height:1.6;margin-top:0;">${data.synopsis}</p>
-                <div class="ep-title">All Episodes</div>
-                <div class="ep-list" style="flex-wrap:wrap; overflow:visible;">${epHtml}</div>
+            <div class="container">
+                <div class="meta" style="color:var(--primary);font-weight:bold;">${data.status} • ${data.type}</div>
+                <div style="margin-bottom:15px;">${genres}</div>
+                <p style="font-size:13px;color:#ccc;line-height:1.6;">${data.synopsis}</p>
+                <div style="font-weight:bold; margin-bottom:5px;">All Episodes</div>
+                <div class="ep-grid">${epHtml}</div>
             </div>
         `;
+    }
+
+    // --- DOWNLOAD MODAL LOGIC ---
+    function showDl() {
+        const dlData = window.currentDl;
+        const box = document.getElementById('dlContent');
+        box.innerHTML = "<h3 style='margin-top:0'>Download Links</h3>";
+
+        if (!dlData) {
+            box.innerHTML += "<p>Download tidak tersedia.</p>";
+        } else {
+            // Parsing Objek Download (Format API: key=res, val={server: url})
+            // Contoh: "download_url_360p": { "Gdrive": "..." }
+            
+            for (const [key, servers] of Object.entries(dlData)) {
+                // Bersihkan key (misal "download_url_360p" -> "360p")
+                const resName = key.replace('download_url_', '').toUpperCase();
+                
+                let links = "";
+                for (const [serverName, url] of Object.entries(servers)) {
+                    links += `<a href="${url}" target="_blank" class="dl-link">${serverName}</a>`;
+                }
+
+                box.innerHTML += `
+                <div class="dl-row">
+                    <div class="dl-res">${resName}</div>
+                    <div>${links}</div>
+                </div>`;
+            }
+        }
+        document.getElementById('dlModal').classList.add('show');
     }
 
     function toggleFS() {
@@ -147,15 +184,25 @@
         if(!document.fullscreenElement) el.requestFullscreen();
         else document.exitFullscreen();
     }
-    function showDl() { document.getElementById('dlModal').classList.add('show'); }
-    
+
     function saveHist(data) {
         let h = JSON.parse(localStorage.getItem('ach_hist') || '[]');
+        // Gunakan poster untuk series, atau thumbnail default
+        let img = data.poster || (data.donghua_details ? data.donghua_details.poster : '');
+        let title = data.title || (data.donghua_details ? data.donghua_details.title : 'Episode');
+
+        // Filter duplicate
         h = h.filter(x => x.url !== targetUrl);
-        h.unshift({ title: data.title, thumbnail: data.thumbnail, url: targetUrl, ep: data.episode || '?', date: new Date().toLocaleDateString() });
+        h.unshift({ 
+            title: title, 
+            poster: img, 
+            url: targetUrl, 
+            date: new Date().toLocaleDateString() 
+        });
         if(h.length>20) h.pop();
         localStorage.setItem('ach_hist', JSON.stringify(h));
     }
+
     init();
 </script>
 </body>
