@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anichin Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <div class="logo">ANICHIN</div>
+    <img id="userAvatar" src="" style="width:30px; border-radius:50%; display:none;">
+</header>
+
+<section id="banner" style="overflow-x: auto; white-space: nowrap; padding: 10px;">
+    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg" style="width: 80%; border-radius: 10px; display:inline-block;">
+    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg" style="width: 80%; border-radius: 10px; display:inline-block;">
+</section>
+
+<h3 style="padding-left:10px;">Popular Today</h3>
+<div id="popularData" class="grid"></div>
+
+<h3 style="padding-left:10px;">Latest Update</h3>
+<div id="latestData" class="grid"></div>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item active">Home</a>
+    <a href="schedule.html" class="nav-item">Jadwal</a>
+    <a href="history.html" class="nav-item">History</a>
+</nav>
+
+<script>
+    // API BASE LANGSUNG DISINI
+    const API_BASE = "https://anichin-seven.vercel.app/api";
+
+    // 1. Fetch Popular
+    async function getPopular() {
+        try {
+            const res = await fetch(`${API_BASE}/popular`);
+            const data = await res.json();
+            const container = document.getElementById('popularData');
+            
+            // Loop data popular (render 3 kolom)
+            container.innerHTML = data.data.slice(0, 6).map(anime => `
+                <div class="card" onclick="window.location.href='stream.html?url=${anime.href}'">
+                    <img src="${anime.poster}" alt="${anime.title}">
+                    <p>${anime.title}</p>
+                    <span style="font-size:0.6rem; color:#00aaff; padding-left:5px;">Ep ${anime.current_episode}</span>
+                </div>
+            `).join('');
+        } catch (e) { console.log("Err Popular:", e); }
+    }
+
+    // 2. Fetch Latest (List)
+    async function getLatest() {
+        try {
+            const res = await fetch(`${API_BASE}/list?page=1`);
+            const data = await res.json();
+            const container = document.getElementById('latestData');
+            
+            container.innerHTML = data.data.slice(0, 9).map(anime => `
+                <div class="card" onclick="window.location.href='stream.html?url=${anime.href}'">
+                    <img src="${anime.poster}">
+                    <p>${anime.title}</p>
+                </div>
+            `).join('');
+        } catch (e) { console.log("Err Latest:", e); }
+    }
+
+    // Cek Login User (Optional visual)
+    const user = JSON.parse(localStorage.getItem('user_info'));
+    if(user) {
+        document.getElementById('userAvatar').src = user.picture;
+        document.getElementById('userAvatar').style.display = "block";
+    }
+
+    getPopular();
+    getLatest();
+</script>
+</body>
+</html>
