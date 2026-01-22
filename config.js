@@ -2,7 +2,7 @@
 const API_BASE = "https://anichin-seven.vercel.app";
 
 // --- GANTI DENGAN CLIENT ID GOOGLE KAMU ---
-const CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com"; 
+const CLIENT_ID = "879575887567-076iou55sct92iddv4feid04dflotgc5.apps.googleusercontent.com"; 
 
 function checkAuth() {
     const isLoginPage = window.location.pathname.includes('login.html');
