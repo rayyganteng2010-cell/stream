@@ -2,8 +2,10 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jadwal Rilis</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
@@ -11,58 +13,56 @@
     <div class="logo">SCHEDULE</div>
 </header>
 
-<div style="overflow-x:auto; white-space:nowrap; padding:10px; background:#1e1e1e;" id="dayTabs">
-    </div>
+<div id="dayTabs" class="day-tabs"></div>
 
-<div id="scheduleGrid" class="grid">
+<div id="scheduleGrid" class="grid" style="margin-top:10px;">
     </div>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item">Home</a>
-    <a href="schedule.html" class="nav-item active">Jadwal</a>
-    <a href="history.html" class="nav-item">History</a>
+    <a href="index.html" class="nav-item"><i data-lucide="home"></i> Home</a>
+    <a href="schedule.html" class="nav-item active"><i data-lucide="calendar"></i> Jadwal</a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i> History</a>
 </nav>
 
 <script>
     const API_BASE = "https://anichin-seven.vercel.app/api";
 
-    async function getSchedule() {
-        try {
-            const res = await fetch(`${API_BASE}/schedule`);
-            const data = await res.json();
-            const schedule = data.schedule; // Array of objects { day: "Senin", donghua_list: [] }
+    async function loadSchedule() {
+        const res = await fetch(`${API_BASE}/schedule`);
+        const data = await res.json();
+        const sched = data.schedule;
 
-            // Render Tabs Hari
-            const tabsContainer = document.getElementById('dayTabs');
-            tabsContainer.innerHTML = schedule.map((day, index) => `
-                <button onclick="showDay(${index})" style="background:none; border:none; color:white; padding:10px; cursor:pointer; font-weight:bold;">
-                    ${day.day}
-                </button>
-            `).join('');
+        const tabs = document.getElementById('dayTabs');
+        
+        // Render Tabs
+        tabs.innerHTML = sched.map((s, i) => 
+            `<div class="day-tab ${i===0 ? 'active' : ''}" onclick="selectDay(${i}, this)">${s.day}</div>`
+        ).join('');
 
-            // Simpan data di window object biar bisa diakses fungsi showDay
-            window.scheduleData = schedule;
-            
-            // Show hari pertama default
-            showDay(0);
-
-        } catch (e) { console.error(e); }
+        window.schedData = sched;
+        selectDay(0, tabs.children[0]); // Select first day
+        lucide.createIcons();
     }
 
-    function showDay(index) {
-        const data = window.scheduleData[index];
-        const grid = document.getElementById('scheduleGrid');
-        
-        grid.innerHTML = data.donghua_list.map(anime => `
-            <div class="card" onclick="window.location.href='stream.html?url=${anime.href}'">
-                <img src="${anime.poster}" loading="lazy">
-                <p>${anime.title}</p>
-                <div style="position:absolute; top:0; right:0; background:var(--primary); font-size:0.7rem; padding:2px 5px;">Ep ${anime.episode}</div>
+    function selectDay(index, el) {
+        // Active Class logic
+        document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+
+        // Render Grid
+        const list = window.schedData[index].donghua_list;
+        document.getElementById('scheduleGrid').innerHTML = list.map(item => `
+            <div class="card" onclick="window.location.href='stream.html?url=${item.href}'">
+                <img src="${item.poster}">
+                <p>${item.title}</p>
+                <div style="position:absolute; top:5px; right:5px; background:var(--primary); color:black; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold;">
+                    Ep ${item.episode}
+                </div>
             </div>
         `).join('');
     }
 
-    getSchedule();
+    loadSchedule();
 </script>
 </body>
 </html>
