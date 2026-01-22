@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anichin Home</title>
+    <title>RayStream Home</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-    <div class="logo">ANICHIN</div>
+    <div class="logo">RayStream</div>
     <img id="userAvatar" src="" style="width:30px; border-radius:50%; display:none;">
 </header>
 
@@ -60,7 +60,7 @@
             const container = document.getElementById('latestData');
             
             container.innerHTML = data.data.slice(0, 9).map(anime => `
-                <div class="card" onclick="window.location.href='stream.html?url=${anime.href}'">
+                <div class="card" onclick="window.location.href='series.html?url=${anime.href}'">
                     <img src="${anime.poster}">
                     <p>${anime.title}</p>
                 </div>
