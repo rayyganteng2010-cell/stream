@@ -3,163 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nonton Donghua</title>
+    <title>Stream Donghua</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .server-btn { border: 1px solid var(--primary); background: transparent; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-right: 5px; margin-bottom: 5px; }
-        .server-btn.active { background: var(--primary); }
-        .nav-btn { background: #333; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; flex: 1; text-align: center; text-decoration: none;}
-        .download-box { background: #1e1e1e; padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 0.8rem; }
-        .dl-link { display: block; padding: 5px; border-bottom: 1px solid #333; color: var(--text-sec); text-decoration: none; }
-        .dl-link b { color: var(--primary); }
-    </style>
-</head>
+    <script src="https://unpkg.com/lucide@latest"></script> </head>
 <body>
 
-<div class="video-container">
-    <iframe id="videoPlayer" src="" allowfullscreen></iframe>
+<div class="video-wrapper">
+    <iframe id="iframePlayer" src="" allowfullscreen></iframe>
 </div>
 
-<div style="padding: 15px;">
-    <h2 id="epTitle" style="margin:0; font-size:1rem; line-height:1.4;">Loading...</h2>
+<div style="padding: 20px;">
+    <h1 id="epTitle" style="font-size: 1.1rem; margin: 0 0 10px 0; line-height: 1.4;">Loading...</h1>
     
-    <div style="display:flex; gap:10px; margin-top:15px;">
-        <a id="btnPrev" class="nav-btn" style="display:none;">&laquo; Prev</a>
-        <a href="javascript:history.back()" class="nav-btn" style="background:#444;">Series</a>
-        <a id="btnNext" class="nav-btn" style="display:none;">Next &raquo;</a>
+    <div style="display:flex; gap:10px; margin-bottom: 20px;">
+        <button id="btnPrev" class="btn" style="flex:1; display:none;" onclick="">&laquo; Prev</button>
+        <button class="btn" style="flex:1; background:#333;" onclick="window.location.href='index.html'">Home</button>
+        <button id="btnNext" class="btn" style="flex:1; display:none;" onclick="">Next &raquo;</button>
     </div>
 
-    <hr style="border-color:#333; margin: 15px 0;">
+    <div style="margin-bottom: 20px;">
+        <p style="font-size:0.8rem; color:var(--text-sec); margin-bottom:8px;">Ganti Server:</p>
+        <div id="serverList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+    </div>
 
-    <p style="margin:0 0 5px 0; font-size:0.8rem; color:#aaa;">Ganti Server:</p>
-    <div id="serverList" style="display:flex; flex-wrap:wrap;"></div>
-
-    <div style="margin-top:15px;">
-        <button onclick="toggleDownload()" style="width:100%; background:#333; border:none; color:white; padding:8px; border-radius:5px;">
-            📥 Download Episode
-        </button>
-        <div id="downloadContainer" class="download-box" style="display:none;"></div>
+    <div style="background: var(--bg-card); padding: 15px; border-radius: var(--radius);">
+        <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleDl()">
+            <span style="font-weight:bold;">Download</span>
+            <i data-lucide="chevron-down"></i>
+        </div>
+        <div id="dlContainer" style="display:none; margin-top:15px; border-top:1px solid #333; padding-top:10px;">
+            </div>
     </div>
 </div>
-
-<h3 style="padding-left:15px; color: var(--primary); margin-top:20px;">Rekomendasi</h3>
-<div id="replacementPopular" class="grid" style="margin-bottom:20px;"></div>
-
-<nav class="bottom-nav">
-    <a href="index.html" class="nav-item">Home</a>
-    <a href="schedule.html" class="nav-item">Jadwal</a>
-    <a href="history.html" class="nav-item">History</a>
-</nav>
 
 <script>
     const API_BASE = "https://anichin-seven.vercel.app/api";
     const urlParams = new URLSearchParams(window.location.search);
-    const animeUrl = urlParams.get('url'); 
+    const animeUrl = urlParams.get('url');
 
     async function loadStream() {
-        if(!animeUrl) return;
+        if (!animeUrl) return alert("URL Error");
 
         try {
-            // Kita pakai endpoint detail (sesuai struktur JSON pertama lu)
-            // Asumsi endpointnya: /detail?url=...
+            // Fetch Detail API
             const res = await fetch(`${API_BASE}/detail?url=${animeUrl}`);
             const json = await res.json();
-            
-            if(json.status !== "success") return alert("Gagal mengambil data");
 
-            // 1. Set Title & Player Default
+            // 1. Set Title & Default Player
             document.getElementById('epTitle').innerText = json.episode;
-            const defaultStream = json.streaming.main_url.url;
-            document.getElementById('videoPlayer').src = defaultStream;
+            // Ambil URL default (biasanya stream utama)
+            changePlayer(json.streaming.main_url.url);
 
-            // 2. Render Server Buttons
-            const serverContainer = document.getElementById('serverList');
-            serverContainer.innerHTML = json.streaming.servers.map(srv => `
-                <button class="server-btn" onclick="changeServer('${srv.url}', this)">${srv.name}</button>
-            `).join('');
-            
-            // Tandai server pertama aktif
-            if(serverContainer.firstChild) serverContainer.firstChild.classList.add('active');
+            // 2. Render Servers
+            const srvContainer = document.getElementById('serverList');
+            srvContainer.innerHTML = json.streaming.servers.map(srv => 
+                `<button class="btn" style="font-size:0.75rem; padding:5px 10px;" onclick="changePlayer('${srv.url}')">${srv.name}</button>`
+            ).join('');
 
             // 3. Render Navigation (Prev/Next)
-            if(json.navigation.previous_episode) {
+            if (json.navigation.previous_episode) {
                 const btn = document.getElementById('btnPrev');
-                btn.href = `stream.html?url=${json.navigation.previous_episode.anichinUrl}`;
                 btn.style.display = 'block';
+                btn.onclick = () => window.location.href = `stream.html?url=${json.navigation.previous_episode.anichinUrl}`;
             }
-            if(json.navigation.next_episode) {
+            if (json.navigation.next_episode) {
                 const btn = document.getElementById('btnNext');
-                btn.href = `stream.html?url=${json.navigation.next_episode.anichinUrl}`;
                 btn.style.display = 'block';
+                btn.onclick = () => window.location.href = `stream.html?url=${json.navigation.next_episode.anichinUrl}`;
             }
 
-            // 4. Render Download Links
-            const dlContainer = document.getElementById('downloadContainer');
+            // 4. Render Downloads
+            const dlContainer = document.getElementById('dlContainer');
             let dlHtml = "";
-            const dlData = json.download_url;
-            
-            // Loop object download (download_url_360p, etc)
-            for (const [res, links] of Object.entries(dlData)) {
-                // res = "download_url_360p"
-                const resName = res.replace('download_url_', '').toUpperCase(); 
-                dlHtml += `<div style="margin-bottom:5px; border-bottom:1px solid #444; padding-bottom:5px;">
-                           <span style="color:var(--primary); font-size:0.75rem;">${resName}</span><br>`;
+            for (const [res, links] of Object.entries(json.download_url)) {
+                // Bersihkan nama key (misal: download_url_360p -> 360P)
+                const label = res.replace('download_url_', '').toUpperCase();
+                dlHtml += `<div style="margin-bottom:8px;">
+                    <span style="color:var(--primary); font-size:0.75rem;">${label}</span>
+                    <div style="display:flex; gap:10px; margin-top:4px;">`;
                 
-                // Loop provider (Mirrored, Terabox)
                 for (const [provider, url] of Object.entries(links)) {
-                     dlHtml += `<a href="${url}" target="_blank" style="color:#ccc; font-size:0.7rem; margin-right:10px; text-decoration:none;">[ ${provider} ]</a>`;
+                    dlHtml += `<a href="${url}" target="_blank" style="color:#aaa; text-decoration:none; font-size:0.75rem; border:1px solid #444; padding:2px 8px; border-radius:4px;">${provider}</a>`;
                 }
-                dlHtml += `</div>`;
+                dlHtml += `</div></div>`;
             }
             dlContainer.innerHTML = dlHtml;
 
-            // 5. Save History (Lokal Storage dulu)
-            saveHistory(json.episode, "https://via.placeholder.com/150", animeUrl); // Poster ga ada di JSON episode, pake placeholder atau fetch series dulu kalau mau niat.
+            // 5. Save History
+            saveToHistory(json.episode, animeUrl);
 
-        } catch (e) { 
-            console.error(e); 
-            document.getElementById('epTitle').innerText = "Error loading video.";
+            lucide.createIcons();
+        } catch (e) {
+            console.error(e);
+            document.getElementById('epTitle').innerText = "Gagal memuat stream.";
         }
     }
 
-    function changeServer(url, btn) {
-        document.getElementById('videoPlayer').src = url;
-        // Update UI tombol active
-        document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    function changePlayer(url) {
+        document.getElementById('iframePlayer').src = url;
     }
 
-    function toggleDownload() {
-        const box = document.getElementById('downloadContainer');
-        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    function toggleDl() {
+        const el = document.getElementById('dlContainer');
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
 
-    function saveHistory(title, poster, url) {
-        let currentHistory = JSON.parse(localStorage.getItem('temp_history')) || [];
-        currentHistory = currentHistory.filter(h => h.url !== url);
-        currentHistory.unshift({
+    function saveToHistory(title, url) {
+        let hist = JSON.parse(localStorage.getItem('my_history')) || [];
+        // Hapus duplikat
+        hist = hist.filter(h => h.url !== url);
+        // Tambah baru di atas
+        hist.unshift({
             title: title,
-            poster: poster, 
-            progress: "seen",
             url: url,
-            date: new Date().toISOString()
+            date: new Date().toLocaleDateString()
         });
-        localStorage.setItem('temp_history', JSON.stringify(currentHistory));
-    }
-
-    // Load Popular (Sama kayak sebelumnya)
-    async function loadPopularReplacement() {
-        const res = await fetch(`${API_BASE}/popular`);
-        const data = await res.json();
-        document.getElementById("replacementPopular").innerHTML = data.data.slice(0, 6).map(d => `
-            <div class="card" onclick="window.location.href='stream.html?url=${d.href}'">
-                <img src="${d.poster}"><p>${d.title}</p>
-            </div>
-        `).join("");
+        localStorage.setItem('my_history', JSON.stringify(hist));
     }
 
     loadStream();
-    loadPopularReplacement();
 </script>
 </body>
 </html>
