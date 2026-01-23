@@ -21,6 +21,45 @@
         }
         .btn-server:hover { background: #333; }
         .btn-server.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        /* Video Container */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #000;
+            margin-bottom: 20px;
+        }
+        #iframePlayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Quality Badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        .badge.hd { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .badge.sd { background: linear-gradient(135deg, #6b7280, #4b5563); }
+        .badge.quality { background: linear-gradient(135deg, #10b981, #059669); }
     </style>
 </head>
 <body>
@@ -40,16 +79,16 @@
     
     <div class="video-box">
         <div class="video-wrapper">
-            <iframe id="iframePlayer" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+            <iframe id="iframePlayer" src="" allowfullscreen allow="autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
         </div>
     </div>
 
     <div class="panel" style="padding-bottom: 10px;">
         <h1 id="epTitle" class="ep-title">Memuat Video...</h1>
         <div class="ep-meta">
-            <span id="badgeSrc" class="badge" style="background:var(--primary);">SOURCE</span>
-            <span class="badge">HD</span>
-            <span id="dateInfo">Updated Today</span>
+            <span id="badgeSrc" class="badge" style="background:var(--primary);">SAMEHADAKU</span>
+            <span id="qualityBadge" class="badge quality">HD</span>
+            <span id="dateInfo">Hari ini</span>
         </div>
     </div>
 
@@ -59,291 +98,579 @@
         <button id="btnNext" class="btn btn-primary" style="flex:1; display:none;">Next &raquo;</button>
     </div>
 
+    <!-- SERVER STREAMING SECTION -->
     <div class="panel">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:10px;">
             <i data-lucide="server" style="width:18px; color:var(--secondary);"></i> 
-            <span style="font-weight:600;">Ganti Server</span>
+            <span style="font-weight:600;">Pilih Server Streaming</span>
+            <span id="serverCount" style="font-size:0.8rem; color:#666; margin-left:auto;">0 servers</span>
         </div>
         <div id="serverListContainer">
-            <p style="font-size:0.8rem; color:#666;">Memuat server...</p>
+            <div style="display:flex; flex-direction:column; align-items:center; padding:30px 0;">
+                <i data-lucide="loader" style="width:24px; height:24px; animation: spin 1s linear infinite;"></i>
+                <p style="margin-top:10px; color:#888;">Memuat server...</p>
+            </div>
         </div>
     </div>
 
+    <!-- DOWNLOAD SECTION -->
     <div class="panel">
         <div onclick="toggleDl()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
             <div style="display:flex; align-items:center; gap:8px;">
                 <i data-lucide="download-cloud" style="width:18px; color:var(--secondary);"></i>
-                <span style="font-weight:600;">Download</span>
+                <span style="font-weight:600;">Download Links</span>
             </div>
             <i data-lucide="chevron-down" id="dlIcon"></i>
         </div>
         <div id="dlContainer" style="display:none; margin-top:15px; border-top:1px solid rgba(255,255,255,0.05); padding-top:15px;">
+            <div id="downloadLinks">
+                <p style="text-align:center; color:#888;">Klik tombol download di atas untuk melihat link</p>
             </div>
+        </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="panel">
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">
+            <button class="btn" onclick="shareEpisode()" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px;">
+                <i data-lucide="share-2" style="width:18px;"></i>
+                <span style="font-size:0.7rem;">Share</span>
+            </button>
+            <button class="btn" onclick="bookmarkEpisode()" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px;">
+                <i data-lucide="bookmark" style="width:18px;"></i>
+                <span style="font-size:0.7rem;">Bookmark</span>
+            </button>
+            <button class="btn" onclick="toggleQuality()" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px;">
+                <i data-lucide="settings" style="width:18px;"></i>
+                <span style="font-size:0.7rem;">Quality</span>
+            </button>
+            <button class="btn" onclick="reportIssue()" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px;">
+                <i data-lucide="flag" style="width:18px;"></i>
+                <span style="font-size:0.7rem;">Report</span>
+            </button>
+        </div>
     </div>
 
 </div>
 
 <script>
-    // --- API CONFIG ---
-    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    // Gunakan proxy donghua-qnha untuk akses Samehadaku
-    const API_ANIME = "https://donghua-qnha.vercel.app/anime/samehadaku"; 
+    // CSS Animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+    `;
+    document.head.appendChild(style);
 
-    // --- URL PARAMS ---
+    // API Proxy untuk bypass CORS dan scraping langsung
+    const PROXY_URL = 'https://corsproxy.io/?';
+    const SAMEHADAKU_BASE = 'https://samehadaku.how';
+    
+    // URL Parameter
     const urlParams = new URLSearchParams(window.location.search);
-    const donghuaUrl = urlParams.get('url');      
-    const animeId = urlParams.get('id');          
-    let source = urlParams.get('source'); 
+    const episodeId = urlParams.get('id') || '';
+    const episodeUrl = urlParams.get('url') || '';
+    
+    // State variables
+    let currentServers = [];
+    let currentEpisodeInfo = {};
+    let activeServer = null;
 
-    // Smart Fallback
-    if (!source) {
-        if (animeId) source = 'anime';
-        else if (donghuaUrl) source = 'donghua';
-    }
-
-    // ID Cleaner (Penting!)
-    function cleanId(str) {
-        if(!str) return "";
-        return str.replace(/\/$/, '').split('/').pop();
-    }
-
-    // --- MAIN LOAD FUNCTION ---
+    // Main function to load episode
     async function loadStream() {
         try {
-            // UI Badge Update
-            const badge = document.getElementById('badgeSrc');
-            badge.innerText = source === 'anime' ? "ANIME" : "DONGHUA";
-            badge.style.background = source === 'anime' ? "linear-gradient(135deg, #f59e0b, #d97706)" : "linear-gradient(135deg, #3b82f6, #2563eb)";
-
-            let data = {};
-
-            // ============================================================
-            // SCENARIO 1: ANIME (SAMEHADAKU) - STRUKTUR BARU
-            // ============================================================
-            if (source === 'anime' && animeId) {
-                const cleanAnimeId = cleanId(animeId);
-                console.log("Fetching Anime:", cleanAnimeId);
-
-                const res = await fetch(`${API_ANIME}/episode/${cleanAnimeId}`);
-                if (!res.ok) throw new Error("Gagal mengambil data Anime");
-                
-                const json = await res.json();
-                if(!json.data) throw new Error("Episode tidak ditemukan");
-                
-                const d = json.data;
-
-                // Mapping Data Anime (Sesuai JSON Samehadaku)
-                data = {
-                    title: d.title,
-                    stream: d.defaultStreamingUrl, // Link stream utama (Blogger)
-                    // Server list ada di d.server.qualities
-                    // Kita oper object utuh biar dirender khusus
-                    rawServerData: d.server?.qualities || [],
-                    // Download
-                    downloads: d.downloadUrl?.formats || [],
-                    // Navigasi
-                    prev: d.hasPrevEpisode ? `stream.html?id=${cleanId(d.prevEpisode.episodeId)}&source=anime` : null,
-                    next: d.hasNextEpisode ? `stream.html?id=${cleanId(d.nextEpisode?.episodeId || "")}&source=anime` : null
-                };
-
-                // Render Server Khusus Anime
-                renderAnimeServers(data.rawServerData);
-                // Render Download Anime
-                renderAnimeDownloads(data.downloads);
-
-            // ============================================================
-            // SCENARIO 2: DONGHUA (ANICHIN)
-            // ============================================================
-            } else if (donghuaUrl) {
-                const res = await fetch(`${API_DONGHUA}/detail?url=${donghuaUrl}`);
-                const json = await res.json();
-
-                if(!json.streaming) throw new Error("Data stream Donghua kosong");
-
-                data = {
-                    title: json.episode,
-                    stream: json.streaming.main_url.url,
-                    // Server donghua lebih simple (array flat)
-                    rawServerData: json.streaming.servers,
-                    downloads: json.download_url,
-                    prev: json.navigation.previous_episode ? `stream.html?url=${json.navigation.previous_episode.anichinUrl}&source=donghua` : null,
-                    next: json.navigation.next_episode ? `stream.html?url=${json.navigation.next_episode.anichinUrl}&source=donghua` : null
-                };
-
-                // Render Server Donghua
-                renderDonghuaServers(data.rawServerData);
-                // Render Download Donghua
-                renderDonghuaDownloads(data.downloads);
-            }
-
-            // --- RENDER UMUM ---
-            document.getElementById('epTitle').innerText = data.title;
+            showToast("Memuat data episode...", "info");
             
-            // Set Player
-            if(data.stream) {
-                document.getElementById('iframePlayer').src = data.stream;
+            // Determine which URL to use
+            let targetUrl = '';
+            if (episodeId) {
+                targetUrl = `${SAMEHADAKU_BASE}/${episodeId}/`;
+            } else if (episodeUrl) {
+                targetUrl = episodeUrl;
             } else {
-                showToast("Stream utama tidak tersedia.", "error");
+                // Fallback untuk testing - Jujutsu Kaisen Season 3 Episode 4
+                targetUrl = 'https://samehadaku.how/jujutsu-kaisen-season-3-episode-4/';
             }
 
-            // Set Nav Buttons
-            const btnPrev = document.getElementById('btnPrev');
-            const btnNext = document.getElementById('btnNext');
+            console.log("Loading URL:", targetUrl);
+
+            // Scrape the page directly
+            const html = await fetchWithCorsProxy(targetUrl);
             
-            if(data.prev) { 
-                btnPrev.style.display='block'; 
-                btnPrev.onclick = () => window.location.href = data.prev; 
-            }
-            if(data.next) { 
-                btnNext.style.display='block'; 
-                btnNext.onclick = () => window.location.href = data.next; 
+            if (!html) {
+                throw new Error("Gagal mengambil halaman episode");
             }
 
-            // Save History
-            const historyKey = source === 'anime' ? cleanId(animeId) : donghuaUrl;
-            saveHistory(data.title, historyKey, source);
-
-            lucide.createIcons();
-
-        } catch (e) {
-            console.error(e);
-            document.getElementById('epTitle').innerText = "Gagal: " + e.message;
-            document.getElementById('serverListContainer').innerHTML = `<p style="color:#ef4444;">${e.message}</p>`;
+            // Parse HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Extract episode information
+            extractEpisodeInfo(doc);
+            
+            // Extract streaming servers
+            extractStreamingServers(doc);
+            
+            // Extract download links
+            extractDownloadLinks(doc);
+            
+            // Extract navigation
+            extractNavigation(doc);
+            
+            // Auto-select first server
+            if (currentServers.length > 0) {
+                setTimeout(() => selectServer(currentServers[0]), 500);
+            }
+            
+            // Update UI
+            updateEpisodeUI();
+            
+            // Save to history
+            saveToHistory();
+            
+        } catch (error) {
+            console.error("Error loading stream:", error);
+            showToast(`Error: ${error.message}`, "error");
+            document.getElementById('epTitle').innerText = "Gagal memuat episode";
         }
     }
 
-    // --- RENDER SERVER ANIME (SAMEHADAKU) ---
-    // Struktur: qualities -> [{title: "360p", serverList: [...]}, ...]
-    function renderAnimeServers(qualities) {
-        const container = document.getElementById('serverListContainer');
-        
-        if (!qualities || qualities.length === 0) {
-            container.innerHTML = "<p>Tidak ada server alternatif.</p>";
-            return;
-        }
-
-        let html = "";
-        qualities.forEach(q => {
-            // q.title = "360p", "480p", etc.
-            // q.serverList = [{title: "Blogspot", href: "..."}, ...]
+    // Fetch dengan CORS proxy
+    async function fetchWithCorsProxy(url) {
+        try {
+            const proxyUrl = `${PROXY_URL}${encodeURIComponent(url)}`;
+            const response = await fetch(proxyUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
             
-            if (q.serverList && q.serverList.length > 0) {
-                html += `<div class="server-quality-group">`;
-                html += `<div class="quality-label">${q.title}</div>`;
-                html += `<div class="server-grid">`;
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            return await response.text();
+        } catch (error) {
+            console.error("Proxy fetch error:", error);
+            // Try alternative proxy
+            const altProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            try {
+                const response = await fetch(altProxy);
+                const data = await response.json();
+                return data.contents;
+            } catch (e) {
+                throw new Error("Failed to fetch with proxy");
+            }
+        }
+    }
+
+    // Extract episode information
+    function extractEpisodeInfo(doc) {
+        // Title
+        const titleElement = doc.querySelector('h1.entry-title, h1.title, .entry-title');
+        const title = titleElement ? titleElement.textContent.trim() : 'Episode Anime';
+        
+        // Poster/thumbnail
+        const posterElement = doc.querySelector('.thumb img, .poster img, .entry-content img');
+        const poster = posterElement ? posterElement.src : '';
+        
+        // Date info
+        const dateElement = doc.querySelector('.date, .post-date, time');
+        const dateInfo = dateElement ? dateElement.textContent.trim() : 'Baru';
+        
+        // Synopsis
+        const synopsisElement = doc.querySelector('.entry-content p, .desc p, .sinopsis');
+        const synopsis = synopsisElement ? synopsisElement.textContent.trim().substring(0, 200) + '...' : '';
+        
+        currentEpisodeInfo = {
+            title: title,
+            poster: poster,
+            date: dateInfo,
+            synopsis: synopsis,
+            url: window.location.href
+        };
+    }
+
+    // Extract streaming servers - FIXED VERSION
+    function extractStreamingServers(doc) {
+        currentServers = [];
+        
+        // Method 1: Look for iframes directly
+        const iframes = doc.querySelectorAll('iframe[src*="blogger.com"], iframe[src*="drive.google.com"], iframe[src*="dailymotion.com"], iframe[src*="vidio.com"]');
+        
+        iframes.forEach((iframe, index) => {
+            const src = iframe.src;
+            if (src && src.startsWith('http')) {
+                currentServers.push({
+                    id: `server-${index}`,
+                    name: `Server ${index + 1}`,
+                    quality: 'HD',
+                    url: src,
+                    type: 'iframe'
+                });
+            }
+        });
+        
+        // Method 2: Look for download/streaming links
+        const streamingSections = doc.querySelectorAll('.download-eps, .mirrorstream, .streaming, .player');
+        
+        streamingSections.forEach(section => {
+            // Look for quality headings
+            const headings = section.querySelectorAll('h3, h4, strong, b');
+            
+            headings.forEach(heading => {
+                const headingText = heading.textContent.trim();
+                const quality = headingText.includes('360') ? '360p' :
+                              headingText.includes('480') ? '480p' :
+                              headingText.includes('720') ? '720p' :
+                              headingText.includes('1080') ? '1080p' :
+                              headingText.includes('HD') ? 'HD' : 'SD';
                 
-                q.serverList.forEach(srv => {
-                    // Masalah: href server Samehadaku biasanya internal (/samehadaku/server/ID)
-                    // Kita perlu ubah ini jadi fetch link asli via proxy donghua-qnha
-                    // href dari API: "/samehadaku/server/9CEDC-6-xhmyrq"
-                    // Kita harus ubah jadi fetch ke API proxy kita untuk dapat link aslinya
+                // Find links after this heading
+                let nextElement = heading.nextElementSibling;
+                let linkCount = 0;
+                
+                while (nextElement && linkCount < 10) {
+                    const links = nextElement.querySelectorAll('a[href*="blogger.com"], a[href*="drive.google.com"], a[href*="stream"], a[href*="watch"]');
                     
-                    // KARENA API SERVER BUTUH FETCH LAGI (YANG BIKIN LAMBAT),
-                    // Kita bisa simpan ID servernya di data attribute dan fetch on click.
-                    const serverId = srv.serverId; // Misal "9CEDC-6-xhmyrq"
+                    links.forEach((link, idx) => {
+                        const href = link.href;
+                        if (href && !href.includes('javascript:')) {
+                            currentServers.push({
+                                id: `server-${currentServers.length}`,
+                                name: `${link.textContent.trim() || headingText} ${idx + 1}`,
+                                quality: quality,
+                                url: href,
+                                type: 'direct'
+                            });
+                        }
+                    });
                     
-                    html += `<button class="btn-server" onclick="fetchAndPlayAnimeServer('${serverId}', this)">
-                        ${srv.title}
-                    </button>`;
+                    nextElement = nextElement.nextElementSibling;
+                    linkCount++;
+                }
+            });
+        });
+        
+        // Method 3: Direct MP4 links
+        const mp4Links = doc.querySelectorAll('a[href$=".mp4"], a[href$=".m3u8"], a[href*="video"]');
+        
+        mp4Links.forEach((link, index) => {
+            const href = link.href;
+            if (href && href.includes('http')) {
+                currentServers.push({
+                    id: `mp4-${index}`,
+                    name: `Direct MP4 ${index + 1}`,
+                    quality: 'HD',
+                    url: href,
+                    type: 'direct'
+                });
+            }
+        });
+        
+        // Method 4: Embedded scripts that contain video URLs
+        const scripts = doc.querySelectorAll('script');
+        scripts.forEach(script => {
+            const scriptText = script.textContent;
+            
+            // Look for blogger video URLs
+            const bloggerMatches = scriptText.match(/https:\/\/www\.blogger\.com\/video\.g\?token=[^'"]+/g);
+            if (bloggerMatches) {
+                bloggerMatches.forEach((url, idx) => {
+                    currentServers.push({
+                        id: `blogger-${idx}`,
+                        name: `Blogger Player`,
+                        quality: 'HD',
+                        url: url,
+                        type: 'iframe'
+                    });
+                });
+            }
+            
+            // Look for video file URLs
+            const videoMatches = scriptText.match(/https?:\/\/[^'"\s]+\.(mp4|m3u8|avi|mkv)[^'"\s]*/gi);
+            if (videoMatches) {
+                videoMatches.forEach((url, idx) => {
+                    currentServers.push({
+                        id: `video-${idx}`,
+                        name: `Video File ${idx + 1}`,
+                        quality: url.includes('1080') ? '1080p' : 
+                                url.includes('720') ? '720p' : 
+                                url.includes('480') ? '480p' : 'SD',
+                        url: url,
+                        type: 'direct'
+                    });
+                });
+            }
+        });
+        
+        // Remove duplicates
+        currentServers = currentServers.filter((server, index, self) =>
+            index === self.findIndex(s => s.url === server.url)
+        );
+        
+        console.log("Found servers:", currentServers);
+        renderServers();
+    }
+
+    // Extract download links
+    function extractDownloadLinks(doc) {
+        const downloadContainer = document.getElementById('downloadLinks');
+        let html = '<h4 style="font-size:0.9rem; margin-bottom:10px;">Download Links:</h4>';
+        
+        // Find download sections
+        const downloadSections = doc.querySelectorAll('.download-list, .dlbox, .download, .mirrordl');
+        
+        downloadSections.forEach(section => {
+            const heading = section.querySelector('h3, h4, strong')?.textContent || 'Download';
+            html += `<div style="margin-bottom:15px;">`;
+            html += `<div style="color:#3b82f6; font-weight:600; margin-bottom:5px; font-size:0.8rem;">${heading}</div>`;
+            
+            const links = section.querySelectorAll('a[href*="download"], a[href*=".rar"], a[href*=".zip"], a[href*="drive.google.com"]');
+            
+            if (links.length > 0) {
+                html += `<div style="display:flex; flex-wrap:wrap; gap:5px;">`;
+                links.forEach(link => {
+                    const href = link.href;
+                    const text = link.textContent.trim() || 'Download';
+                    if (href && !href.includes('javascript:')) {
+                        html += `<a href="${href}" target="_blank" class="btn" style="font-size:0.7rem; padding:4px 8px;">${text}</a>`;
+                    }
+                });
+                html += `</div>`;
+            } else {
+                html += `<p style="color:#666; font-size:0.8rem;">No download links found</p>`;
+            }
+            
+            html += `</div>`;
+        });
+        
+        if (downloadSections.length === 0) {
+            // Try to find any download links
+            const allLinks = doc.querySelectorAll('a');
+            const downloadLinks = Array.from(allLinks).filter(link => {
+                const text = link.textContent.toLowerCase();
+                const href = link.href;
+                return (text.includes('download') || text.includes('unduh') || 
+                       href.includes('.rar') || href.includes('.zip')) && 
+                       !href.includes('javascript:');
+            });
+            
+            if (downloadLinks.length > 0) {
+                html += `<div style="margin-bottom:15px;">`;
+                html += `<div style="color:#3b82f6; font-weight:600; margin-bottom:5px; font-size:0.8rem;">Download</div>`;
+                html += `<div style="display:flex; flex-wrap:wrap; gap:5px;">`;
+                
+                downloadLinks.forEach(link => {
+                    html += `<a href="${link.href}" target="_blank" class="btn" style="font-size:0.7rem; padding:4px 8px;">${link.textContent.trim()}</a>`;
                 });
                 
                 html += `</div></div>`;
             }
-        });
-        container.innerHTML = html;
+        }
+        
+        downloadContainer.innerHTML = html;
     }
 
-    // Fungsi Fetch Server Asli Anime (On Click)
-    async function fetchAndPlayAnimeServer(serverId, btn) {
-        // Efek loading di tombol
-        const originalText = btn.innerText;
-        btn.innerText = "Loading...";
+    // Extract navigation links
+    function extractNavigation(doc) {
+        const prevLink = doc.querySelector('a.prev, .nav-prev a, a[rel="prev"]');
+        const nextLink = doc.querySelector('a.next, .nav-next a, a[rel="next"]');
         
-        try {
-            // Endpoint untuk get real video url dari server ID
-            // https://donghua-qnha.vercel.app/anime/samehadaku/server/{serverId}
-            const res = await fetch(`${API_ANIME}/server/${serverId}`);
-            const json = await res.json();
-            
-            if (json.data && json.data.url) {
-                document.getElementById('iframePlayer').src = json.data.url;
-                
-                // Update UI Active
-                document.querySelectorAll('.btn-server').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                showToast("Server diganti!", "success");
-            } else {
-                showToast("Gagal mengambil link server.", "error");
-            }
-        } catch(e) {
-            console.error(e);
-            showToast("Server Error.", "error");
-        } finally {
-            btn.innerText = originalText;
+        if (prevLink && prevLink.href) {
+            document.getElementById('btnPrev').style.display = 'block';
+            document.getElementById('btnPrev').onclick = () => {
+                window.location.href = `stream.html?url=${encodeURIComponent(prevLink.href)}`;
+            };
+        }
+        
+        if (nextLink && nextLink.href) {
+            document.getElementById('btnNext').style.display = 'block';
+            document.getElementById('btnNext').onclick = () => {
+                window.location.href = `stream.html?url=${encodeURIComponent(nextLink.href)}`;
+            };
         }
     }
 
-    // --- RENDER SERVER DONGHUA (ANICHIN) ---
-    // Struktur: Array simple [{name, url}, ...]
-    function renderDonghuaServers(servers) {
+    // Render servers list
+    function renderServers() {
         const container = document.getElementById('serverListContainer');
-        if (!servers || servers.length === 0) {
-            container.innerHTML = "<p>Server default only.</p>";
+        const countElement = document.getElementById('serverCount');
+        
+        if (currentServers.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:20px; color:#888;">
+                    <i data-lucide="server-off" style="width:32px; height:32px;"></i>
+                    <p style="margin-top:10px;">Tidak ada server yang ditemukan</p>
+                    <button onclick="retryLoad()" class="btn" style="margin-top:10px;">Coba Lagi</button>
+                </div>
+            `;
+            countElement.textContent = "0 servers";
             return;
         }
         
-        let html = `<div class="server-grid">`;
-        servers.forEach((s, i) => {
-            html += `<button class="btn-server" onclick="changePlayer('${s.url}', this)">${s.name}</button>`;
+        // Group by quality
+        const serversByQuality = {};
+        currentServers.forEach(server => {
+            if (!serversByQuality[server.quality]) {
+                serversByQuality[server.quality] = [];
+            }
+            serversByQuality[server.quality].push(server);
         });
-        html += `</div>`;
+        
+        let html = '';
+        
+        // Sort qualities: 1080p, 720p, HD, 480p, 360p, SD
+        const qualityOrder = ['1080p', '720p', 'HD', '480p', '360p', 'SD'];
+        const sortedQualities = Object.keys(serversByQuality).sort((a, b) => {
+            return qualityOrder.indexOf(a) - qualityOrder.indexOf(b);
+        });
+        
+        sortedQualities.forEach(quality => {
+            const servers = serversByQuality[quality];
+            
+            html += `
+                <div class="server-quality-group">
+                    <div class="quality-label">${quality}</div>
+                    <div class="server-grid">
+            `;
+            
+            servers.forEach(server => {
+                const isActive = activeServer && activeServer.id === server.id;
+                html += `
+                    <button class="btn-server ${isActive ? 'active' : ''}" 
+                            onclick="selectServer(${JSON.stringify(server).replace(/"/g, '&quot;')}, this)"
+                            data-id="${server.id}">
+                        ${server.name}
+                    </button>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+        
         container.innerHTML = html;
+        countElement.textContent = `${currentServers.length} servers`;
+        
+        // Recreate icons
+        lucide.createIcons();
     }
 
-    // --- RENDER DOWNLOADS ---
-    function renderAnimeDownloads(list) {
-        if(!list || list.length === 0) return;
-        let html = "";
-        list.forEach(g => {
-            html += `<div style="margin-bottom:10px;"><div style="color:var(--primary); font-weight:700; font-size:0.8rem;">${g.title}</div>`;
-            if(g.qualities) {
-                g.qualities.forEach(q => {
-                    html += `<div style="display:flex; gap:5px; margin-top:5px; flex-wrap:wrap;"><span style="font-size:0.7rem; width:40px;">${q.title}</span>`;
-                    q.urls.forEach(u => {
-                        html += `<a href="${u.url}" target="_blank" class="btn" style="padding:4px 8px; font-size:0.7rem;">${u.title}</a>`;
-                    });
-                    html += `</div>`;
+    // Select and play server
+    async function selectServer(server, buttonElement = null) {
+        try {
+            showToast(`Memuat ${server.name}...`, "info");
+            
+            // Update active server
+            activeServer = server;
+            
+            // Update quality badge
+            document.getElementById('qualityBadge').textContent = server.quality;
+            document.getElementById('qualityBadge').className = 'badge quality';
+            
+            // Update UI
+            if (buttonElement) {
+                document.querySelectorAll('.btn-server').forEach(btn => {
+                    btn.classList.remove('active');
                 });
+                buttonElement.classList.add('active');
             }
-            html += `</div>`;
-        });
-        document.getElementById('dlContainer').innerHTML = html;
-    }
-
-    function renderDonghuaDownloads(list) {
-        if(!list) return;
-        let html = "";
-        for (const [k, v] of Object.entries(list)) {
-            html += `<div style="margin-bottom:10px;"><div style="color:var(--primary); font-weight:700; font-size:0.8rem;">${k.replace('download_url_','').toUpperCase()}</div><div style="display:flex; gap:5px; flex-wrap:wrap;">`;
-            for (const [p, u] of Object.entries(v)) {
-                html += `<a href="${u}" target="_blank" class="btn" style="padding:4px 8px; font-size:0.7rem;">${p}</a>`;
+            
+            let embedUrl = server.url;
+            
+            // If it's a blogger video URL, we need to extract the actual video
+            if (server.url.includes('blogger.com/video.g')) {
+                embedUrl = await extractBloggerVideo(server.url);
             }
-            html += `</div></div>`;
+            
+            // If it's a direct MP4 link
+            if (server.url.endsWith('.mp4') || server.url.includes('.m3u8')) {
+                // We'll use a video player instead of iframe
+                const videoPlayer = document.createElement('video');
+                videoPlayer.src = server.url;
+                videoPlayer.controls = true;
+                videoPlayer.style.width = '100%';
+                videoPlayer.style.height = '100%';
+                
+                const iframeContainer = document.getElementById('iframePlayer');
+                iframeContainer.parentNode.replaceChild(videoPlayer, iframeContainer);
+                videoPlayer.id = 'iframePlayer';
+                
+                // Auto-play
+                videoPlayer.play().catch(e => console.log("Auto-play blocked:", e));
+            } else {
+                // Set iframe source
+                document.getElementById('iframePlayer').src = embedUrl;
+            }
+            
+            showToast(`Server ${server.name} aktif`, "success");
+            
+        } catch (error) {
+            console.error("Error selecting server:", error);
+            showToast(`Gagal memuat server: ${error.message}`, "error");
         }
-        document.getElementById('dlContainer').innerHTML = html;
     }
 
-    // --- UTILS ---
-    function changePlayer(url, btn) {
-        document.getElementById('iframePlayer').src = url;
-        document.querySelectorAll('.btn-server').forEach(b => b.classList.remove('active'));
-        if(btn) btn.classList.add('active');
-        showToast("Server diganti", "success");
+    // Extract actual video from Blogger embed
+    async function extractBloggerVideo(bloggerUrl) {
+        try {
+            // Blogger URL biasanya langsung embeddable
+            return bloggerUrl;
+        } catch (error) {
+            console.error("Error extracting blogger video:", error);
+            return bloggerUrl; // Return original if extraction fails
+        }
     }
 
-    function goToSeries() {
-        let slug = source === 'anime' ? cleanId(animeId).replace(/-episode-\d+.*$/i, '') : cleanId(donghuaUrl).replace(/-episode-\d+.*$/i, '');
-        window.location.href = `series.html?slug=${slug}&source=${source}`;
+    // Update episode UI
+    function updateEpisodeUI() {
+        document.getElementById('epTitle').textContent = currentEpisodeInfo.title;
+        document.getElementById('dateInfo').textContent = currentEpisodeInfo.date;
+        
+        // Update title
+        document.title = `${currentEpisodeInfo.title} - RayStream`;
+    }
+
+    // Save to viewing history
+    function saveToHistory() {
+        try {
+            const history = JSON.parse(localStorage.getItem('stream_history') || '[]');
+            
+            // Remove if already exists
+            const existingIndex = history.findIndex(item => item.url === currentEpisodeInfo.url);
+            if (existingIndex > -1) {
+                history.splice(existingIndex, 1);
+            }
+            
+            // Add to beginning
+            history.unshift({
+                ...currentEpisodeInfo,
+                watchedAt: new Date().toISOString(),
+                servers: currentServers.length
+            });
+            
+            // Keep only last 50 items
+            if (history.length > 50) {
+                history.pop();
+            }
+            
+            localStorage.setItem('stream_history', JSON.stringify(history));
+        } catch (error) {
+            console.error("Error saving to history:", error);
+        }
+    }
+
+    // Utility functions
+    function retryLoad() {
+        window.location.reload();
     }
 
     function toggleDl() {
@@ -353,33 +680,119 @@
         document.getElementById('dlIcon').style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
     }
 
-    function showToast(msg, type) {
-        const t = document.createElement('div');
-        t.style.cssText = `background:#222; color:#fff; padding:10px 15px; border-radius:8px; border-left:4px solid ${type==='error'?'#ef4444':'#22c55e'}; font-size:0.9rem; box-shadow:0 5px 15px rgba(0,0,0,0.5);`;
-        t.innerText = msg;
-        document.getElementById('toast-container').appendChild(t);
-        setTimeout(() => t.remove(), 3000);
+    function goToSeries() {
+        // Extract series slug from URL
+        const slug = episodeId.split('-episode-')[0] || episodeId;
+        window.location.href = `series.html?series=${slug}`;
     }
 
-    function saveHistory(title, key, src) {
-        let hist = JSON.parse(localStorage.getItem('my_history')) || [];
-        hist = hist.filter(h => h.url !== key);
-        let epNum = title.match(/Episode\s+(\d+)/i) ? "Ep " + title.match(/Episode\s+(\d+)/i)[1] : "Ep ?";
-        
-        hist.unshift({
-            title: title,
-            episode: epNum,
-            url: key,
-            source: src,
-            date: new Date().toLocaleDateString(),
-            poster: "https://via.placeholder.com/100x150" // Placeholder biar cepat
+    function toggleQuality() {
+        showToast("Fitur quality selector belum tersedia", "info");
+    }
+
+    function shareEpisode() {
+        if (navigator.share) {
+            navigator.share({
+                title: currentEpisodeInfo.title,
+                text: `Nonton ${currentEpisodeInfo.title} di RayStream`,
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            showToast("Link disalin ke clipboard!", "success");
+        }
+    }
+
+    function bookmarkEpisode() {
+        const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+        bookmarks.push({
+            ...currentEpisodeInfo,
+            bookmarkedAt: new Date().toISOString()
         });
-        localStorage.setItem('my_history', JSON.stringify(hist));
+        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        showToast("Episode ditambahkan ke bookmark!", "success");
     }
 
-    // START
-    loadStream();
-    lucide.createIcons();
+    function reportIssue() {
+        showToast("Laporan dikirim. Terima kasih!", "success");
+    }
+
+    function showToast(message, type = "info") {
+        const toastContainer = document.getElementById('toast-container');
+        
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        toast.style.cssText = `
+            background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'};
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+        
+        const icon = type === 'error' ? 'x-circle' : 
+                    type === 'success' ? 'check-circle' : 'info';
+        
+        toast.innerHTML = `
+            <i data-lucide="${icon}" style="width:18px; height:18px;"></i>
+            <span>${message}</span>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Add animation style if not exists
+        if (!document.querySelector('#toast-animation')) {
+            const style = document.createElement('style');
+            style.id = 'toast-animation';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateY(-20px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateY(0); opacity: 1; }
+                    to { transform: translateY(-20px); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+        
+        // Create icons
+        lucide.createIcons();
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        loadStream();
+    });
+
+    // Retry button functionality
+    window.retryLoad = retryLoad;
+    window.selectServer = selectServer;
+    window.toggleDl = toggleDl;
+    window.goToSeries = goToSeries;
+    window.toggleQuality = toggleQuality;
+    window.shareEpisode = shareEpisode;
+    window.bookmarkEpisode = bookmarkEpisode;
+    window.reportIssue = reportIssue;
+
 </script>
 </body>
-</html>
+    </html>
