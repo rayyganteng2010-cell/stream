@@ -3,443 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RayStream - Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>RayStream - Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <script>
-        // Cek Login (Simulasi)
+        // Cek Login
         if (!localStorage.getItem('user_info')) {
-            // Uncomment baris di bawah jika file login.html sudah ada
-            // window.location.href = 'login.html';
+            window.location.href = 'login.html';
         }
     </script>
-
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --bg-card: rgba(30, 41, 59, 0.7);
-            --primary: #6366f1; /* Indigo */
-            --accent-anime: #f59e0b; /* Amber */
-            --accent-donghua: #3b82f6; /* Blue */
-            --accent-schedule: #10b981; /* Emerald */
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+            --bg-deep: #0f0f13;
+            --bg-surface: #1a1a22;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --accent-anime: #f59e0b;
+            --accent-donghua: #3b82f6;
+            --accent-schedule: #10b981;
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.1) 0px, transparent 50%);
+            background-color: var(--bg-deep);
             color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            padding-bottom: 90px; /* Space for bottom nav */
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
         }
 
-        /* Navbar Sederhana */
-        .navbar {
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--glass-border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        /* Header User */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 25px 20px;
         }
-
-        .brand {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(to right, var(--primary), #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 6px 15px;
-            border-radius: 30px;
-            border: 1px solid var(--glass-border);
-            transition: all 0.3s ease;
-        }
-
-        .user-profile:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
+        .user-profile { display: flex; align-items: center; gap: 12px; }
         .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
+            width: 45px; height: 45px; border-radius: 50%; object-fit: cover;
             border: 2px solid var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
         }
+        .user-greeting span { display: block; font-size: 0.75rem; color: var(--text-muted); }
+        .user-greeting strong { font-size: 1.1rem; }
 
-        .user-name {
-            font-size: 0.9rem;
-            font-weight: 600;
+        .btn-icon {
+            background: rgba(255,255,255,0.05); border: none; color: white;
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s;
         }
+        .btn-icon:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
 
-        /* Container Utama */
-        .main-container {
-            flex: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+        /* Main Hero/Logo */
+        .hero-section {
+            text-align: center; padding: 10px 20px 30px 20px;
         }
-
-        .hero-text {
-            text-align: center;
-            margin-bottom: 50px;
+        .brand-logo {
+            font-size: 2.5rem; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 30%, var(--primary) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
         }
+        .brand-sub { color: var(--text-muted); font-size: 0.9rem; }
 
-        .hero-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
-        }
-
-        .hero-desc {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }
-
-        /* Grid Menu Utama */
+        /* Menu Grid - Balanced & Modern */
+        .menu-container { padding: 0 20px; margin-bottom: 30px; }
+        .menu-label { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); margin-bottom: 15px; letter-spacing: 0.5px; }
+        
         .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 60px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
         }
 
         .menu-card {
-            background: var(--bg-card);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 35px 25px;
+            background: var(--bg-surface);
+            border-radius: 20px;
+            padding: 20px 10px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
-            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-
-        .menu-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--shadow-glow);
-            border-color: rgba(255, 255, 255, 0.2);
+        
+        .menu-card:active { transform: scale(0.95); }
+        
+        .menu-card::before {
+            content: ''; position: absolute; inset: 0; opacity: 0; transition: 0.3s;
         }
+        .menu-card:hover::before { opacity: 1; }
 
-        .card-icon-bg {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 20px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            transition: transform 0.3s ease;
+        .menu-icon {
+            width: 50px; height: 50px; margin: 0 auto 10px;
+            border-radius: 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; position: relative; z-index: 2;
         }
+        .menu-text { font-weight: 600; font-size: 0.9rem; position: relative; z-index: 2; }
 
-        .menu-card:hover .card-icon-bg {
-            transform: scale(1.1) rotate(5deg);
-        }
+        /* Specific Colors */
+        .mc-anime .menu-icon { background: rgba(245, 158, 11, 0.15); color: var(--accent-anime); }
+        .mc-anime:hover { border-color: var(--accent-anime); }
+        .mc-anime:hover::before { background: linear-gradient(to bottom, rgba(245, 158, 11, 0.1), transparent); }
 
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
+        .mc-donghua .menu-icon { background: rgba(59, 130, 246, 0.15); color: var(--accent-donghua); }
+        .mc-donghua:hover { border-color: var(--accent-donghua); }
+        .mc-donghua:hover::before { background: linear-gradient(to bottom, rgba(59, 130, 246, 0.1), transparent); }
 
-        .card-desc {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
+        .mc-schedule .menu-icon { background: rgba(16, 185, 129, 0.15); color: var(--accent-schedule); }
+        .mc-schedule:hover { border-color: var(--accent-schedule); }
+        .mc-schedule:hover::before { background: linear-gradient(to bottom, rgba(16, 185, 129, 0.1), transparent); }
 
-        /* Tema Warna Per Card */
-        .card-anime .card-icon-bg { background: rgba(245, 158, 11, 0.15); color: var(--accent-anime); }
-        .card-anime:hover { border-color: var(--accent-anime); }
-
-        .card-donghua .card-icon-bg { background: rgba(59, 130, 246, 0.15); color: var(--accent-donghua); }
-        .card-donghua:hover { border-color: var(--accent-donghua); }
-
-        .card-schedule .card-icon-bg { background: rgba(16, 185, 129, 0.15); color: var(--accent-schedule); }
-        .card-schedule:hover { border-color: var(--accent-schedule); }
-
-        /* History Section */
-        .history-section {
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 24px;
-            border: 1px solid var(--glass-border);
-            padding: 30px;
-            max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
+        /* History / Continue Watching */
+        .history-section { padding-left: 20px; margin-bottom: 20px; }
         .history-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--glass-border);
+            display: flex; justify-content: space-between; align-items: center;
+            padding-right: 20px; margin-bottom: 15px;
+        }
+        .history-scroll {
+            display: flex; gap: 15px; overflow-x: auto;
+            padding-bottom: 20px; padding-right: 20px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .history-scroll::-webkit-scrollbar { display: none; }
+
+        .h-card {
+            min-width: 140px; width: 140px;
+            position: relative; cursor: pointer;
+        }
+        .h-poster-wrapper {
+            width: 100%; aspect-ratio: 2/3;
+            border-radius: 12px; overflow: hidden;
+            margin-bottom: 10px; position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .h-poster {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: 0.3s;
+        }
+        .h-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: 0.3s;
+        }
+        .h-card:hover .h-overlay { opacity: 1; }
+        .h-card:hover .h-poster { transform: scale(1.05); }
+
+        .h-progress-bar {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+            background: rgba(255,255,255,0.2);
+        }
+        .h-progress-val {
+            height: 100%; background: var(--primary); width: 0%; /* Dynamic later */
         }
 
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        .h-title {
+            font-size: 0.85rem; font-weight: 600;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        .h-ep { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Badge Type */
+        .type-badge {
+            position: absolute; top: 6px; left: 6px;
+            font-size: 0.6rem; font-weight: 800; padding: 2px 6px;
+            border-radius: 4px; color: #fff; z-index: 2;
+        }
+        .bg-anime { background: rgba(245, 158, 11, 0.9); }
+        .bg-donghua { background: rgba(59, 130, 246, 0.9); }
+
+        /* Empty State */
+        .empty-history {
+            text-align: center; color: var(--text-muted);
+            padding: 30px 20px 30px 0;
+            width: 100%; border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px;
         }
 
-        .history-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.03);
-            transition: all 0.2s ease;
-            cursor: pointer;
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(15, 15, 19, 0.9);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-around;
+            padding: 12px 0; z-index: 100;
         }
-
-        .history-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateX(5px);
+        .nav-btn {
+            background: none; border: none; color: #666;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            font-size: 0.7rem; font-weight: 600; cursor: pointer;
         }
+        .nav-btn.active { color: var(--primary); }
+        .nav-btn svg { width: 22px; height: 22px; }
 
-        .history-poster {
-            width: 50px;
-            height: 70px;
-            border-radius: 8px;
-            object-fit: cover;
-            background: #1e293b;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        }
-
-        .history-content {
-            flex: 1;
-            min-width: 0; /* Prevent text overflow */
-        }
-
-        .history-title {
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .history-meta {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .tag {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .tag-anime { background: rgba(245, 158, 11, 0.2); color: var(--accent-anime); }
-        .tag-donghua { background: rgba(59, 130, 246, 0.2); color: var(--accent-donghua); }
-
-        .btn-play {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-main);
-            transition: 0.2s;
-        }
-
-        .history-item:hover .btn-play {
-            background: var(--primary);
-            color: white;
-        }
-
-        .no-history {
-            text-align: center;
-            padding: 30px;
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        @media (max-width: 768px) {
-            .menu-grid { grid-template-columns: 1fr; }
-            .hero-title { font-size: 2rem; }
-            .navbar { padding: 15px 20px; }
-        }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="brand">RayStream</div>
-        <div class="user-profile" id="userProfileBtn" onclick="toggleLogout()">
-            <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User" class="user-avatar" id="userAvatar">
-            <span class="user-name" id="userName">Guest</span>
-            <i data-lucide="chevron-down" style="width: 16px; margin-left: 5px;"></i>
-        </div>
-    </nav>
-
-    <div class="main-container">
-        <div class="hero-text">
-            <h1 class="hero-title">Mau nonton apa hari ini?</h1>
-            <p class="hero-desc">Platform streaming Anime dan Donghua terlengkap dengan update tercepat.</p>
-        </div>
-
-        <div class="menu-grid">
-            
-            <div class="menu-card card-anime" onclick="window.location.href='anime.html'">
-                <div class="card-icon-bg">
-                    <i data-lucide="tv"></i>
-                </div>
-                <h3 class="card-title">Anime</h3>
-                <p class="card-desc">Koleksi anime Jepang dari musim terbaru hingga klasik legendaris.</p>
+    <header class="header">
+        <div class="user-profile">
+            <img src="" id="userImg" class="user-avatar" alt="User">
+            <div class="user-greeting">
+                <span id="greetingTime">Welcome back,</span>
+                <strong id="userName">User</strong>
             </div>
-
-            <div class="menu-card card-donghua" onclick="window.location.href='donghua.html'">
-                <div class="card-icon-bg">
-                    <i data-lucide="flame"></i>
-                </div>
-                <h3 class="card-title">Donghua</h3>
-                <p class="card-desc">Serial animasi China 3D/2D penuh aksi kultivasi dan martial arts.</p>
-            </div>
-
-            <div class="menu-card card-schedule" onclick="window.location.href='schedule.html'">
-                <div class="card-icon-bg">
-                    <i data-lucide="calendar-clock"></i>
-                </div>
-                <h3 class="card-title">Jadwal Rilis</h3>
-                <p class="card-desc">Cek kapan episode terbaru anime dan donghua favoritmu tayang.</p>
-            </div>
-
         </div>
+        <button class="btn-icon" onclick="logout()">
+            <i data-lucide="log-out"></i>
+        </button>
+    </header>
 
-        <div class="history-section">
-            <div class="history-header">
-                <i data-lucide="history" style="color: var(--primary)"></i>
-                <h3 style="font-weight: 600;">Lanjutkan Menonton</h3>
-            </div>
-            <div id="historyContainer" class="history-list">
-                </div>
-        </div>
-
+    <div class="hero-section">
+        <h1 class="brand-logo">RayStream</h1>
+        <p class="brand-sub">Ultimate Anime & Donghua Platform</p>
     </div>
 
-    <script>
-        // Inisialisasi Ikon
-        lucide.createIcons();
+    <div class="menu-container">
+        <div class="menu-label">BROWSE CONTENT</div>
+        <div class="menu-grid">
+            <div class="menu-card mc-anime" onclick="window.location.href='anime.html'">
+                <div class="menu-icon"><i data-lucide="tv"></i></div>
+                <div class="menu-text">Anime</div>
+            </div>
+            
+            <div class="menu-card mc-donghua" onclick="window.location.href='donghua.html'">
+                <div class="menu-icon"><i data-lucide="zap"></i></div>
+                <div class="menu-text">Donghua</div>
+            </div>
+            
+            <div class="menu-card mc-schedule" onclick="window.location.href='schedule.html'">
+                <div class="menu-icon"><i data-lucide="calendar-days"></i></div>
+                <div class="menu-text">Jadwal</div>
+            </div>
+        </div>
+    </div>
 
-        // 1. User Logic
-        function loadUser() {
-            const userData = JSON.parse(localStorage.getItem('user_info'));
-            if (userData) {
-                document.getElementById('userName').textContent = userData.name || 'User';
-                if(userData.picture) {
-                    document.getElementById('userAvatar').src = userData.picture;
-                }
-            }
+    <section class="history-section">
+        <div class="history-header">
+            <div class="menu-label" style="margin:0;">LANJUT NONTON</div>
+            <a href="history.html" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Lihat Semua</a>
+        </div>
+        
+        <div class="history-scroll" id="historyList">
+            </div>
+    </section>
+
+    <nav class="bottom-nav">
+        <button class="nav-btn active">
+            <i data-lucide="home"></i> Home
+        </button>
+        <button class="nav-btn" onclick="window.location.href='search.html'">
+            <i data-lucide="search"></i> Search
+        </button>
+        <button class="nav-btn" onclick="window.location.href='history.html'">
+            <i data-lucide="history"></i> History
+        </button>
+    </nav>
+
+<script>
+    // 1. SETUP USER
+    function initUser() {
+        try {
+            const userData = localStorage.getItem('user_info');
+            if(!userData) return;
+            const user = JSON.parse(userData);
+            
+            document.getElementById('userName').innerText = user.name || 'Nakama';
+            document.getElementById('userImg').src = user.picture || 'https://via.placeholder.com/100';
+
+            // Greeting logic
+            const hour = new Date().getHours();
+            let greet = "Selamat Pagi,";
+            if(hour >= 12 && hour < 15) greet = "Selamat Siang,";
+            else if(hour >= 15 && hour < 18) greet = "Selamat Sore,";
+            else if(hour >= 18) greet = "Selamat Malam,";
+            document.getElementById('greetingTime').innerText = greet;
+
+        } catch(e) {}
+    }
+
+    function logout() {
+        if(confirm("Logout dari RayStream?")) {
+            localStorage.removeItem('user_info');
+            window.location.href = 'login.html';
+        }
+    }
+
+    // 2. LOAD HISTORY WITH THUMBNAILS
+    function loadHistoryWidget() {
+        const container = document.getElementById('historyList');
+        const raw = localStorage.getItem('my_history');
+        const list = raw ? JSON.parse(raw) : [];
+
+        if(list.length === 0) {
+            container.innerHTML = `<div class="empty-history">Belum ada riwayat tontonan.</div>`;
+            return;
         }
 
-        function toggleLogout() {
-            if(confirm('Ingin keluar dari akun?')) {
-                localStorage.removeItem('user_info');
-                window.location.reload(); // Atau redirect ke login
-            }
-        }
+        // Ambil 6 item terakhir
+        const recent = list.slice(0, 6);
 
-        // 2. Load History with Thumbnails
-        function loadHistory() {
-            const container = document.getElementById('historyContainer');
-            // Mengambil data dari localStorage (asumsi format array object)
-            // Pastikan saat save history di page nonton, property 'poster' ikut disimpan
-            const history = JSON.parse(localStorage.getItem('my_history')) || [];
+        container.innerHTML = recent.map(item => {
+            const typeClass = item.source === 'anime' ? 'bg-anime' : 'bg-donghua';
+            const link = item.source === 'anime' 
+                ? `stream.html?id=${item.url}&source=anime`
+                : `stream.html?url=${item.url}&source=donghua`;
+            
+            const poster = item.poster || 'https://via.placeholder.com/150x220?text=No+Img';
+            const epTxt = item.episode || 'Lanjut';
 
-            if (history.length === 0) {
-                container.innerHTML = `
-                    <div class="no-history">
-                        <p>Belum ada riwayat tontonan.</p>
-                    </div>`;
-                return;
-            }
-
-            // Ambil 4 history terakhir
-            const recentHistory = history.slice(0, 4);
-
-            container.innerHTML = recentHistory.map(item => {
-                // Fallback image jika poster tidak ada/broken
-                const posterUrl = item.poster || 'https://via.placeholder.com/50x70/1e293b/94a3b8?text=?';
-                const tagClass = item.source === 'anime' ? 'tag-anime' : 'tag-donghua';
-                const link = item.source === 'anime' 
-                    ? `stream.html?id=${item.url}&source=anime` 
-                    : `stream.html?url=${item.url}&source=donghua`;
-
-                return `
-                <div class="history-item" onclick="window.location.href='${link}'">
-                    <img src="${posterUrl}" class="history-poster" alt="Poster" onerror="this.src='https://via.placeholder.com/50x70'">
-                    
-                    <div class="history-content">
-                        <div class="history-title">${item.title || 'Judul Tidak Diketahui'}</div>
-                        <div class="history-meta">
-                            <span class="tag ${tagClass}">${item.source || 'VIDEO'}</span>
-                            <span>${item.episode || 'Episode Terakhir'}</span>
-                        </div>
+            return `
+            <div class="h-card" onclick="window.location.href='${link}'">
+                <div class="h-poster-wrapper">
+                    <span class="type-badge ${typeClass}">${item.source.toUpperCase()}</span>
+                    <img src="${poster}" class="h-poster" loading="lazy">
+                    <div class="h-overlay">
+                        <i data-lucide="play" fill="white" style="width:24px; color:white;"></i>
                     </div>
-                    
-                    <div class="btn-play">
-                        <i data-lucide="play" style="width: 14px;"></i>
+                    <div class="h-progress-bar">
+                        <div class="h-progress-val" style="width: 40%"></div>
                     </div>
                 </div>
-                `;
-            }).join('');
-            
-            // Re-init icons for dynamic content
-            lucide.createIcons();
-        }
+                <div class="h-title">${item.title}</div>
+                <div class="h-ep">${epTxt}</div>
+            </div>
+            `;
+        }).join('');
+        
+        lucide.createIcons();
+    }
 
-        // Jalankan saat load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadUser();
-            loadHistory();
-        });
-    </script>
+    // Init
+    initUser();
+    loadHistoryWidget();
+    lucide.createIcons();
+</script>
+
 </body>
 </html>
