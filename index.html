@@ -12,18 +12,6 @@
             window.location.href = 'login.html';
         }
     </script>
-    <style>
-        /* CSS Tambahan untuk Badge Tipe (Anime/Donghua) */
-        .type-badge {
-            position: absolute; top: 8px; left: 8px;
-            padding: 3px 8px; border-radius: 6px;
-            font-size: 0.65rem; font-weight: 700; z-index: 5;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-        .bg-donghua { background: rgba(59, 130, 246, 0.9); color: white; } /* Biru */
-        .bg-anime { background: rgba(245, 158, 11, 0.9); color: black; }   /* Kuning/Orange */
-    </style>
 </head>
 <body>
 
@@ -58,7 +46,7 @@
     <div id="latestData" class="grid">
         </div>
 
-    <button id="btnLoadMore" class="btn-load-more" onclick="loadNextPage()">
+    <button id="btnLoadMore" class="btn btn-primary" onclick="loadNextPage()">
         Load Next Page
     </button>
 
@@ -164,4 +152,4 @@
     lucide.createIcons();
 </script>
 </body>
-    </html>
+                                                                               </html>
