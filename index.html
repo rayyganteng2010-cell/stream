@@ -3,93 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>𝚁𝙰𝚈𝚂𝚃𝚁𝙴𝙰𝙼-𝙽𝙾𝙽𝚃𝙾𝙽 𝙶𝚁𝙰𝚃𝙸𝚂</title>
+    <title>RayStream Home</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        // WAJIB LOGIN CHECK (Paling Atas)
-        // Jika tidak ada data user, tendang ke login.html
+        // Cek Login
         if (!localStorage.getItem('user_info')) {
             window.location.href = 'login.html';
         }
     </script>
-    <style>
-        .slider-container {
-            overflow-x: auto;
-            white-space: nowrap;
-            padding: 20px 15px;
-            display: flex;
-            gap: 15px;
-            scrollbar-width: none;
-        }
-        .slider-container::-webkit-scrollbar { display: none; }
-        .slider-img {
-            width: 85%;
-            max-width: 400px; /* Batas lebar di desktop */
-            height: 180px;
-            object-fit: cover;
-            border-radius: 16px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-            flex-shrink: 0;
-            scroll-snap-align: center;
-        }
-        .section-header {
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-        }
-        .section-header h3 { margin: 0; font-size: 1.2rem; font-weight: 700; }
-        .refresh-btn { 
-            color: var(--primary); 
-            font-size: 0.8rem; 
-            background: rgba(0, 170, 255, 0.1); 
-            padding: 5px 12px; 
-            border-radius: 20px; 
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
 
 <header>
-    <div class="logo">𝚁𝚊𝚢𝚂𝚝𝚛𝚎𝚊𝚖</div>
+    <div class="logo">RayStream</div>
     <div id="userStatus"></div>
 </header>
 
-<div class="slider-container">
-    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg">
-    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg">
-    <img class="slider-img" src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/0c96d013d87134ba7d2c951a889ebf15.jpg">
+<div class="slider-container" style="display:flex; overflow-x:auto; gap:15px; padding:20px; scrollbar-width:none;">
+    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg" style="height:180px; border-radius:16px; width:85%; object-fit:cover; flex-shrink:0;">
+    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg" style="height:180px; border-radius:16px; width:85%; object-fit:cover; flex-shrink:0;">
+    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/0c96d013d87134ba7d2c951a889ebf15.jpg" style="height:180px; border-radius:16px; width:85%; object-fit:cover; flex-shrink:0;">
 </div>
 
-<div class="section-header">
-    <h3>Popular Today</h3>
-    <span class="refresh-btn" onclick="location.reload()">Refresh</span>
-</div>
-<div id="popularData" class="grid">
-    <div class="card skeleton" style="height:200px;"></div>
-    <div class="card skeleton" style="height:200px;"></div>
-    <div class="card skeleton" style="height:200px;"></div>
-</div>
+<div class="container">
+    <div class="section-header">
+        <h3>Popular Today</h3>
+    </div>
+    <div id="popularData" class="grid">
+        <p style="color:#555;">Loading...</p>
+    </div>
 
-<div class="section-header">
-    <h3>Latest Release</h3>
-</div>
-<div id="latestData" class="grid">
-    <div class="card skeleton" style="height:200px;"></div>
+    <div class="section-header">
+        <h3>Latest Release</h3>
+        <span id="pageIndicator" style="font-size:0.8rem; color:#666;"></span>
+    </div>
+    
+    <div id="latestData" class="grid">
+        </div>
+
+    <button id="btnLoadMore" class="btn-load-more" onclick="loadNextPage()">
+        
+    </button>
 </div>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active"><i data-lucide="home"></i> Home</a>
-    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i> Jadwal</a>
-    <a href="history.html" class="nav-item"><i data-lucide="history"></i> History</a>
+    <a href="index.html" class="nav-item active"><i data-lucide="home"></i></a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
 </nav>
 
 <script>
     const API_BASE = "https://anichin-seven.vercel.app/api";
 
+    // LOGIC PAGE ROTATION
+    // Ambil page terakhir dari storage, tambah 1. Kalau > 5 balik ke 1.
+    let storedPage = parseInt(localStorage.getItem('current_page')) || 0; 
+    let currentPage = storedPage + 1;
+    if (currentPage > 5) currentPage = 1; // Loop 1-5
+    
+    // Simpan page sekarang buat kunjungan berikutnya
+    localStorage.setItem('current_page', currentPage);
+
+    // Update UI Indicator
+    document.getElementById('pageIndicator').innerText = `Page ${currentPage}`;
+
+    // Helper: Slug Cleaner
     function getCleanSlug(href) {
         if (!href) return '';
         href = href.replace(/\/$/, '');
@@ -97,37 +76,52 @@
         return segment.replace(/-episode-\d+.*$/i, '');
     }
 
-    async function loadHome() {
+    // 1. Load Popular
+    async function loadPopular() {
         try {
-            // Popular
-            const resPop = await fetch(`${API_BASE}/popular`);
-            const dataPop = await resPop.json();
-            
-            document.getElementById('popularData').innerHTML = dataPop.data.slice(0, 6).map(item => {
-                const slug = getCleanSlug(item.href);
-                // "Ep" SUDAH DIHAPUS DI SINI
-                return `
-                <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
+            const res = await fetch(`${API_BASE}/popular`);
+            const data = await res.json();
+            document.getElementById('popularData').innerHTML = data.data.slice(0, 6).map(item => `
+                <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}'">
                     <img src="${item.poster}" loading="lazy">
                     <p>${item.title}</p>
                 </div>
-            `}).join('');
-
-            // Latest
-            const resLat = await fetch(`${API_BASE}/list?page=1`);
-            const dataLat = await resLat.json();
-
-            document.getElementById('latestData').innerHTML = dataLat.data.slice(0, 12).map(item => {
-                const slug = getCleanSlug(item.href);
-                return `
-                <div class="card" onclick="window.location.href='series.html?slug=${slug}'">
-                    <img src="${item.poster}" loading="lazy">
-                    <p>${item.title}</p>
-                </div>
-            `}).join('');
-            
-            lucide.createIcons();
+            `).join('');
         } catch (e) { console.error(e); }
+    }
+
+    // 2. Load Latest (Sesuai Page Saat Ini)
+    async function loadLatest(pageNum) {
+        try {
+            const btn = document.getElementById('btnLoadMore');
+            btn.innerText = "Loading...";
+            
+            const res = await fetch(`${API_BASE}/list?page=${pageNum}`);
+            const data = await res.json();
+            
+            // Append (tambah ke bawah) bukan replace
+            const container = document.getElementById('latestData');
+            
+            const html = data.data.map(item => `
+                <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}'">
+                    <img src="${item.poster}" loading="lazy">
+                    <p>${item.title}</p>
+                </div>
+            `).join('');
+
+            container.insertAdjacentHTML('beforeend', html);
+            
+            btn.innerText = "Load Next Page";
+        } catch (e) { 
+            console.error(e);
+            document.getElementById('btnLoadMore').innerText = "Error loading";
+        }
+    }
+
+    // 3. Fungsi Tombol Next Page
+    function loadNextPage() {
+        currentPage++; // Naikkan counter page session ini
+        loadLatest(currentPage);
     }
 
     // Tampilkan Avatar User
@@ -138,7 +132,10 @@
         `;
     }
 
-    loadHome();
+    // Init
+    loadPopular();
+    loadLatest(currentPage); // Load page hasil rotasi
+    lucide.createIcons();
 </script>
 </body>
 </html>
