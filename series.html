@@ -9,24 +9,28 @@
     
     <style>
         :root {
-            --bg-main: #0f172a;      /* Dark Blue Slate */
-            --bg-card: #1e293b;      /* Lighter Slate */
-            --bg-element: #334155;   /* Element BG */
-            --primary: #3b82f6;      /* Blue (Donghua) */
-            --warning: #f59e0b;      /* Orange (Anime) */
-            --text-main: #f8fafc;
+            --bg-main: #0a0a0c;
+            --bg-card: #141418;
+            --primary: #6366f1; /* Indigo (Donghua) */
+            --warning: #f59e0b; /* Orange (Anime) */
+            --text-main: #ffffff;
             --text-muted: #94a3b8;
             --radius: 16px;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            margin: 0; padding: 0;
             background-color: var(--bg-main);
+            /* Background halus dengan radial gradient */
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
-            padding-bottom: 90px; /* Space for bottom nav */
+            padding-bottom: 90px;
+            min-height: 100vh;
         }
 
         /* --- HERO SECTION --- */
@@ -39,27 +43,27 @@
         .hero-bg {
             width: 100%; height: 100%;
             object-fit: cover;
-            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
             opacity: 0.5;
             transition: opacity 0.5s ease;
         }
 
         .header-nav {
             position: absolute; top: 0; left: 0; right: 0;
-            padding: 15px 20px; z-index: 10;
+            padding: 20px; z-index: 10;
         }
 
         .back-btn {
             background: rgba(0,0,0,0.4);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.1);
-            width: 40px; height: 40px;
+            width: 42px; height: 42px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: transform 0.2s;
         }
-        .back-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
+        .back-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
 
         .hero-content {
             position: absolute; bottom: 0; left: 0; width: 100%;
@@ -72,7 +76,7 @@
             width: 110px; flex-shrink: 0;
             aspect-ratio: 2/3;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             border: 1px solid rgba(255,255,255,0.15);
             overflow: hidden;
             background: var(--bg-card);
@@ -91,8 +95,9 @@
         }
 
         h2#title {
-            margin: 0; font-size: 1.3rem; line-height: 1.2; font-weight: 800;
+            margin: 0; font-size: 1.4rem; line-height: 1.2; font-weight: 800;
             text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            color: #fff;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
@@ -109,7 +114,7 @@
             display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px;
         }
         .genre-pill {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.08);
             border: 1px solid rgba(255,255,255,0.1);
             padding: 6px 14px; border-radius: 20px;
             font-size: 0.75rem; color: var(--text-muted);
@@ -122,6 +127,7 @@
             padding: 20px; border-radius: var(--radius);
             margin-bottom: 30px;
             border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .synopsis-title {
             margin: 0 0 10px 0; color: var(--text-muted);
@@ -145,8 +151,8 @@
         }
 
         .eps-btn {
-            background: var(--bg-element);
-            border: 1px solid rgba(255,255,255,0.05);
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
             color: var(--text-main);
             padding: 12px 5px;
             border-radius: 10px;
@@ -157,25 +163,29 @@
             display: flex; align-items: center; justify-content: center;
         }
         .eps-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); }
-        .eps-btn:active { transform: scale(0.95); background: var(--primary); color: white; }
+        .eps-btn:active { transform: scale(0.95); background: var(--warning); color: black; }
 
         /* --- BOTTOM NAV --- */
         .bottom-nav {
-            position: fixed; bottom: 0; width: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex; justify-content: space-around;
-            padding: 12px 0; z-index: 100;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 380px; height: 65px;
+            background: rgba(15, 15, 20, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 40px;
+            display: flex; justify-content: space-evenly; align-items: center;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .nav-item {
-            color: var(--text-muted); text-decoration: none;
+            color: #64748b; transition: 0.3s;
             display: flex; flex-direction: column; align-items: center;
-            font-size: 0.7rem; gap: 4px; transition: color 0.2s;
+            text-decoration: none;
         }
-        .nav-item:active, .nav-item:hover { color: white; }
+        .nav-item:active, .nav-item:hover { color: var(--text-main); transform: translateY(-3px); }
+        .nav-item svg { transition: 0.3s; }
+        .nav-item:active svg { stroke: var(--warning); filter: drop-shadow(0 0 8px var(--warning)); }
         
-        /* Loading Placeholder */
         .loading-text { color: var(--text-muted); font-style: italic; font-size: 0.9rem; }
     </style>
 </head>
@@ -211,7 +221,8 @@
     </div>
 
     <div class="section-header">
-        <i data-lucide="layers" size="18"></i> Episode
+        <i data-lucide="layers" size="18" color="var(--warning)"></i>
+        <span>Daftar Episode</span>
     </div>
     
     <div id="epsGrid" class="eps-grid">
@@ -220,119 +231,167 @@
 </div>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item"><i data-lucide="home" size="22"></i></a>
-    <a href="anime.html" class="nav-item"><i data-lucide="tv" size="22"></i></a>
-    <a href="schedule.html" class="nav-item"><i data-lucide="calendar" size="22"></i></a>
-    <a href="donghua.html" class="nav-item"><i data-lucide="zap" size="22"></i></a>
+    <a href="index.html" class="nav-item"><i data-lucide="home" size="24"></i></a>
+    <a href="anime.html" class="nav-item"><i data-lucide="tv" size="24"></i></a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar" size="24"></i></a>
+    <a href="donghua.html" class="nav-item"><i data-lucide="zap" size="24"></i></a>
 </nav>
 
 <script>
     const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    const API_ANIME = "https://www.sankavollerei.com/anime/samehadaku"; // Base API Anime
+    const API_ANIME = "https://www.sankavollerei.com/anime/samehadaku";
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const slug = urlParams.get('slug');      
-    const source = urlParams.get('source');  
+    // --- PROXY HELPERS (Wajib buat Anime) ---
+    async function smartFetch(url) {
+        // Coba direct dulu (siapa tau bisa)
+        try {
+            const res = await fetch(url);
+            if(res.ok) return await res.json();
+        } catch(e) {}
 
-    async function loadSeries() {
-        if(!slug) return alert("Slug Series tidak ditemukan");
-        
+        // List proxy cadangan
+        const proxies = [
+            (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+            (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+        ];
+
+        for (const proxy of proxies) {
+            try {
+                const res = await fetch(proxy(url));
+                if(res.ok) return await res.json();
+            } catch(e) {}
+        }
+        throw new Error("Gagal mengambil data dari server.");
+    }
+
+    // --- MAIN LOGIC ---
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        loadSeriesData();
+    });
+
+    async function loadSeriesData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const slug = urlParams.get('slug');      
+        const source = urlParams.get('source');  
+
+        if(!slug) {
+            alert("Series tidak valid");
+            return history.back();
+        }
+
         try {
             let data = {};
-            
-            // --- LOGIKA PERCABANGAN API ---
+
             if (source === 'anime') {
-                // Fetch API Anime (Samehadaku)
-                const res = await fetch(`${API_ANIME}/anime/${slug}`);
-                const json = await res.json();
+                // --- ANIME LOGIC (FIXED) ---
+                const json = await smartFetch(`${API_ANIME}/anime/${slug}`);
                 const d = json.data;
+                
+                if(!d) throw new Error("Data Anime Kosong");
+
+                // FIX 1: Judul
+                // API One Piece mengembalikan title: "" (kosong).
+                // Kita prioritas ambil English atau Japanese.
+                const realTitle = d.english || d.japanese || d.title || "Unknown Title";
+
+                // FIX 2: Score/Rating
+                // API One Piece mengembalikan score dalam bentuk object { value: "8.73", users: ... }
+                let rating = "-";
+                if (d.score && typeof d.score === 'object') {
+                    rating = d.score.value;
+                } else if (d.score) {
+                    rating = d.score;
+                }
 
                 data = {
-                    title: d.japanese || d.english || "Unknown Title",
+                    title: realTitle,
                     poster: d.poster,
                     status: d.status,
                     type: "Anime",
-                    studio: d.studios,
-                    synopsis: d.synopsis ? d.synopsis.paragraphs.join("\n\n") : "Sinopsis tidak tersedia.",
-                    genres: d.genreList.map(g => ({ name: g.title })),
-                    episodes: d.episodeList.map(ep => ({
-                        num: ep.title.replace(/Episode\s+/i, ''), // Clean title
-                        urlParam: ep.episodeId 
-                    }))
+                    studio: d.studios || "Unknown",
+                    rating: rating,
+                    synopsis: d.synopsis && d.synopsis.paragraphs ? d.synopsis.paragraphs.join("\n\n") : "Sinopsis tidak tersedia.",
+                    genres: d.genreList ? d.genreList.map(g => g.title) : [],
+                    
+                    // FIX 3: Episode List
+                    // API One Piece mengembalikan title episode berupa ANGKA (1155), bukan String.
+                    // .replace() akan error jika dijalankan pada angka. Kita convert ke String dulu.
+                    episodes: d.episodeList ? d.episodeList.map(ep => ({
+                        num: String(ep.title).replace(/Episode\s+/i, ''), 
+                        param: ep.episodeId 
+                    })) : []
                 };
 
             } else {
-                // Fetch API Donghua (Anichin)
-                const res = await fetch(`${API_DONGHUA}/series?url=${slug}`);
-                const d = await res.json();
+                // --- DONGHUA LOGIC (ANICHIN) ---
+                const d = await smartFetch(`${API_DONGHUA}/series?url=${slug}`);
 
                 data = {
                     title: d.title,
                     poster: d.poster,
                     status: d.info.status,
                     type: "Donghua",
-                    studio: d.info.studio,
-                    synopsis: d.short_description || d.synopsis,
-                    genres: d.genres,
-                    episodes: d.episodes_list.map(ep => ({
+                    rating: d.info.rating || "-",
+                    studio: d.info.studio || "-",
+                    synopsis: d.short_description || d.synopsis || "Sinopsis tidak tersedia.",
+                    genres: d.genres ? d.genres.map(g => g.name) : [],
+                    episodes: d.episodes_list ? d.episodes_list.map(ep => ({
                         num: ep.episode.match(/Episode\s+(\d+)/i)?.[1] || ep.episode,
-                        urlParam: ep.anichinUrl 
-                    }))
+                        param: ep.anichinUrl
+                    })) : []
                 };
             }
 
-            // --- RENDER KE HTML ---
-            document.getElementById('title').innerText = data.title;
-            
-            // Set Images with fallback
-            const hero = document.getElementById('heroImg');
-            const poster = document.getElementById('posterImg');
-            hero.src = data.poster;
-            poster.src = data.poster;
+            renderUI(data, source);
 
-            document.getElementById('synopsis').innerText = data.synopsis;
-            
-            // Badge Type Styling
-            const badge = document.getElementById('badgeType');
-            badge.innerText = data.type;
-            badge.style.background = data.type === 'Anime' ? 'var(--warning)' : 'var(--primary)';
-            badge.style.color = data.type === 'Anime' ? '#000' : '#fff';
-
-            // Meta Info
-            document.getElementById('meta').innerHTML = `
-                <span>${data.status}</span> • <span>${data.studio || 'Unknown'}</span>
-            `;
-
-            // Genres
-            document.getElementById('genres').innerHTML = data.genres.map(g => 
-                `<span class="genre-pill">${g.name}</span>`
-            ).join('');
-
-            // Episode Grid
-            const epsContainer = document.getElementById('epsGrid');
-            if(data.episodes && data.episodes.length > 0) {
-                epsContainer.innerHTML = data.episodes.map(ep => {
-                    let link = "";
-                    if(source === 'anime') {
-                        link = `stream.html?id=${ep.urlParam}&source=anime`;
-                    } else {
-                        link = `stream.html?url=${ep.urlParam}&source=donghua`;
-                    }
-
-                    return `<div class="eps-btn" onclick="window.location.href='${link}'">${ep.num}</div>`;
-                }).join('');
-            } else {
-                epsContainer.innerHTML = "<p class='loading-text'>Belum ada episode.</p>";
-            }
-
-            lucide.createIcons();
-
-        } catch(e) { 
+        } catch (e) {
             console.error(e);
-            alert("Gagal memuat data series.");
+            alert("Gagal memuat data: " + e.message);
+            document.querySelector('.container').innerHTML = '<p style="color:red; text-align:center;">Gagal Memuat Data</p>';
         }
     }
-    loadSeries();
+
+    function renderUI(data, source) {
+        // Set Images
+        document.getElementById('heroImg').src = data.poster;
+        document.getElementById('posterImg').src = data.poster;
+        
+        // Text Info
+        document.getElementById('title').innerText = data.title;
+        document.getElementById('synopsis').innerText = data.synopsis;
+
+        // Badge Type Styling
+        const badge = document.getElementById('badgeType');
+        badge.innerText = data.type;
+        // Anime = Orange (Warning), Donghua = Blue (Primary)
+        badge.style.background = source === 'anime' ? 'var(--warning)' : 'var(--primary)';
+        badge.style.color = source === 'anime' ? '#000' : '#fff';
+
+        // Meta Info
+        document.getElementById('meta').innerHTML = `
+            <span>${data.status}</span> • <span>${data.studio}</span> • <span style="color:#fbbf24">★ ${data.rating}</span>
+        `;
+
+        // Genres
+        const gBox = document.getElementById('genres');
+        gBox.innerHTML = data.genres.map(g => `<span class="genre-pill">${g}</span>`).join('');
+
+        // Episode Grid
+        const epBox = document.getElementById('epsGrid');
+        if(data.episodes.length > 0) {
+            // Sort episodes: Newest first (Optional logic, usually default is fine)
+            // data.episodes.reverse(); 
+
+            epBox.innerHTML = data.episodes.map(ep => {
+                const paramKey = source === 'anime' ? 'id' : 'url';
+                const link = `stream.html?${paramKey}=${encodeURIComponent(ep.param)}&source=${source}`;
+                return `<div class="eps-btn" onclick="location.href='${link}'">${ep.num}</div>`;
+            }).join('');
+        } else {
+            epBox.innerHTML = '<p style="color:gray; font-size:0.9rem; grid-column:1/-1;">Belum ada episode.</p>';
+        }
+    }
 </script>
 </body>
 </html>
