@@ -3,21 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Tontonan</title>
+    <title>Riwayat - RayStream</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        // Cek Login
-        if (!localStorage.getItem('user_info')) window.location.href = 'login.html';
-    </script>
 </head>
 <body>
 
 <header>
     <div class="logo">HISTORY</div>
-    <button class="btn btn-outline" onclick="openModal()" style="padding: 6px 12px; font-size: 0.8rem; border-color: var(--danger); color: var(--danger);">
-        <i data-lucide="trash-2" style="width:16px;"></i> Clear
-    </button>
+    <div onclick="clearHistory()" style="color: #ef4444; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+        <i data-lucide="trash-2" style="width: 18px; vertical-align: middle;"></i> Clear
+    </div>
 </header>
 
 <div class="container">
@@ -25,103 +21,75 @@
         </div>
 </div>
 
-<div id="confirmModal" class="modal-overlay">
-    <div class="modal-box">
-        <div style="background: rgba(255, 68, 68, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
-            <i data-lucide="alert-triangle" style="color: var(--danger); width: 30px; height: 30px;"></i>
-        </div>
-        <div class="modal-title">Hapus Riwayat?</div>
-        <p class="modal-desc">Semua riwayat tontonan kamu akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.</p>
-        
-        <div class="modal-actions">
-            <button class="modal-btn btn-cancel" onclick="closeModal()">Batal</button>
-            <button class="modal-btn btn-confirm" onclick="confirmClear()">Ya, Hapus</button>
-        </div>
-    </div>
-</div>
-
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item"><i data-lucide="home"></i> Home</a>
-    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i> Jadwal</a>
-    <a href="history.html" class="nav-item active"><i data-lucide="history"></i> History</a>
+    <a href="index.html" class="nav-item"><i data-lucide="home"></i></a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
+    <a href="history.html" class="nav-item active"><i data-lucide="history"></i></a>
 </nav>
 
 <script>
+    // Load Icons
+    lucide.createIcons();
+
     function loadHistory() {
-        const data = JSON.parse(localStorage.getItem('my_history')) || [];
+        // Ambil data dari LocalStorage
+        const raw = localStorage.getItem('my_history');
+        const list = raw ? JSON.parse(raw) : [];
         const container = document.getElementById('historyList');
 
-        if(data.length === 0) {
+        if (list.length === 0) {
             container.innerHTML = `
-                <div style="text-align:center; margin-top:100px; opacity:0.5;">
-                    <i data-lucide="clock" style="width:50px; height:50px; margin-bottom:10px;"></i>
+                <div style="text-align:center; padding: 50px 0; color: #555;">
+                    <i data-lucide="ghost" style="width: 40px; height: 40px; margin-bottom: 10px;"></i>
                     <p>Belum ada riwayat tontonan.</p>
-                    <a href="index.html" class="btn btn-primary" style="margin-top:15px; display:inline-flex;">Mulai Nonton</a>
                 </div>
             `;
             lucide.createIcons();
             return;
         }
 
-        container.innerHTML = data.map(item => `
-            <div class="history-card" onclick="window.location.href='stream.html?url=${item.url}'">
-                <img src="${item.poster || 'https://via.placeholder.com/100x150?text=No+Img'}" class="history-thumb" loading="lazy">
+        container.innerHTML = list.map(item => {
+            // GENERATE LINK YANG BENAR
+            // Pastikan item.url adalah ID bersih, bukan URL lengkap
+            let link = "";
+            let badgeColor = "";
+            
+            if (item.source === 'anime') {
+                link = `stream.html?id=${item.url}&source=anime`;
+                badgeColor = "color: #fbbf24;"; // Kuning
+            } else {
+                link = `stream.html?url=${item.url}&source=donghua`;
+                badgeColor = "color: #6366f1;"; // Biru
+            }
+
+            return `
+            <div class="history-item" onclick="window.location.href='${link}'">
+                <img src="${item.poster || 'https://via.placeholder.com/100x150'}" class="history-img" loading="lazy">
                 <div class="history-info">
                     <div class="history-title">${item.title}</div>
-                    
-                    <div style="margin-bottom:8px;">
-                        <span style="background: var(--primary-glow); color: var(--primary); font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
-                            ${item.episode || 'Episode ???'}
-                        </span>
+                    <div class="history-sub">
+                        <span style="${badgeColor} font-weight:700;">${item.source ? item.source.toUpperCase() : 'VIDEO'}</span>
+                        <span>•</span>
+                        <span>${item.episode || 'Ep ?'}</span>
                     </div>
-
-                    <div class="history-meta">
-                        <i data-lucide="calendar"></i> 
-                        <span>${item.date}</span>
-                    </div>
+                    <div style="font-size:0.7rem; color:#555; margin-top:4px;">${item.date}</div>
                 </div>
-                <div style="display:flex; align-items:center; padding-right:15px;">
-                    <i data-lucide="play-circle" style="color:var(--primary); width:28px; height:28px; opacity:0.8;"></i>
-                </div>
+                <i data-lucide="play-circle" style="color:#fff; opacity:0.5;"></i>
             </div>
-        `).join('');
+            `;
+        }).join('');
         
         lucide.createIcons();
     }
 
-    // Modal Logic
-    const modal = document.getElementById('confirmModal');
-
-    function openModal() {
-        const data = JSON.parse(localStorage.getItem('my_history'));
-        if(!data || data.length === 0) return; // Jangan buka kalau kosong
-        modal.style.display = 'flex';
-    }
-
-    function closeModal() {
-        modal.style.display = 'none';
-    }
-
-    function confirmClear() {
-        localStorage.removeItem('my_history');
-        closeModal();
-        loadHistory(); // Refresh list jadi kosong
-        
-        // Show Toast effect (Manual simple toast)
-        const toast = document.createElement('div');
-        toast.style.cssText = "position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:10px 20px; border-radius:20px; font-size:0.8rem; z-index:3000;";
-        toast.innerText = "Riwayat berhasil dihapus";
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
-    }
-
-    // Close modal kalau klik di luar box
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            closeModal();
+    function clearHistory() {
+        if(confirm("Hapus semua riwayat?")) {
+            localStorage.removeItem('my_history');
+            loadHistory();
         }
     }
 
+    // Jalankan saat load
     loadHistory();
 </script>
 </body>
