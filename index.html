@@ -30,6 +30,10 @@
 <header>
     <div class="logo">RayStream</div>
     <div id="userStatus"></div>
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search..." oninput="searchContent()">
+    </div>
 </header>
 
 <div class="slider-container" style="display:flex; overflow-x:auto; gap:15px; padding:20px; scrollbar-width:none;">
@@ -57,6 +61,22 @@
     <button id="btnLoadMore" class="btn-load-more" onclick="loadNextPage()">
         Load Next Page
     </button>
+
+    <!-- Genres Section -->
+    <div class="section-header">
+        <h3>Genres</h3>
+    </div>
+    <div id="genresData" class="genres-list">
+        <p style="color:#555;">Loading Genres...</p>
+    </div>
+
+    <!-- Combined Search Results Section -->
+    <div class="section-header">
+        <h3>Search Results</h3>
+    </div>
+    <div id="searchResultsData" class="grid">
+        <p style="color:#555;">Please enter a search query...</p>
+    </div>
 </div>
 
 <nav class="bottom-nav">
@@ -67,15 +87,14 @@
 
 <script>
     const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    const API_ANIME = "https://www.sankavollerei.com/anime/samehadaku/home";
-
-    // LOGIC PAGE ROTATION
-    let storedPage = parseInt(localStorage.getItem('current_page')) || 0; 
-    let currentPage = storedPage + 1;
-    if (currentPage > 5) currentPage = 1; 
-    localStorage.setItem('current_page', currentPage);
-
-    document.getElementById('pageIndicator').innerText = `Page ${currentPage}`;
+    const API_ANIME_SEARCH = "https://donghua-qnha.vercel.app/anime/samehadaku/search?query=";
+    const API_SEARCH = "https://anichin-seven.vercel.app/api/search?s=";
+    const API_GENRES = "https://anichin-seven.vercel.app/api/genres";
+    const API_COMPLETED_DONGHUA = "https://anichin-seven.vercel.app/api/completed";
+    const API_ONGOING_DONGHUA = "https://anichin-seven.vercel.app/api/ongoing";
+    
+    // Caching variables
+    let searchResults = [];
 
     // Helper: Slug Cleaner untuk Anichin
     function getCleanSlug(href) {
@@ -85,135 +104,64 @@
         return segment.replace(/-episode-\d+.*$/i, '');
     }
 
-    // 1. Load Popular (Donghua)
-    async function loadPopular() {
-        try {
-            const res = await fetch(`${API_DONGHUA}/popular`);
-            const data = await res.json();
-            document.getElementById('popularData').innerHTML = data.data.slice(0, 6).map(item => `
-                <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}&type=donghua'">
-                    <span class="type-badge bg-donghua">Donghua</span>
-                    <img src="${item.poster}" loading="lazy">
-                    <p>${item.title}</p>
-                </div>
-            `).join('');
-        } catch (e) { console.error(e); }
-    }
-
-    // 2. Load Mixed Content (Anime + Donghua)
-    async function loadMixedContent(pageNum) {
-        const btn = document.getElementById('btnLoadMore');
-        btn.innerText = "Loading...";
+    // Load Search Results for both Anime and Donghua
+    async function searchContent() {
+        const query = document.getElementById('searchInput').value;
+        if (query.length < 3) {
+            document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>Please enter a search query...</p>";
+            return;
+        }
 
         try {
-            // Kita buat array janji (Promises)
-            const promises = [
-                fetch(`${API_DONGHUA}/list?page=${pageNum}`).then(r => r.json())
+            // Fetch Anime Search Results
+            const animeRes = await fetch(`${API_ANIME_SEARCH}${query}`);
+            const animeData = await animeRes.json();
+
+            // Fetch Donghua Search Results
+            const donghuaRes = await fetch(`${API_SEARCH}${query}`);
+            const donghuaData = await donghuaRes.json();
+
+            // Merge both anime and donghua data into a single list
+            const combinedResults = [
+                ...animeData.data.animeList.map(item => ({
+                    title: item.title,
+                    poster: item.poster,
+                    type: 'anime',
+                    slug: item.animeId,
+                    href: item.href,
+                    genres: item.genreList
+                })),
+                ...donghuaData.data.map(item => ({
+                    title: item.title,
+                    poster: item.poster,
+                    type: 'donghua',
+                    slug: getCleanSlug(item.href),
+                    href: item.href,
+                    genres: item.genres
+                }))
             ];
 
-            // HANYA ambil Anime di load pertama kali (biar gak duplikat terus saat next page)
-            // Atau kalau mau selalu refresh anime, biarkan fetch terus. 
-            // Di sini saya setting fetch Anime setiap load biar up to date.
-            promises.push(fetch(API_ANIME).then(r => r.json()));
-
-            const [dataDonghua, dataAnime] = await Promise.all(promises);
-
-            // --- NORMALISASI DATA (Biar formatnya sama) ---
-
-            // A. Proses Anime (Samehadaku)
-            let animeList = [];
-            if (dataAnime && dataAnime.data && dataAnime.data.recent && dataAnime.data.recent.animeList) {
-                animeList = dataAnime.data.recent.animeList.map(item => ({
-                    title: item.title,
-                    poster: item.poster,
-                    ep: item.episodes,
-                    // AnimeId dari Samehadaku biasanya bersih, kita pakai sebagai slug
-                    slug: item.animeId, 
-                    type: 'anime', // Penanda
-                    rawDate: item.releasedOn
-                }));
-            }
-
-            // B. Proses Donghua (Anichin)
-            let donghuaList = [];
-            if (dataDonghua && dataDonghua.data) {
-                donghuaList = dataDonghua.data.map(item => ({
-                    title: item.title,
-                    poster: item.poster,
-                    ep: '?', // Anichin list kadang gak ada ep number di endpoint ini
-                    slug: getCleanSlug(item.href),
-                    type: 'donghua',
-                    rawDate: 'Just now'
-                }));
-            }
-
-            // --- PENGGABUNGAN ---
-            // Kita selang-seling (interleave) atau gabung langsung.
-            // Karena Anime biasanya lebih dikit updatenya per hari dibanding donghua,
-            // Kita taruh Anime di sela-sela atau di atas.
-            
-            // Strategi: Gabung semua -> Randomize dikit biar variatif -> Render
-            let combined = [...animeList, ...donghuaList];
-
-            // (Optional) Shuffle array biar nyampur banget
-            // combined.sort(() => Math.random() - 0.5); 
-
-            // Append ke HTML
-            const container = document.getElementById('latestData');
-            
-            const html = combined.map(item => {
-                // Tentukan warna badge
-                const badgeClass = item.type === 'anime' ? 'bg-anime' : 'bg-donghua';
-                const label = item.type === 'anime' ? 'ANIME' : 'DONGHUA';
-                
-                // Link Hati-hati:
-                // Kita oper parameter '&source=anime' biar nanti series.html tau harus fetch kemana
-                // (Nanti lu harus update series.html buat handle source=anime)
-                return `
-                <div class="card" onclick="window.location.href='series.html?slug=${item.slug}&source=${item.type}'">
-                    <span class="type-badge ${badgeClass}">${label}</span>
-                    <img src="${item.poster}" loading="lazy">
-                    <p>${item.title}</p>
-                    <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
-                        Ep ${item.ep}
+            // Display combined search results
+            if (combinedResults.length > 0) {
+                document.getElementById('searchResultsData').innerHTML = combinedResults.map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${item.slug}&type=${item.type}'">
+                        <span class="type-badge ${item.type === 'donghua' ? 'bg-donghua' : 'bg-anime'}">${item.type.toUpperCase()}</span>
+                        <img src="${item.poster}" loading="lazy">
+                        <p>${item.title}</p>
                     </div>
-                </div>
-                `;
-            }).join('');
-
-            // Kalau ini halaman pertama, replace isi. Kalau next page, append.
-            // Tapi karena struktur logic loadNextPage append, kita pakai insertAdjacentHTML
-            container.insertAdjacentHTML('beforeend', html);
-            
-            btn.innerText = "Load Next Page";
-
-        } catch (e) { 
-            console.error("Error loading content:", e);
-            document.getElementById('btnLoadMore').innerText = "Try Again";
+                `).join('');
+            } else {
+                document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>No results found.</p>";
+            }
+        } catch (error) {
+            console.error("Error fetching search results:", error);
+            document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>An error occurred while fetching results. Please try again.</p>";
         }
     }
 
-    // 3. Fungsi Tombol Next Page
-    function loadNextPage() {
-        currentPage++;
-        // Saat next page, kita mungkin cuma mau load Donghua (karena anime listnya itu2 aja di endpoint recent)
-        // Tapi di logic loadMixedContent diatas, dia fetch dua-duanya.
-        // Gpp, biar user liat anime lagi kalau scroll bawah.
-        loadMixedContent(currentPage);
-    }
-
-    // Tampilkan Avatar User
-    const user = JSON.parse(localStorage.getItem('user_info'));
-    if(user) {
-        document.getElementById('userStatus').innerHTML = `
-            <img src="${user.picture}" style="width:36px; height:36px; border-radius:50%; border:2px solid var(--primary); cursor:pointer;" onclick="window.location.href='history.html'">
-        `;
-    }
-
     // Init
-    loadPopular();
-    loadMixedContent(currentPage);
+    loadGenres();
     lucide.createIcons();
 </script>
 </body>
-</html>
+    </html>
