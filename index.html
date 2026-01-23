@@ -10,80 +10,124 @@
     // wajib login
     if (!localStorage.getItem('user_info')) window.location.href = 'login.html';
   </script>
+
+  <style>
+    /* tambahan kecil biar search nyatu header tanpa ngerusak css lama */
+    .header-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      width: 55%;
+      max-width: 520px;
+      justify-content:flex-end;
+    }
+    .searchbar{
+      display:flex; align-items:center; gap:10px;
+      width:100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    .searchbar input{
+      flex:1; border:0; outline:0; background:transparent;
+      color: var(--text-main);
+      font-size: .95rem;
+    }
+    .icon-btn{
+      width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      cursor:pointer;
+    }
+    .icon-btn svg{ width:18px; }
+
+    /* section title */
+    .dual-head{
+      display:flex; align-items:center; gap:10px;
+      margin: 12px 5px 10px;
+    }
+    .pill{
+      font-size: .65rem; font-weight:800; letter-spacing:.6px;
+      padding: 4px 8px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .pill.donghua{ background: rgba(59,130,246,0.16); color:#cfe3ff; border-color: rgba(59,130,246,0.22); }
+    .pill.anime{ background: rgba(245,158,11,0.16); color:#ffe6b7; border-color: rgba(245,158,11,0.22); }
+
+    .tiny-status{
+      font-size:.82rem;
+      color: var(--text-muted);
+      margin: 0 5px 8px;
+    }
+
+    .pager-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin: 8px 5px 10px;
+    }
+    .pager-row .pagebox{
+      font-size:.82rem;
+      color: var(--text-muted);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.03);
+    }
+  </style>
 </head>
+
 <body>
 
-<header class="rs-header">
-  <div class="rs-brand" onclick="location.href='index.html'">
-    <div class="rs-logo">RayStream</div>
-    <div class="rs-sub">Anime + Donghua, disatuin biar otak kamu nggak perlu multitasking</div>
-  </div>
+<header>
+  <div class="logo" onclick="location.href='index.html'" style="cursor:pointer;">RayStream</div>
 
-  <div class="rs-actions">
-    <div class="rs-search">
-      <i data-lucide="search" class="rs-ico"></i>
-      <input id="q" type="search" placeholder="Cari judul... (anime & donghua)" autocomplete="off" />
-      <button id="btnClear" class="rs-clear" title="Clear" style="display:none;">
+  <div class="header-right">
+    <div class="searchbar">
+      <i data-lucide="search" style="width:18px; color:var(--text-muted)"></i>
+      <input id="q" type="search" placeholder="Cari anime / donghua..." autocomplete="off">
+      <button id="btnClear" class="icon-btn" style="display:none;" title="Clear">
         <i data-lucide="x"></i>
       </button>
     </div>
   </div>
 </header>
 
-<div class="tabs-wrap">
-  <button class="tab-btn active" data-tab="latest">
-    <i data-lucide="sparkles"></i><span>Latest</span>
-  </button>
-  <button class="tab-btn" data-tab="ongoing">
-    <i data-lucide="play-circle"></i><span>Ongoing</span>
-  </button>
-  <button class="tab-btn" data-tab="completed">
-    <i data-lucide="check-circle-2"></i><span>Completed</span>
-  </button>
+<!-- Tabs: pakai style kamu yang udah ada -->
+<div class="tab-container">
+  <button class="tab-btn active" data-tab="ongoing">Ongoing</button>
+  <button class="tab-btn" data-tab="completed">Completed</button>
 </div>
 
-<main class="container">
-  <div class="panel rs-panel">
-    <div class="rs-panel-head">
-      <div class="rs-status" id="statusText">Memuat...</div>
+<div class="container">
 
-      <div class="rs-pager">
-        <button id="btnPrev" class="btn btn-ghost" disabled title="Prev">
-          <i data-lucide="chevron-left"></i>
-        </button>
-        <div class="rs-page">Page <span id="pageNum">1</span></div>
-        <button id="btnNext" class="btn btn-ghost" title="Next">
-          <i data-lucide="chevron-right"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- DONGHUA -->
-    <section class="rs-section">
-      <div class="rs-section-title">
-        <div class="rs-pill rs-pill-donghua"><span>DONGHUA</span></div>
-        <h3 id="titleDonghua">Donghua</h3>
-      </div>
-      <div id="gridDonghua" class="grid"></div>
-      <div id="emptyDonghua" class="rs-empty" style="display:none;">Tidak ada data donghua.</div>
-    </section>
-
-    <!-- ANIME -->
-    <section class="rs-section">
-      <div class="rs-section-title">
-        <div class="rs-pill rs-pill-anime"><span>ANIME</span></div>
-        <h3 id="titleAnime">Anime</h3>
-      </div>
-      <div id="gridAnime" class="grid"></div>
-      <div id="emptyAnime" class="rs-empty" style="display:none;">Tidak ada data anime.</div>
-    </section>
-
-    <div id="loading" class="rs-loading" style="display:none;">
-      <div class="spinner"></div>
-      <div>Loading...</div>
-    </div>
+  <div class="pager-row">
+    <button id="btnPrev" class="btn" style="padding:10px 14px; opacity:.9;" disabled>&laquo; Prev</button>
+    <div class="pagebox">Page <span id="pageNum">1</span></div>
+    <button id="btnNext" class="btn" style="padding:10px 14px; opacity:.9;">Next &raquo;</button>
   </div>
-</main>
+
+  <div id="statusText" class="tiny-status">Memuat...</div>
+
+  <!-- DONGHUA -->
+  <div class="dual-head">
+    <span class="pill donghua">DONGHUA</span>
+    <div class="section-title" style="margin:0; font-size:1rem;">List Donghua</div>
+  </div>
+  <div id="gridDonghua" class="grid"></div>
+  <div id="emptyDonghua" class="tiny-status" style="display:none;">Donghua kosong / error.</div>
+
+  <!-- ANIME -->
+  <div class="dual-head" style="margin-top:16px;">
+    <span class="pill anime">ANIME</span>
+    <div class="section-title" style="margin:0; font-size:1rem;">List Anime</div>
+  </div>
+  <div id="gridAnime" class="grid"></div>
+  <div id="emptyAnime" class="tiny-status" style="display:none;">Anime kosong / error.</div>
+</div>
 
 <nav class="bottom-nav">
   <a href="index.html" class="nav-item active"><i data-lucide="home"></i></a>
@@ -96,31 +140,15 @@
   const API_DONGHUA = "https://anichin-seven.vercel.app/api";
   const API_ANIME   = "https://donghua-qnha.vercel.app/anime/samehadaku";
 
-  const ENDPOINT = {
-    latest: {
-      donghua: (page) => `${API_DONGHUA}/list?page=${page}`,
-      anime:   (page) => `${API_ANIME}/home?page=${page}` // fallback handled
-    },
-    ongoing: {
-      donghua: (page) => `${API_DONGHUA}/ongoing?page=${page}`,
-      anime:   (page) => `${API_ANIME}/ongoing?page=${page}`
-    },
-    completed: {
-      donghua: (page) => `${API_DONGHUA}/completed?page=${page}`,
-      anime:   (page) => `${API_ANIME}/completed?page=${page}`
-    },
-    search: {
-      donghua: (q) => `${API_DONGHUA}/search?s=${encodeURIComponent(q)}`,
-      anime:   (q) => `${API_ANIME}/search?query=${encodeURIComponent(q)}`
-    }
+  let state = {
+    tab: "ongoing", // ongoing | completed
+    page: 1,
+    q: ""
   };
-
-  let state = { tab: "latest", page: 1, q: "" };
 
   const el = {
     q: document.getElementById("q"),
     btnClear: document.getElementById("btnClear"),
-    loading: document.getElementById("loading"),
     status: document.getElementById("statusText"),
     pageNum: document.getElementById("pageNum"),
     btnPrev: document.getElementById("btnPrev"),
@@ -128,39 +156,36 @@
     gridD: document.getElementById("gridDonghua"),
     gridA: document.getElementById("gridAnime"),
     emptyD: document.getElementById("emptyDonghua"),
-    emptyA: document.getElementById("emptyAnime"),
-    titleD: document.getElementById("titleDonghua"),
-    titleA: document.getElementById("titleAnime")
+    emptyA: document.getElementById("emptyAnime")
   };
 
-  function setLoading(on){ el.loading.style.display = on ? "flex" : "none"; }
-  function setEmpty(which, on){ (which === "donghua" ? el.emptyD : el.emptyA).style.display = on ? "block" : "none"; }
-
-  function clearGrid(){
-    el.gridD.innerHTML = "";
-    el.gridA.innerHTML = "";
-    setEmpty("donghua", false);
-    setEmpty("anime", false);
+  function showEmpty(kind, on){
+    (kind === "donghua" ? el.emptyD : el.emptyA).style.display = on ? "block" : "none";
   }
 
-  function titleCase(s){ return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
+  function clearUI(){
+    el.gridD.innerHTML = "";
+    el.gridA.innerHTML = "";
+    showEmpty("donghua", false);
+    showEmpty("anime", false);
+  }
+
+  async function fetchJson(url){
+    const r = await fetch(url);
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  }
 
   function normalizeDonghua(json){
-    const arr = json?.data;
-    return Array.isArray(arr) ? arr : [];
+    return Array.isArray(json?.data) ? json.data : [];
   }
 
   function normalizeAnime(json){
-    const a = json?.data?.animeList;
-    if (Array.isArray(a)) return a;
-    const b = json?.data;
-    if (Array.isArray(b)) return b;
-    return [];
+    const arr = json?.data?.animeList;
+    return Array.isArray(arr) ? arr : [];
   }
 
-  function getAnimePagination(json){ return json?.pagination || null; }
-
-  function renderCards(list, kind){
+  function render(list, kind){
     const grid = (kind === "donghua") ? el.gridD : el.gridA;
 
     grid.innerHTML = list.map(item => {
@@ -169,22 +194,16 @@
       const status = (item.status || "").trim();
       const type = (item.type || "").trim();
       const score = (item.score || item.rating || "").toString().trim();
-      const sub = (item.sub || "").trim();
 
-      const slug = kind === "donghua"
-        ? (item.slug || (item.anichinUrl ? item.anichinUrl.split('/').filter(Boolean).pop() : ""))
-        : (item.animeId || "");
-
+      const slug = (kind === "donghua") ? (item.slug || "") : (item.animeId || "");
       const badgeClass = kind === "donghua" ? "tag-donghua" : "tag-anime";
       const badgeText  = kind === "donghua" ? "DONGHUA" : "ANIME";
 
       const left = status || type || "—";
-      const right = score ? `⭐ ${score}` : (sub ? sub : "");
-
-      const link = `series.html?slug=${encodeURIComponent(slug)}&source=${kind}`;
+      const right = score ? `⭐ ${score}` : "";
 
       return `
-        <article class="card rs-card" onclick="window.location.href='${link}'">
+        <article class="card" onclick="location.href='series.html?slug=${encodeURIComponent(slug)}&source=${kind}'">
           <span class="type-tag ${badgeClass}">${badgeText}</span>
           <img src="${poster}" loading="lazy" alt="${title}">
           <div class="card-info">
@@ -199,71 +218,67 @@
     }).join("");
   }
 
-  async function fetchJson(url){
-    const r = await fetch(url);
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
+  function buildUrls(){
+    const isSearch = state.q.length > 0;
+
+    if(isSearch){
+      return {
+        donghua: `${API_DONGHUA}/search?s=${encodeURIComponent(state.q)}`,
+        anime: `${API_ANIME}/search?query=${encodeURIComponent(state.q)}`
+      };
+    }
+
+    return {
+      donghua: `${API_DONGHUA}/${state.tab}?page=${state.page}`,
+      anime: `${API_ANIME}/${state.tab}?page=${state.page}`
+    };
   }
 
   async function load(){
-    setLoading(true);
-    clearGrid();
+    clearUI();
+    el.pageNum.textContent = state.page;
 
     const isSearch = state.q.length > 0;
-
-    el.titleD.textContent = isSearch ? `Hasil Search: "${state.q}"` : `${titleCase(state.tab)} Donghua`;
-    el.titleA.textContent = isSearch ? `Hasil Search: "${state.q}"` : `${titleCase(state.tab)} Anime`;
-
-    el.pageNum.textContent = state.page;
     el.btnPrev.disabled = (state.page <= 1) || isSearch;
 
     el.status.textContent = isSearch
-      ? `Mencari di 2 sumber...`
-      : `Menampilkan ${titleCase(state.tab)} (2 sumber)`;
+      ? `Search: "${state.q}" (2 sumber)`
+      : `${state.tab.toUpperCase()} (2 sumber)`;
 
-    try{
-      const [jD, jA] = await Promise.all([
-        isSearch
-          ? fetchJson(ENDPOINT.search.donghua(state.q))
-          : fetchJson(ENDPOINT[state.tab].donghua(state.page)),
-        isSearch
-          ? fetchJson(ENDPOINT.search.anime(state.q))
-          : fetchJson(ENDPOINT[state.tab].anime(state.page))
-            .catch(async () => {
-              // fallback khusus latest anime
-              if(state.tab !== "latest") throw new Error("anime endpoint fail");
-              try { return await fetchJson(`${API_ANIME}/latest?page=${state.page}`); }
-              catch { return await fetchJson(`${API_ANIME}/list?page=${state.page}`); }
-            })
-      ]);
+    const urls = buildUrls();
 
-      const donghuaList = normalizeDonghua(jD);
-      const animeList = normalizeAnime(jA);
+    // penting: jangan bikin 1 error ngebunuh semuanya
+    const [dRes, aRes] = await Promise.allSettled([
+      fetchJson(urls.donghua),
+      fetchJson(urls.anime)
+    ]);
 
-      if(donghuaList.length) renderCards(donghuaList, "donghua");
-      else setEmpty("donghua", true);
-
-      if(animeList.length) renderCards(animeList, "anime");
-      else setEmpty("anime", true);
-
-      if(isSearch){
-        el.btnNext.disabled = true;
-      } else {
-        const pA = getAnimePagination(jA);
-        const animeHasNext = (pA && typeof pA.hasNextPage === "boolean") ? pA.hasNextPage : true;
-        const donghuaHasNext = donghuaList.length > 0;
-        el.btnNext.disabled = !(animeHasNext || donghuaHasNext);
-      }
-    } catch(err){
-      console.error(err);
-      el.status.textContent = "Gagal load data. Cek console, atau API lagi drama.";
-      setEmpty("donghua", true);
-      setEmpty("anime", true);
-      el.btnNext.disabled = true;
-    } finally {
-      setLoading(false);
-      lucide.createIcons();
+    // donghua
+    if(dRes.status === "fulfilled"){
+      const listD = normalizeDonghua(dRes.value);
+      if(listD.length) render(listD, "donghua");
+      else showEmpty("donghua", true);
+    } else {
+      console.error("Donghua error:", dRes.reason);
+      showEmpty("donghua", true);
     }
+
+    // anime
+    if(aRes.status === "fulfilled"){
+      const listA = normalizeAnime(aRes.value);
+      if(listA.length) render(listA, "anime");
+      else showEmpty("anime", true);
+    } else {
+      console.error("Anime error:", aRes.reason);
+      showEmpty("anime", true);
+    }
+
+    // next page:
+    // search -> disable next (biar gak bikin request ngawur)
+    // non-search -> allow next (donghua ga kasih hasNext, jadi ya coba aja)
+    el.btnNext.disabled = isSearch;
+
+    lucide.createIcons();
   }
 
   // tabs
@@ -271,28 +286,26 @@
     btn.addEventListener("click", () => {
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-
       state.tab = btn.dataset.tab;
       state.page = 1;
 
-      // keluar dari search kalau ganti tab
+      // kalau lagi search, keluar search pas ganti tab
       if(state.q){
         state.q = "";
         el.q.value = "";
         el.btnClear.style.display = "none";
       }
-
       load();
     });
   });
 
-  document.getElementById("btnPrev").addEventListener("click", () => {
+  // paging
+  el.btnPrev.addEventListener("click", () => {
     if(state.page <= 1) return;
     state.page--;
     load();
   });
-
-  document.getElementById("btnNext").addEventListener("click", () => {
+  el.btnNext.addEventListener("click", () => {
     state.page++;
     load();
   });
@@ -323,4 +336,4 @@
 </script>
 
 </body>
-    </html>
+  </html>
