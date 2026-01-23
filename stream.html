@@ -6,6 +6,22 @@
     <title>Nonton - RayStream</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* CSS Tambahan untuk Server Grid yang Rapi */
+        .server-quality-group { margin-bottom: 10px; }
+        .quality-label { 
+            font-size: 0.75rem; color: var(--primary); font-weight: 700; margin-bottom: 5px; 
+            text-transform: uppercase;
+        }
+        .server-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .btn-server {
+            padding: 6px 12px; background: #222; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px; color: #ccc; font-size: 0.75rem; cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-server:hover { background: #333; }
+        .btn-server.active { background: var(--primary); color: white; border-color: var(--primary); }
+    </style>
 </head>
 <body>
 
@@ -20,70 +36,64 @@
     <div style="width:24px;"></div>
 </header>
 
-<div class="container" style="padding-top: 0; max-width: 850px;">
+<div class="container" style="padding-top: 0; max-width: 900px;">
     
-    <div class="video-area">
+    <div class="video-box">
         <div class="video-wrapper">
-            <div class="video-loader">
-                <i data-lucide="loader-2" class="spin" style="width:40px; height:40px; animation: spin 1s linear infinite;"></i>
-            </div>
             <iframe id="iframePlayer" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
         </div>
     </div>
-    <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 
-    <div class="stream-title-block">
+    <div class="panel" style="padding-bottom: 10px;">
         <h1 id="epTitle" class="ep-title">Memuat Video...</h1>
         <div class="ep-meta">
-            <span id="badgeSrc" class="meta-badge" style="color:var(--primary);">SOURCE</span>
-            <span class="meta-badge">HD</span>
+            <span id="badgeSrc" class="badge" style="background:var(--primary);">SOURCE</span>
+            <span class="badge">HD</span>
             <span id="dateInfo">Updated Today</span>
         </div>
     </div>
 
-    <div class="nav-buttons">
-        <button id="btnPrev" class="btn-nav" style="display:none;">&laquo; Prev</button>
-        <button class="btn-nav" onclick="goToSeries()">Info Series</button>
-        <button id="btnNext" class="btn-nav primary" style="display:none;">Next &raquo;</button>
+    <div style="display:flex; gap:10px; margin-bottom: 20px;">
+        <button id="btnPrev" class="btn" style="flex:1; display:none;">&laquo; Prev</button>
+        <button class="btn" style="flex:1; background:#333;" onclick="goToSeries()">Info Series</button>
+        <button id="btnNext" class="btn btn-primary" style="flex:1; display:none;">Next &raquo;</button>
     </div>
 
-    <div class="control-box">
-        <div class="box-label"><i data-lucide="server" style="width:14px; vertical-align:middle;"></i> Server Stream</div>
-        <div id="serverList" class="server-grid">
-            <p style="font-size:0.8rem; color:#666;">Mencari server terbaik...</p>
+    <div class="panel">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:10px;">
+            <i data-lucide="server" style="width:18px; color:var(--secondary);"></i> 
+            <span style="font-weight:600;">Ganti Server</span>
+        </div>
+        <div id="serverListContainer">
+            <p style="font-size:0.8rem; color:#666;">Memuat server...</p>
         </div>
     </div>
 
-    <div class="control-box">
-        <div class="dl-header" onclick="toggleDl()">
-            <div class="box-label" style="margin:0; display:flex; align-items:center; gap:8px;">
-                <i data-lucide="download-cloud" style="width:16px;"></i> Download Link
+    <div class="panel">
+        <div onclick="toggleDl()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i data-lucide="download-cloud" style="width:18px; color:var(--secondary);"></i>
+                <span style="font-weight:600;">Download</span>
             </div>
-            <i data-lucide="chevron-down" id="dlIcon" style="transition:0.3s;"></i>
+            <i data-lucide="chevron-down" id="dlIcon"></i>
         </div>
-        <div id="dlContainer" class="dl-content" style="display:none; margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
+        <div id="dlContainer" style="display:none; margin-top:15px; border-top:1px solid rgba(255,255,255,0.05); padding-top:15px;">
             </div>
-    </div>
-
-    <div style="margin-top:40px;">
-        <h3 class="section-header" style="padding:0; margin-bottom:15px;">Mungkin kamu suka</h3>
-        <div id="recommendationGrid" class="grid"></div>
     </div>
 
 </div>
 
 <script>
-    // --- SETUP API ---
+    // --- API CONFIG ---
     const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    // API Anime (Proxy Samehadaku)
-    const API_ANIME_STREAM = "https://www.sankavollerei.com/anime/samehadaku"; 
-    const API_ANIME_SERIES = "https://www.sankavollerei.com/anime/samehadaku";
+    // Gunakan proxy donghua-qnha untuk akses Samehadaku
+    const API_ANIME = "https://donghua-qnha.vercel.app/anime/samehadaku"; 
 
-    // --- AMBIL PARAMETER URL ---
+    // --- URL PARAMS ---
     const urlParams = new URLSearchParams(window.location.search);
     const donghuaUrl = urlParams.get('url');      
     const animeId = urlParams.get('id');          
-    let source = urlParams.get('source'); // Bisa 'anime' atau 'donghua'
+    let source = urlParams.get('source'); 
 
     // Smart Fallback
     if (!source) {
@@ -91,162 +101,218 @@
         else if (donghuaUrl) source = 'donghua';
     }
 
-    // ID CLEANER
+    // ID Cleaner (Penting!)
     function cleanId(str) {
         if(!str) return "";
         return str.replace(/\/$/, '').split('/').pop();
     }
 
-    // --- FUNGSI UTAMA LOAD STREAM ---
+    // --- MAIN LOAD FUNCTION ---
     async function loadStream() {
         try {
-            // UI Badge
+            // UI Badge Update
             const badge = document.getElementById('badgeSrc');
             badge.innerText = source === 'anime' ? "ANIME" : "DONGHUA";
-            badge.style.color = source === 'anime' ? "#f59e0b" : "#3b82f6"; 
+            badge.style.background = source === 'anime' ? "linear-gradient(135deg, #f59e0b, #d97706)" : "linear-gradient(135deg, #3b82f6, #2563eb)";
 
             let data = {};
 
-            // === 1. MODE ANIME (MAPPING BARU SESUAI RESPON JSON) ===
+            // ============================================================
+            // SCENARIO 1: ANIME (SAMEHADAKU) - STRUKTUR BARU
+            // ============================================================
             if (source === 'anime' && animeId) {
                 const cleanAnimeId = cleanId(animeId);
-                console.log("Fetching Anime ID:", cleanAnimeId);
+                console.log("Fetching Anime:", cleanAnimeId);
 
-                // Fetch ke Endpoint Episode
-                const res = await fetch(`${API_ANIME_STREAM}/episode/${cleanAnimeId}`);
-                if (!res.ok) throw new Error("API Anime Error/Down");
+                const res = await fetch(`${API_ANIME}/episode/${cleanAnimeId}`);
+                if (!res.ok) throw new Error("Gagal mengambil data Anime");
                 
                 const json = await res.json();
                 if(!json.data) throw new Error("Episode tidak ditemukan");
                 
                 const d = json.data;
-                
-                // MAPPING DATA ANIME (UPDATED)
-                // Stream URL: d.defaultStreamingUrl (Blogger)
-                // Servers: d.server.qualities (Array)
-                // Downloads: d.downloadUrl.formats (Array)
-                
+
+                // Mapping Data Anime (Sesuai JSON Samehadaku)
                 data = {
-                    title: d.title || cleanAnimeId,
-                    stream: d.defaultStreamingUrl, 
-                    // Kita akan ekstrak server list dari d.server.qualities
-                    // Ambil server dari kualitas tertinggi (misal 1080p atau 720p)
-                    servers: extractServers(d.server?.qualities),
+                    title: d.title,
+                    stream: d.defaultStreamingUrl, // Link stream utama (Blogger)
+                    // Server list ada di d.server.qualities
+                    // Kita oper object utuh biar dirender khusus
+                    rawServerData: d.server?.qualities || [],
+                    // Download
                     downloads: d.downloadUrl?.formats || [],
-                    
                     // Navigasi
                     prev: d.hasPrevEpisode ? `stream.html?id=${cleanId(d.prevEpisode.episodeId)}&source=anime` : null,
-                    next: d.hasNextEpisode ? `stream.html?id=${cleanId(d.nextEpisode.episodeId)}&source=anime` : null
+                    next: d.hasNextEpisode ? `stream.html?id=${cleanId(d.nextEpisode?.episodeId || "")}&source=anime` : null
                 };
 
-                // Render Download Anime (Structure Baru)
+                // Render Server Khusus Anime
+                renderAnimeServers(data.rawServerData);
+                // Render Download Anime
                 renderAnimeDownloads(data.downloads);
 
-            // === 2. MODE DONGHUA (LAMA) ===
+            // ============================================================
+            // SCENARIO 2: DONGHUA (ANICHIN)
+            // ============================================================
             } else if (donghuaUrl) {
-                console.log("Fetching Donghua:", donghuaUrl);
                 const res = await fetch(`${API_DONGHUA}/detail?url=${donghuaUrl}`);
                 const json = await res.json();
 
-                if(json.status === "error" || !json.streaming) throw new Error("Gagal mengambil data Donghua");
+                if(!json.streaming) throw new Error("Data stream Donghua kosong");
 
                 data = {
                     title: json.episode,
                     stream: json.streaming.main_url.url,
-                    servers: json.streaming.servers, // Structure [ {name, url}, ... ]
+                    // Server donghua lebih simple (array flat)
+                    rawServerData: json.streaming.servers,
                     downloads: json.download_url,
                     prev: json.navigation.previous_episode ? `stream.html?url=${json.navigation.previous_episode.anichinUrl}&source=donghua` : null,
                     next: json.navigation.next_episode ? `stream.html?url=${json.navigation.next_episode.anichinUrl}&source=donghua` : null
                 };
 
+                // Render Server Donghua
+                renderDonghuaServers(data.rawServerData);
                 // Render Download Donghua
                 renderDonghuaDownloads(data.downloads);
-
-            } else {
-                throw new Error("Parameter URL tidak valid.");
             }
 
-            // === 3. RENDER PLAYER & TITLE ===
+            // --- RENDER UMUM ---
             document.getElementById('epTitle').innerText = data.title;
             
             // Set Player
-            const player = document.getElementById('iframePlayer');
             if(data.stream) {
-                player.src = data.stream;
+                document.getElementById('iframePlayer').src = data.stream;
             } else {
-                showToast("Stream utama kosong.", "error");
+                showToast("Stream utama tidak tersedia.", "error");
             }
 
-            // Render Navigasi
+            // Set Nav Buttons
             const btnPrev = document.getElementById('btnPrev');
             const btnNext = document.getElementById('btnNext');
             
-            if(data.prev) { btnPrev.style.display='block'; btnPrev.onclick = () => window.location.href = data.prev; }
-            if(data.next) { btnNext.style.display='block'; btnNext.onclick = () => window.location.href = data.next; }
-
-            // Render Server
-            const sList = document.getElementById('serverList');
-            if(data.servers && data.servers.length > 0) {
-                // Handle beda format server object (Donghua: {name, url}, Anime: {title, serverId/href})
-                // Untuk Anime kita perlu fetch lagi server url-nya, atau redirect?
-                // API Anime Samehadaku ini server list-nya href="/samehadaku/server/XYZ". 
-                // Ini butuh fetch lagi ke endpoint server. RIBET.
-                // SEMENTARA: Kita hanya render server Donghua yang langsung URL.
-                
-                if (source === 'donghua') {
-                    sList.innerHTML = data.servers.map((s, i) => 
-                        `<button class="btn-server ${i===0?'active':''}" onclick="changePlayer('${s.url}', this)">${s.name}</button>`
-                    ).join('');
-                } else {
-                    // Anime Server Handling (Advanced)
-                    // API Samehadaku server list-nya butuh proses tambahan.
-                    // Untuk sekarang kita tampilkan Default Stream (Blogger) saja.
-                    sList.innerHTML = `<span style="font-size:0.8rem; color:#666;">Default Server (Blogger) Only. <br>Gunakan Download jika stream error.</span>`;
-                }
-            } else {
-                sList.innerHTML = `<span style="font-size:0.8rem; color:#666;">Default Server Only</span>`;
+            if(data.prev) { 
+                btnPrev.style.display='block'; 
+                btnPrev.onclick = () => window.location.href = data.prev; 
+            }
+            if(data.next) { 
+                btnNext.style.display='block'; 
+                btnNext.onclick = () => window.location.href = data.next; 
             }
 
             // Save History
             const historyKey = source === 'anime' ? cleanId(animeId) : donghuaUrl;
-            saveToHistory(data.title, historyKey, source);
+            saveHistory(data.title, historyKey, source);
+
+            lucide.createIcons();
 
         } catch (e) {
             console.error(e);
-            document.getElementById('epTitle').innerText = "Gagal memuat: " + e.message;
-            alert("Error: " + e.message);
+            document.getElementById('epTitle').innerText = "Gagal: " + e.message;
+            document.getElementById('serverListContainer').innerHTML = `<p style="color:#ef4444;">${e.message}</p>`;
         }
     }
 
-    // --- HELPER: EXTRACT SERVERS (ANIME) ---
-    function extractServers(qualities) {
-        // Ini cuma dummy extraction, karena server anime butuh fetch detail lagi.
-        // Kita return empty array biar gak error, fokus ke default stream dulu.
-        return []; 
+    // --- RENDER SERVER ANIME (SAMEHADAKU) ---
+    // Struktur: qualities -> [{title: "360p", serverList: [...]}, ...]
+    function renderAnimeServers(qualities) {
+        const container = document.getElementById('serverListContainer');
+        
+        if (!qualities || qualities.length === 0) {
+            container.innerHTML = "<p>Tidak ada server alternatif.</p>";
+            return;
+        }
+
+        let html = "";
+        qualities.forEach(q => {
+            // q.title = "360p", "480p", etc.
+            // q.serverList = [{title: "Blogspot", href: "..."}, ...]
+            
+            if (q.serverList && q.serverList.length > 0) {
+                html += `<div class="server-quality-group">`;
+                html += `<div class="quality-label">${q.title}</div>`;
+                html += `<div class="server-grid">`;
+                
+                q.serverList.forEach(srv => {
+                    // Masalah: href server Samehadaku biasanya internal (/samehadaku/server/ID)
+                    // Kita perlu ubah ini jadi fetch link asli via proxy donghua-qnha
+                    // href dari API: "/samehadaku/server/9CEDC-6-xhmyrq"
+                    // Kita harus ubah jadi fetch ke API proxy kita untuk dapat link aslinya
+                    
+                    // KARENA API SERVER BUTUH FETCH LAGI (YANG BIKIN LAMBAT),
+                    // Kita bisa simpan ID servernya di data attribute dan fetch on click.
+                    const serverId = srv.serverId; // Misal "9CEDC-6-xhmyrq"
+                    
+                    html += `<button class="btn-server" onclick="fetchAndPlayAnimeServer('${serverId}', this)">
+                        ${srv.title}
+                    </button>`;
+                });
+                
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
     }
 
-    // --- RENDERERS ---
-    
-    // Anime Download Renderer (Format Samehadaku)
-    function renderAnimeDownloads(formats) {
-        if(!formats || formats.length === 0) return;
-        let html = "";
+    // Fungsi Fetch Server Asli Anime (On Click)
+    async function fetchAndPlayAnimeServer(serverId, btn) {
+        // Efek loading di tombol
+        const originalText = btn.innerText;
+        btn.innerText = "Loading...";
         
-        // formats: [{title: "MKV", qualities: [...]}, ...]
-        formats.forEach(fmt => {
-            html += `<div style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed #333;">`;
-            html += `<div style="color:var(--primary); font-weight:700; font-size:0.85rem; margin-bottom:5px;">${fmt.title}</div>`; // MKV / MP4
+        try {
+            // Endpoint untuk get real video url dari server ID
+            // https://donghua-qnha.vercel.app/anime/samehadaku/server/{serverId}
+            const res = await fetch(`${API_ANIME}/server/${serverId}`);
+            const json = await res.json();
             
-            if(fmt.qualities) {
-                fmt.qualities.forEach(q => {
-                    html += `<div style="display:flex; flex-direction:column; gap:5px; margin-bottom:8px;">`;
-                    html += `<span style="font-size:0.75rem; color:#aaa; font-weight:600;">${q.title}</span>`; // 360p / 480p
-                    
-                    html += `<div style="display:flex; flex-wrap:wrap; gap:6px;">`;
+            if (json.data && json.data.url) {
+                document.getElementById('iframePlayer').src = json.data.url;
+                
+                // Update UI Active
+                document.querySelectorAll('.btn-server').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                showToast("Server diganti!", "success");
+            } else {
+                showToast("Gagal mengambil link server.", "error");
+            }
+        } catch(e) {
+            console.error(e);
+            showToast("Server Error.", "error");
+        } finally {
+            btn.innerText = originalText;
+        }
+    }
+
+    // --- RENDER SERVER DONGHUA (ANICHIN) ---
+    // Struktur: Array simple [{name, url}, ...]
+    function renderDonghuaServers(servers) {
+        const container = document.getElementById('serverListContainer');
+        if (!servers || servers.length === 0) {
+            container.innerHTML = "<p>Server default only.</p>";
+            return;
+        }
+        
+        let html = `<div class="server-grid">`;
+        servers.forEach((s, i) => {
+            html += `<button class="btn-server" onclick="changePlayer('${s.url}', this)">${s.name}</button>`;
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    // --- RENDER DOWNLOADS ---
+    function renderAnimeDownloads(list) {
+        if(!list || list.length === 0) return;
+        let html = "";
+        list.forEach(g => {
+            html += `<div style="margin-bottom:10px;"><div style="color:var(--primary); font-weight:700; font-size:0.8rem;">${g.title}</div>`;
+            if(g.qualities) {
+                g.qualities.forEach(q => {
+                    html += `<div style="display:flex; gap:5px; margin-top:5px; flex-wrap:wrap;"><span style="font-size:0.7rem; width:40px;">${q.title}</span>`;
                     q.urls.forEach(u => {
-                        html += `<a href="${u.url}" target="_blank" class="btn" style="padding:4px 10px; font-size:0.7rem; height:auto; background:#222; border:1px solid #333;">${u.title}</a>`;
+                        html += `<a href="${u.url}" target="_blank" class="btn" style="padding:4px 8px; font-size:0.7rem;">${u.title}</a>`;
                     });
-                    html += `</div></div>`;
+                    html += `</div>`;
                 });
             }
             html += `</div>`;
@@ -254,7 +320,6 @@
         document.getElementById('dlContainer').innerHTML = html;
     }
 
-    // Donghua Download Renderer
     function renderDonghuaDownloads(list) {
         if(!list) return;
         let html = "";
@@ -275,69 +340,46 @@
         if(btn) btn.classList.add('active');
         showToast("Server diganti", "success");
     }
-    
-    function toggleDl() {
-        const el = document.getElementById('dlContainer');
-        const icon = document.getElementById('dlIcon');
-        if(el.style.display === 'none') {
-            el.style.display = 'block';
-            icon.style.transform = 'rotate(180deg)';
-        } else {
-            el.style.display = 'none';
-            icon.style.transform = 'rotate(0deg)';
-        }
-    }
-
-    function saveToHistory(title, key, src) {
-        let hist = JSON.parse(localStorage.getItem('my_history')) || [];
-        hist = hist.filter(h => h.url !== key);
-        
-        let poster = "https://via.placeholder.com/150";
-        // Fetch Background Poster (Optional)
-        // ... (Kode fetch poster sama kayak sebelumnya) ...
-        
-        hist.unshift({ title, url: key, source: src, poster: poster, date: new Date().toLocaleDateString() });
-        localStorage.setItem('my_history', JSON.stringify(hist));
-    }
 
     function goToSeries() {
-        let slug = source === 'anime' ? animeId.replace(/-episode-\d+.*$/i, '') : ""; 
-        if(!slug && donghuaUrl) slug = getSlugFromUrl(donghuaUrl);
-        
-        if(slug) window.location.href = `series.html?slug=${slug}&source=${source}`;
-        else window.history.back();
+        let slug = source === 'anime' ? cleanId(animeId).replace(/-episode-\d+.*$/i, '') : cleanId(donghuaUrl).replace(/-episode-\d+.*$/i, '');
+        window.location.href = `series.html?slug=${slug}&source=${source}`;
     }
-    
-    function getSlugFromUrl(url) {
-        let clean = url.replace(/\/$/, '');
-        let segment = clean.substring(clean.lastIndexOf('/') + 1);
-        return segment.replace(/-episode-\d+.*$/i, '');
+
+    function toggleDl() {
+        const el = document.getElementById('dlContainer');
+        const isHidden = el.style.display === 'none';
+        el.style.display = isHidden ? 'block' : 'none';
+        document.getElementById('dlIcon').style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
     }
 
     function showToast(msg, type) {
         const t = document.createElement('div');
-        t.className = 'toast';
-        t.style.borderLeft = type === 'error' ? '4px solid #ef4444' : '4px solid #22c55e';
-        t.innerHTML = `<span>${msg}</span>`;
+        t.style.cssText = `background:#222; color:#fff; padding:10px 15px; border-radius:8px; border-left:4px solid ${type==='error'?'#ef4444':'#22c55e'}; font-size:0.9rem; box-shadow:0 5px 15px rgba(0,0,0,0.5);`;
+        t.innerText = msg;
         document.getElementById('toast-container').appendChild(t);
         setTimeout(() => t.remove(), 3000);
     }
 
-    // Load Recommendation (Bottom)
-    async function loadRec() {
-        try {
-            const res = await fetch(`${API_DONGHUA}/list?page=1`);
-            const data = await res.json();
-            document.getElementById('recommendationGrid').innerHTML = data.data.slice(0,6).map(item => `
-                <div class="card" onclick="window.location.href='series.html?slug=${getSlugFromUrl(item.href)}&source=donghua'">
-                    <img src="${item.poster}">
-                    <p>${item.title}</p>
-                </div>
-            `).join('');
-        } catch(e) {}
+    function saveHistory(title, key, src) {
+        let hist = JSON.parse(localStorage.getItem('my_history')) || [];
+        hist = hist.filter(h => h.url !== key);
+        let epNum = title.match(/Episode\s+(\d+)/i) ? "Ep " + title.match(/Episode\s+(\d+)/i)[1] : "Ep ?";
+        
+        hist.unshift({
+            title: title,
+            episode: epNum,
+            url: key,
+            source: src,
+            date: new Date().toLocaleDateString(),
+            poster: "https://via.placeholder.com/100x150" // Placeholder biar cepat
+        });
+        localStorage.setItem('my_history', JSON.stringify(hist));
     }
 
+    // START
     loadStream();
-    loadRec();
     lucide.createIcons();
 </script>
+</body>
+</html>
