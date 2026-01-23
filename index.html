@@ -70,6 +70,7 @@
 <script>
     // --- API ENDPOINTS ---
     const API_DONGHUA = "https://anichin-seven.vercel.app/api";
+    // Using proxy for Samehadaku access
     const API_ANIME = "https://donghua-qnha.vercel.app/anime/samehadaku";
 
     // --- USER AVATAR ---
@@ -109,18 +110,17 @@
 
     let homePage = 1;
     async function loadMixedHome() {
-        const container = document.getElementById('homeData');
-        // Fetch Donghua List & Anime Recent secara paralel
+        // Fetch Donghua List & Anime Recent in parallel
         const [resD, resA] = await Promise.all([
             fetch(`${API_DONGHUA}/list?page=${homePage}`).then(r=>r.json()),
             fetch(`${API_ANIME}/home`).then(r=>r.json()) // Anime recent
         ]);
 
         const listD = normalizeDonghua(resD.data);
-        // Hati-hati, struktur anime recent bisa beda
+        // Be careful, anime recent structure might vary
         const listA = resA.data?.recent?.animeList ? normalizeAnime(resA.data.recent.animeList) : [];
 
-        // Gabung & Render
+        // Merge & Render
         const mixed = [...listA, ...listD]; 
         renderCards(mixed, 'homeData', 'mixed');
         homePage++;
@@ -138,7 +138,7 @@
             ]);
 
             const listD = normalizeDonghua(resD.data);
-            // Cek struktur Anime Ongoing (biasanya data.animeList)
+            // Check Anime Ongoing structure (usually data.animeList)
             const listA = resA.data?.animeList ? normalizeAnime(resA.data.animeList) : [];
 
             renderCards([...listA, ...listD], 'ongoingData', 'mixed');
@@ -163,13 +163,13 @@
         } catch(e) { console.error(e); }
     }
 
-    // --- HELPERS: NORMALISASI DATA BIAR SAMA ---
+    // --- HELPERS: NORMALIZE DATA ---
     function normalizeDonghua(list) {
         if(!list) return [];
         return list.map(item => ({
             title: item.title,
             poster: item.poster,
-            ep: item.episode || "Ep ?", 
+            ep: item.current_episode || item.episode || "Ep ?", // Handle different field names
             slug: getCleanSlug(item.href),
             type: 'donghua'
         }));
@@ -181,7 +181,7 @@
             title: item.title,
             poster: item.poster,
             ep: item.episodes || "Ep ?",
-            slug: item.animeId, // Anime ID biasanya sudah bersih
+            slug: item.animeId, // Anime ID is usually clean
             type: 'anime'
         }));
     }
@@ -191,13 +191,13 @@
         return url.replace(/\/$/, '').split('/').pop().replace(/-episode-\d+.*$/i, '');
     }
 
-    // --- RENDERER KARTU ---
+    // --- CARD RENDERER ---
     function renderCards(list, elementId, mode) {
         const container = document.getElementById(elementId);
         if(container.innerHTML.includes('Loading')) container.innerHTML = ""; // Clear loader
 
         const html = list.map(item => {
-            // Tentukan link tujuan
+            // Determine destination link
             let link = `series.html?slug=${item.slug}&source=${item.type}`;
             
             // Badge Class
@@ -216,8 +216,12 @@
             `;
         }).join('');
 
-        if (mode === 'popularData') container.innerHTML = html; // Replace
-        else container.insertAdjacentHTML('beforeend', html); // Append
+        if (mode === 'popularData' || mode === 'mixed') {
+             if (container.innerHTML === "") container.innerHTML = html; // First load
+             else container.insertAdjacentHTML('beforeend', html); // Load more
+        } else {
+             container.innerHTML = html; // Replace content
+        }
     }
 
     // Init
