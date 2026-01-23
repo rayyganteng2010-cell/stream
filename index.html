@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RayStream - Dashboard</title>
+    <title>RayStream Premium</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        // AUTH CHECK
+        // Auth sederhana
         if (!localStorage.getItem('user_info')) window.location.href = 'login.html';
     </script>
 </head>
@@ -15,195 +15,219 @@
 
 <header>
     <div class="logo">RAYSTREAM</div>
-    <div onclick="window.location.href='search.html'" style="background:#222; padding:8px; border-radius:50%; cursor:pointer;">
-        <i data-lucide="search" style="width:20px; color:#fff;"></i>
+    <div class="search-icon-btn" onclick="window.location.href='search.html'">
+        <i data-lucide="search" style="color:#fff; width:20px;"></i>
     </div>
 </header>
 
 <div class="container">
     
-    <div id="genreList" class="genre-scroll">
-        <div class="genre-chip">Loading Genres...</div>
+    <div class="genre-scroll">
+        <a href="search.html" class="genre-chip active">All</a>
+        <a href="search.html?query=action" class="genre-chip">Action</a>
+        <a href="search.html?query=adventure" class="genre-chip">Adventure</a>
+        <a href="search.html?query=fantasy" class="genre-chip">Fantasy</a>
+        <a href="search.html?query=isekai" class="genre-chip">Isekai</a>
+        <a href="search.html?query=magic" class="genre-chip">Magic</a>
+        <a href="search.html?query=romance" class="genre-chip">Romance</a>
     </div>
 
-    <div class="section-title">
-        <span>Latest Updates</span>
-        <a href="search.html?type=ongoing" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View All</a>
+    <div class="section-header">
+        <div class="section-title">New Releases</div>
+        <a href="search.html?type=ongoing" class="section-link">View All</a>
     </div>
+    
     <div id="latestGrid" class="grid">
-        <div class="card skeleton" style="height:200px;"></div>
-        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton"></div>
+        <div class="card skeleton"></div>
+        <div class="card skeleton"></div>
     </div>
 
-    <div style="margin-top: 30px;">
+    <div style="margin-top: 40px; text-align: center;">
         <div class="tab-container">
-            <button class="tab-btn active" onclick="switchTab('popular')">Popular</button>
-            <button class="tab-btn" onclick="switchTab('completed')">Completed</button>
+            <button class="tab-btn active" onclick="switchTab('popular', this)">Popular</button>
+            <button class="tab-btn" onclick="switchTab('completed', this)">Completed</button>
         </div>
-        
-        <div id="dynamicGrid" class="grid"></div>
     </div>
+    
+    <div id="dynamicGrid" class="grid">
+        <div class="card skeleton"></div>
+        <div class="card skeleton"></div>
+    </div>
+
+    <button class="load-more-btn" onclick="window.location.href='search.html'">Explore More Content</button>
 
 </div>
 
 <nav class="bottom-nav">
     <a href="index.html" class="nav-item active"><i data-lucide="home"></i></a>
     <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
-    <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
+    <a href="history.html" class="nav-item"><i data-lucide="clock"></i></a>
 </nav>
 
 <script>
-    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
+    // --- KONFIGURASI API ---
     const API_ANIME   = "https://donghua-qnha.vercel.app/anime/samehadaku";
+    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
 
-    // --- 1. LOAD GENRES ---
-    async function loadGenres() {
-        try {
-            const res = await fetch(`${API_DONGHUA}/genres`);
-            const data = await res.json();
-            const list = document.getElementById('genreList');
-            
-            // Tambahkan tombol statis untuk Anime/Donghua umum
-            let html = `
-                <a href="search.html" class="genre-chip" style="background:var(--primary); border-color:var(--primary);">All</a>
-                <a href="search.html?query=action" class="genre-chip">Action</a>
-                <a href="search.html?query=romance" class="genre-chip">Romance</a>
-            `;
-
-            // Render Genre dari API Donghua
-            data.forEach(g => {
-                // Link ke search.html dengan parameter genre
-                html += `<a href="search.html?genre=${g.endpoint}" class="genre-chip">${g.title}</a>`;
-            });
-            
-            list.innerHTML = html;
-        } catch(e) { console.log("Genre Err", e); }
-    }
-
-    // --- 2. LOAD LATEST (Mix Anime & Donghua) ---
+    // --- 1. LOAD ONGOING (LATEST) ---
     async function loadLatest() {
         const grid = document.getElementById('latestGrid');
         try {
-            // Ambil data parallel
-            const [resD, resA] = await Promise.all([
-                fetch(`${API_DONGHUA}/list?page=1`),
-                fetch(`${API_ANIME}/ongoing?page=1`) // Anime ongoing dianggap latest
+            // Kita fetch Anime Ongoing (Sesuai endpoint kamu) & Donghua List
+            const [resA, resD] = await Promise.all([
+                fetch(`${API_ANIME}/ongoing?page=1`),
+                fetch(`${API_DONGHUA}/list?page=1`)
             ]);
 
-            const jsonD = await resD.json();
-            const jsonA = await resA.json();
+            const jsonA = await resA.json(); // Struktur: { data: { animeList: [] } }
+            const jsonD = await resD.json(); // Struktur: { result: [] } (Asumsi Donghua)
 
-            // Format Data Donghua
-            const donghuaItems = (jsonD.result || []).slice(0, 6).map(item => ({
-                title: item.title,
-                poster: item.thumbnail,
-                url: item.url, // Full URL
-                source: 'donghua',
-                ep: item.update || 'Ep ?'
-            }));
-
-            // Format Data Anime
-            const animeItems = (jsonA.data || []).slice(0, 6).map(item => ({
+            // Parsing Data Anime (Perbaikan Utama)
+            const animeList = (jsonA.data?.animeList || []).slice(0, 6).map(item => ({
                 title: item.title,
                 poster: item.poster,
-                url: item.slug, // Slug only
+                id: item.animeId, // Menggunakan animeId sesuai JSON
+                score: item.score || '?',
                 source: 'anime',
-                ep: item.latestEpisode || 'Ep ?'
+                type: item.type || 'TV'
             }));
 
-            // Gabung dan Acak sedikit biar variatif (atau sort by date kalau ada)
-            const combined = [...donghuaItems, ...animeItems];
+            // Parsing Data Donghua
+            const donghuaList = (jsonD.result || []).slice(0, 6).map(item => ({
+                title: item.title,
+                poster: item.thumbnail,
+                id: item.url, // URL untuk donghua
+                score: item.update || 'On',
+                source: 'donghua',
+                type: 'ONA'
+            }));
 
-            grid.innerHTML = combined.map(item => createCard(item)).join('');
+            // Gabung & Render
+            const combined = interleave(animeList, donghuaList);
+            renderGrid(grid, combined);
 
         } catch(e) {
-            grid.innerHTML = "<p>Gagal memuat update terbaru.</p>";
-            console.error(e);
+            console.error("Load Latest Error:", e);
+            grid.innerHTML = `<p style="color:#ef4444;">Gagal memuat data. Periksa koneksi.</p>`;
         }
     }
 
-    // --- 3. TAB LOGIC (Popular / Completed) ---
-    let currentTab = 'popular';
-    
-    async function switchTab(tab) {
-        currentTab = tab;
+    // --- 2. SWITCH TAB (POPULAR / COMPLETED) ---
+    async function switchTab(type, btn) {
+        // UI Handling
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        
+        btn.classList.add('active');
+
         const grid = document.getElementById('dynamicGrid');
-        grid.innerHTML = '<div class="card skeleton"></div><div class="card skeleton"></div><div class="card skeleton"></div>';
+        grid.innerHTML = '<div class="card skeleton"></div><div class="card skeleton"></div>';
 
         try {
-            let items = [];
-            if(tab === 'popular') {
-                // Fetch Popular Anime & Donghua
-                const [d, a] = await Promise.all([
-                    fetch(`${API_DONGHUA}/popular`).then(r=>r.json()),
-                    fetch(`${API_ANIME}/popular?page=1`).then(r=>r.json())
-                ]);
-                
-                // Map Donghua
-                const listD = (d.result || d || []).slice(0,6).map(i => ({
-                    title: i.title, poster: i.thumbnail, url: i.url, source: 'donghua', ep: 'Hot'
-                }));
-                // Map Anime
-                const listA = (a.data || []).slice(0,6).map(i => ({
-                    title: i.title, poster: i.poster, url: i.slug, source: 'anime', ep: i.score || 'Hot'
-                }));
-                items = [...listD, ...listA];
+            let animeData = [];
+            let donghuaData = [];
 
-            } else if (tab === 'completed') {
-                // Fetch Completed
-                const [d, a] = await Promise.all([
-                    fetch(`${API_DONGHUA}/completed`).then(r=>r.json()),
-                    fetch(`${API_ANIME}/completed?page=1`).then(r=>r.json())
-                ]);
+            if (type === 'completed') {
+                // Fetch Completed Anime
+                const resA = await fetch(`${API_ANIME}/completed?page=1`);
+                const jsonA = await resA.json();
+                animeData = (jsonA.data?.animeList || []).slice(0, 8).map(item => ({
+                    title: item.title,
+                    poster: item.poster,
+                    id: item.animeId, // FIX: pakai animeId
+                    score: item.score,
+                    source: 'anime',
+                    type: 'END'
+                }));
 
-                const listD = (d.result || d || []).slice(0,6).map(i => ({
-                    title: i.title, poster: i.thumbnail, url: i.url, source: 'donghua', ep: 'End'
+                // Fetch Completed Donghua
+                const resD = await fetch(`${API_DONGHUA}/completed`);
+                const jsonD = await resD.json();
+                donghuaData = (jsonD.result || []).slice(0, 8).map(item => ({
+                    title: item.title,
+                    poster: item.thumbnail,
+                    id: item.url,
+                    score: 'End',
+                    source: 'donghua',
+                    type: 'END'
                 }));
-                const listA = (a.data || []).slice(0,6).map(i => ({
-                    title: i.title, poster: i.poster, url: i.slug, source: 'anime', ep: 'End'
+            } 
+            else if (type === 'popular') {
+                // Fetch Popular (Asumsi endpoint popular anime strukturnya sama)
+                const resA = await fetch(`${API_ANIME}/popular?page=1`);
+                const jsonA = await resA.json();
+                animeData = (jsonA.data?.animeList || []).slice(0, 8).map(item => ({
+                    title: item.title,
+                    poster: item.poster,
+                    id: item.animeId,
+                    score: item.score,
+                    source: 'anime',
+                    type: 'HOT'
                 }));
-                items = [...listD, ...listA];
+
+                const resD = await fetch(`${API_DONGHUA}/popular`);
+                const jsonD = await resD.json();
+                donghuaData = (jsonD.result || []).slice(0, 8).map(item => ({
+                    title: item.title,
+                    poster: item.thumbnail,
+                    id: item.url,
+                    score: 'Hot',
+                    source: 'donghua',
+                    type: 'HOT'
+                }));
             }
 
-            grid.innerHTML = items.map(item => createCard(item)).join('');
+            renderGrid(grid, interleave(animeData, donghuaData));
 
-        } catch(e) { console.error(e); }
-    }
-
-    // --- HELPER: Create Card HTML ---
-    function createCard(item) {
-        // Bersihkan URL/Slug untuk dikirim ke series.html
-        // Donghua: butuh full url atau slug dari anichin
-        // Anime: butuh slug (misal: one-piece)
-        
-        let slug = item.url;
-        if(item.source === 'donghua') {
-            // Ambil slug dari URL anichin jika bentuknya URL penuh
-            if(slug.includes('anichin')) {
-                // Biasanya URL anichin: .../nama-donghua/
-                // Kita kirim full URL saja biar aman, karena series.html Anda handle donghua by URL
-            }
+        } catch(e) {
+            console.error(e);
+            grid.innerHTML = `<p style="color:#ef4444;">Gagal memuat tab ${type}.</p>`;
         }
-
-        const badgeColor = item.source === 'anime' ? 'bg-anime' : 'bg-donghua';
-        
-        return `
-        <div class="card" onclick="window.location.href='series.html?slug=${encodeURIComponent(slug)}&source=${item.source}'">
-            <span class="card-badge ${badgeColor}">${item.source.toUpperCase()}</span>
-            <img src="${item.poster}" loading="lazy" alt="${item.title}">
-            <p>${item.title}</p>
-        </div>
-        `;
     }
 
-    // Init
-    loadGenres();
+    // --- HELPER FUNCTIONS ---
+    
+    // Fungsi render kartu HTML
+    function renderGrid(container, items) {
+        container.innerHTML = items.map(item => {
+            const badgeClass = item.source === 'anime' ? 'bg-anime' : 'bg-donghua';
+            // Untuk link: Anime pakai ID, Donghua pakai URL
+            return `
+            <div class="card" onclick="goToSeries('${item.id}', '${item.source}')">
+                <div class="badge-top ${badgeClass}">${item.source}</div>
+                <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                <div class="card-content">
+                    <div class="card-title">${item.title}</div>
+                    <div class="badge-score">
+                        <i data-lucide="star" style="width:12px; fill:#ffd700;"></i>
+                        ${item.score}
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    function goToSeries(id, source) {
+        // Encode URI component agar aman
+        window.location.href = `series.html?slug=${encodeURIComponent(id)}&source=${source}`;
+    }
+
+    // Fungsi untuk selang-seling (mix) array Anime dan Donghua
+    function interleave(arr1, arr2) {
+        const result = [];
+        const maxLength = Math.max(arr1.length, arr2.length);
+        for (let i = 0; i < maxLength; i++) {
+            if (i < arr1.length) result.push(arr1[i]);
+            if (i < arr2.length) result.push(arr2[i]);
+        }
+        return result;
+    }
+
+    // INIT
     loadLatest();
-    // Trigger klik tab pertama manual untuk load awal
-    document.querySelector('.tab-btn').click();
+    // Load tab popular sebagai default saat tombol pertama diklik otomatis
+    document.querySelector('.tab-btn.active').click();
     lucide.createIcons();
 </script>
 </body>
