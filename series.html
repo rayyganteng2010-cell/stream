@@ -3,169 +3,399 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Series Detail</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Series Detail - RayStream</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-element: #334155;
+            --primary-anime: #f59e0b; /* Orange */
+            --primary-donghua: #3b82f6; /* Blue */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-dark);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            margin: 0;
+            padding-bottom: 90px;
+        }
+
+        /* --- HERO SECTION --- */
+        .hero-container {
+            position: relative;
+            height: 380px;
+            width: 100%;
+        }
+
+        .hero-bg {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            opacity: 0.6;
+        }
+
+        .header-nav {
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: 15px 20px; z-index: 10;
+            display: flex; justify-content: space-between;
+        }
+
+        .back-btn {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .back-btn:active { transform: scale(0.9); }
+
+        /* --- SERIES INFO --- */
+        .info-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            padding: 20px;
+            display: flex; align-items: flex-end; gap: 20px;
+            background: linear-gradient(to top, var(--bg-dark) 10%, transparent);
+        }
+
+        .poster-card {
+            width: 110px; flex-shrink: 0;
+            aspect-ratio: 2/3;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .poster-img { width: 100%; height: 100%; object-fit: cover; }
+
+        .meta-info { flex: 1; padding-bottom: 5px; }
+
+        .type-badge {
+            display: inline-block;
+            font-size: 0.7rem; font-weight: 800;
+            padding: 4px 10px; border-radius: 6px;
+            margin-bottom: 8px; text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .bg-anime { background: var(--primary-anime); color: black; }
+        .bg-donghua { background: var(--primary-donghua); color: white; }
+
+        .title {
+            margin: 0; font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem; line-height: 1.2; font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .sub-meta {
+            font-size: 0.8rem; color: #cbd5e1;
+            margin-top: 8px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+        }
+
+        /* --- CONTENT --- */
+        .container { padding: 0 20px; }
+
+        .genre-list {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px;
+        }
+
+        .genre-pill {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 0.75rem; color: var(--text-muted);
+        }
+
+        .synopsis-box {
+            background: var(--bg-card);
+            padding: 20px; border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .synopsis-title {
+            margin: 0 0 10px 0; color: var(--text-muted);
+            text-transform: uppercase; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
+        }
+
+        .synopsis-text {
+            font-size: 0.9rem; color: #cbd5e1;
+            line-height: 1.6; margin: 0; text-align: justify;
+        }
+
+        .section-header {
+            font-size: 1.1rem; font-weight: 700; color: white;
+            margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+        }
+
+        /* --- EPISODE GRID --- */
+        .eps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+            gap: 10px;
+        }
+
+        .eps-btn {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-main);
+            padding: 12px 5px;
+            border-radius: 10px;
+            font-weight: 600; font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .eps-btn:hover { background: rgba(255,255,255,0.1); }
+        .eps-btn:active { transform: scale(0.95); }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-around;
+            padding: 12px 0; z-index: 100;
+        }
+        .nav-item {
+            color: var(--text-muted); text-decoration: none;
+            display: flex; flex-direction: column; align-items: center;
+            font-size: 0.7rem; gap: 4px;
+        }
+        .nav-item:active { color: white; }
+
+        /* Loading State */
+        .loading-overlay {
+            position: fixed; inset: 0; background: var(--bg-dark);
+            z-index: 999; display: flex; justify-content: center; align-items: center;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary-anime); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
 </head>
 <body>
 
-<header style="background:transparent; position:absolute; border:none;">
-    <div class="logo" onclick="history.back()" style="background:rgba(0,0,0,0.5); padding:8px; border-radius:50%; cursor:pointer;">
-        <i data-lucide="arrow-left" style="color:white; width:24px; height:24px;"></i>
-    </div>
-</header>
+<div id="loadingScreen" class="loading-overlay">
+    <div class="spinner"></div>
+</div>
 
-<div style="position:relative; height:350px;">
-    <img id="heroImg" src="" style="width:100%; height:100%; object-fit:cover; opacity:0.6; mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);">
-    <div style="position:absolute; bottom:0; left:0; width:100%; height:150px; background:linear-gradient(to top, var(--bg-body), transparent);"></div>
+<div class="hero-container">
+    <div class="header-nav">
+        <div class="back-btn" onclick="history.back()">
+            <i data-lucide="arrow-left" color="white"></i>
+        </div>
+        <div class="back-btn" onclick="location.href='index.html'">
+            <i data-lucide="home" color="white" size="20"></i>
+        </div>
+    </div>
     
-    <div style="position:absolute; bottom:20px; left:20px; right:20px; display:flex; align-items:flex-end; gap:20px;">
-        <img id="posterImg" src="" style="width:110px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1);">
-        <div style="flex:1;">
-            <div id="badgeType" style="display:inline-block; font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:6px; margin-bottom:8px; text-transform:uppercase;"></div>
-            <h2 id="title" style="margin:0; font-size:1.4rem; line-height:1.2; text-shadow:0 2px 10px rgba(0,0,0,0.8);">Loading...</h2>
-            <p id="meta" style="font-size:0.85rem; color:#ccc; margin-top:8px; display:flex; gap:10px; align-items:center;"></p>
+    <img id="heroImg" class="hero-bg" src="">
+    
+    <div class="info-overlay">
+        <div class="poster-card">
+            <img id="posterImg" class="poster-img" src="">
+        </div>
+        <div class="meta-info">
+            <div id="badgeType" class="type-badge"></div>
+            <h1 id="title" class="title">...</h1>
+            <div id="meta" class="sub-meta"></div>
         </div>
     </div>
 </div>
 
 <div class="container">
-    <div id="genres" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:25px;"></div>
+    <div id="genres" class="genre-list"></div>
     
-    <div style="background:var(--bg-surface); padding:20px; border-radius:var(--radius); margin-bottom:30px; border:1px solid rgba(255,255,255,0.05);">
-        <h4 style="margin:0 0 10px 0; color:var(--text-muted); text-transform:uppercase; font-size:0.8rem; letter-spacing:1px;">Sinopsis</h4>
-        <p id="synopsis" style="font-size:0.9rem; color:#ddd; line-height:1.7; margin:0; text-align:justify;">...</p>
+    <div class="synopsis-box">
+        <h4 class="synopsis-title">Sinopsis</h4>
+        <p id="synopsis" class="synopsis-text">...</p>
     </div>
 
-    <h3 class="section-header" style="padding:0; margin-bottom:15px;">Episodes</h3>
-    
-    <div id="epsGrid" class="eps-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px;"></div>
+    <div class="section-header">
+        <i data-lucide="layers" size="18"></i> Daftar Episode
+    </div>
+    <div id="epsGrid" class="eps-grid">
+        </div>
 </div>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item"><i data-lucide="home"></i></a>
-    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
-    <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
+    <a href="index.html" class="nav-item"><i data-lucide="home" size="20"></i></a>
+    <a href="anime.html" class="nav-item"><i data-lucide="tv" size="20"></i></a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar" size="20"></i></a>
+    <a href="donghua.html" class="nav-item"><i data-lucide="zap" size="20"></i></a>
 </nav>
 
 <script>
+    // --- CONFIGURATION ---
     const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    const API_ANIME = "https://www.sankavollerei.com/anime/samehadaku"; // Base API Anime
+    const API_ANIME = "https://www.sankavollerei.com/anime/samehadaku";
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const slug = urlParams.get('slug');      // Contoh: one-piece (Anime) atau renegade-immortal (Donghua)
-    const source = urlParams.get('source');  // 'anime' atau 'donghua'
-
-    async function loadSeries() {
-        if(!slug) return alert("Slug Series tidak ditemukan");
+    // --- PROXY HELPERS (Untuk mengatasi CORS Anime) ---
+    // Sama seperti di anime.html, kita butuh proxy untuk API Samehadaku
+    async function smartFetch(url) {
+        const proxies = [
+            (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+            (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+        ];
         
+        // Coba direct dulu (untuk Donghua biasanya aman)
+        try {
+            const res = await fetch(url);
+            if(res.ok) return await res.json();
+        } catch(e) {}
+
+        // Kalau gagal, coba pakai proxy
+        for (const proxy of proxies) {
+            try {
+                const res = await fetch(proxy(url));
+                if(res.ok) return await res.json();
+            } catch(e) {}
+        }
+        throw new Error("Failed to fetch data");
+    }
+
+    // --- MAIN LOGIC ---
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        loadSeriesData();
+    });
+
+    async function loadSeriesData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const slug = urlParams.get('slug');
+        const source = urlParams.get('source'); // 'anime' or 'donghua'
+
+        if(!slug) {
+            alert("Series tidak ditemukan");
+            window.location.href = 'index.html';
+            return;
+        }
+
         try {
             let data = {};
-            
-            // --- LOGIKA PERCABANGAN API ---
-            if (source === 'anime') {
-                // Fetch API Anime (Samehadaku)
-                // Endpoint: https://www.sankavollerei.com/anime/samehadaku/anime/{slug}
-                const res = await fetch(`${API_ANIME}/anime/${slug}`);
-                const json = await res.json();
-                const d = json.data;
 
-                // Mapping Data Anime ke Format Standar kita
+            if (source === 'anime') {
+                // --- FETCH ANIME (SAMEHADAKU) ---
+                const json = await smartFetch(`${API_ANIME}/anime/${slug}`);
+                
+                // Pastikan data valid
+                const d = json.data;
+                if(!d) throw new Error("Data anime kosong");
+
                 data = {
-                    title: d.japanese || d.english || "Unknown Title",
+                    title: d.title || d.japanese || "Unknown",
                     poster: d.poster,
                     status: d.status,
-                    type: "Anime",
-                    studio: d.studios,
-                    synopsis: d.synopsis ? d.synopsis.paragraphs.join("\n\n") : "Sinopsis tidak tersedia.",
-                    genres: d.genreList.map(g => ({ name: g.title })),
-                    // Anime episode list
-                    episodes: d.episodeList.map(ep => ({
-                        num: ep.title, // Di API Anime, title = nomor episode (1155)
-                        // KITA BUTUH ID EPISODE untuk stream.html
-                        // ID nya ada di episodeId: "one-piece-episode-1155"
-                        urlParam: ep.episodeId 
-                    }))
+                    type: "ANIME",
+                    rating: d.score,
+                    studio: d.studios || "Unknown Studio",
+                    synopsis: d.synopsis && d.synopsis.paragraphs ? d.synopsis.paragraphs.join("\n\n") : "Sinopsis tidak tersedia.",
+                    genres: d.genreList ? d.genreList.map(g => g.title) : [],
+                    episodes: d.episodeList ? d.episodeList.map(ep => ({
+                        // Anime title biasanya "Episode 1120"
+                        num: ep.title.replace(/Episode\s+/i, ''),
+                        // ID untuk stream: one-piece-episode-1120
+                        param: ep.episodeId 
+                    })) : []
                 };
 
             } else {
-                // Fetch API Donghua (Anichin - Default)
-                const res = await fetch(`${API_DONGHUA}/series?url=${slug}`);
-                const d = await res.json();
+                // --- FETCH DONGHUA (ANICHIN) ---
+                // Anichin biasanya aman direct fetch, tapi kita pakai smartFetch biar konsisten
+                const d = await smartFetch(`${API_DONGHUA}/series?url=${slug}`);
 
-                // Mapping Data Donghua
                 data = {
                     title: d.title,
                     poster: d.poster,
                     status: d.info.status,
-                    type: "Donghua",
-                    studio: d.info.studio,
-                    synopsis: d.short_description || d.synopsis,
-                    genres: d.genres,
-                    episodes: d.episodes_list.map(ep => ({
-                        num: ep.episode.match(/Episode\s+(\d+)/i)?.[1] || "Ep",
-                        // Donghua pake full URL di param
-                        urlParam: ep.anichinUrl 
-                    }))
+                    type: "DONGHUA",
+                    rating: d.info.rating || "-",
+                    studio: d.info.studio || "Unknown",
+                    synopsis: d.short_description || d.synopsis || "Sinopsis belum tersedia.",
+                    genres: d.genres ? d.genres.map(g => g.name) : [],
+                    episodes: d.episodes_list ? d.episodes_list.map(ep => ({
+                        // Extract angka episode
+                        num: ep.episode.match(/Episode\s+(\d+)/i)?.[1] || ep.episode,
+                        // Donghua butuh full URL anichin
+                        param: ep.anichinUrl
+                    })) : []
                 };
             }
 
-            // --- RENDER KE HTML ---
-            document.getElementById('title').innerText = data.title;
-            document.getElementById('heroImg').src = data.poster;
-            document.getElementById('posterImg').src = data.poster;
-            document.getElementById('synopsis').innerText = data.synopsis;
-            
-            // Badge Type
-            const badge = document.getElementById('badgeType');
-            badge.innerText = data.type;
-            badge.style.background = data.type === 'Anime' ? 'var(--warning)' : 'var(--primary)';
-            badge.style.color = data.type === 'Anime' ? '#000' : '#fff';
+            renderUI(data, source);
+            document.getElementById('loadingScreen').style.display = 'none';
 
-            // Meta Info
-            document.getElementById('meta').innerHTML = `
-                <span>${data.status}</span> • <span>${data.studio}</span>
-            `;
-
-            // Genres
-            document.getElementById('genres').innerHTML = data.genres.map(g => 
-                `<span style="background:var(--bg-surface); border:1px solid rgba(255,255,255,0.1); padding:6px 14px; border-radius:20px; font-size:0.75rem;">${g.name}</span>`
-            ).join('');
-
-            // Episode Grid
-            const epsContainer = document.getElementById('epsGrid');
-            if(data.episodes && data.episodes.length > 0) {
-                epsContainer.innerHTML = data.episodes.map(ep => {
-                    // Link menuju stream.html
-                    // Kita bawa parameter 'id' (buat anime) atau 'url' (buat donghua)
-                    // Dan jangan lupa bawa 'source' lagi
-                    
-                    let link = "";
-                    if(source === 'anime') {
-                        // Anime pake ID (one-piece-episode-1155)
-                        link = `stream.html?id=${ep.urlParam}&source=anime`;
-                    } else {
-                        // Donghua pake URL full
-                        link = `stream.html?url=${ep.urlParam}&source=donghua`;
-                    }
-
-                    return `<button class="eps-btn" onclick="window.location.href='${link}'" 
-                            style="background:var(--bg-element); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; cursor:pointer; color:white;">
-                            ${ep.num}
-                        </button>`;
-                }).join('');
-            } else {
-                epsContainer.innerHTML = "<p>Belum ada episode.</p>";
-            }
-
-            lucide.createIcons();
-
-        } catch(e) { 
+        } catch (e) {
             console.error(e);
-            alert("Gagal memuat data series.");
+            alert("Gagal memuat data. Silakan coba lagi.");
+            history.back();
         }
     }
-    loadSeries();
+
+    function renderUI(data, source) {
+        // Hero & Info
+        document.getElementById('heroImg').src = data.poster;
+        document.getElementById('posterImg').src = data.poster;
+        document.getElementById('title').innerText = data.title;
+        document.getElementById('synopsis').innerText = data.synopsis;
+
+        // Badge Type Color
+        const badge = document.getElementById('badgeType');
+        badge.innerText = data.type;
+        badge.className = `type-badge ${source === 'anime' ? 'bg-anime' : 'bg-donghua'}`;
+
+        // Meta Info
+        document.getElementById('meta').innerHTML = `
+            <span>${data.status}</span> • <span>${data.studio}</span> • <span>★ ${data.rating}</span>
+        `;
+
+        // Genres
+        const genreContainer = document.getElementById('genres');
+        genreContainer.innerHTML = data.genres.map(g => 
+            `<span class="genre-pill">${g}</span>`
+        ).join('');
+
+        // Episode Grid
+        const epsContainer = document.getElementById('epsGrid');
+        
+        if (data.episodes.length > 0) {
+            // Sort episode (opsional, tergantung preferensi. Biasanya user mau liat ep 1 dulu atau ep terakhir dulu?)
+            // Default API biasanya Terbaru -> Terlama. Kita biarkan default.
+            
+            epsContainer.innerHTML = data.episodes.map(ep => {
+                // Link Stream
+                // Anime: stream.html?id=...&source=anime
+                // Donghua: stream.html?url=...&source=donghua
+                
+                const paramKey = source === 'anime' ? 'id' : 'url';
+                const link = `stream.html?${paramKey}=${encodeURIComponent(ep.param)}&source=${source}`;
+
+                return `
+                <div class="eps-btn" onclick="window.location.href='${link}'">
+                    ${ep.num}
+                </div>`;
+            }).join('');
+        } else {
+            epsContainer.innerHTML = '<p style="color:gray; grid-column:1/-1;">Belum ada episode yang tersedia.</p>';
+        }
+    }
 </script>
 </body>
 </html>
