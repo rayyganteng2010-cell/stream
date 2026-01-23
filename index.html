@@ -4,300 +4,382 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RayStream - Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --bg-card: rgba(30, 41, 59, 0.7);
+            --bg-dark: #09090b;
+            --card-bg: rgba(24, 24, 27, 0.6);
+            --card-border: rgba(255, 255, 255, 0.08);
             --primary: #6366f1;
-            --accent: #8b5cf6;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --success: #10b981;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --danger: #ef4444;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Outfit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at top right, #1e1b4b, transparent),
-                              radial-gradient(circle at bottom left, #1e1b4b, transparent);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             padding: 20px;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
+        }
+
+        /* --- Ambient Background Glow --- */
+        .glow-effect {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.03) 0%, transparent 70%);
         }
 
         .container {
             width: 100%;
-            max-width: 480px; /* Mobile-first width focus */
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
+            max-width: 450px;
+            position: relative;
+            z-index: 1;
+            padding-bottom: 40px;
         }
 
-        /* --- Header & User --- */
+        /* --- Header --- */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 30px;
             padding-top: 10px;
         }
 
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 800;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -1px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--bg-card);
-            padding: 6px 12px;
-            border-radius: 30px;
-            border: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .user-profile:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        /* --- Hero Section --- */
-        .hero {
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .hero h2 {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-
-        .hero p {
-            color: var(--text-dim);
-            font-size: 0.9rem;
-        }
-
-        /* --- Menu Grid (Modern Bento Box Style) --- */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* 2 Kolom */
-            gap: 15px;
-        }
-
-        .menu-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 20px;
-            padding: 25px 20px;
+        .brand {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 15px;
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .profile-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 8px;
+            border-radius: 14px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Efek Hover Modern */
-        .menu-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.2);
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-        }
-
-        .menu-card i {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 5px;
-        }
-
-        .menu-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-
-        /* Schedule Card (Full Width) */
-        .card-full {
-            grid-column: span 2;
-            flex-direction: row;
-            justify-content: flex-start;
-            padding: 20px 25px;
-            text-align: left;
-        }
-
-        .card-full .icon-box {
-            background: rgba(16, 185, 129, 0.2);
-            padding: 12px;
-            border-radius: 12px;
-            color: var(--success);
-        }
-
-        /* --- History Section (No Thumbnail) --- */
-        .section-header {
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 15px;
-            color: var(--text-dim);
-            font-size: 0.9rem;
+        }
+
+        .profile-btn:active {
+            transform: scale(0.95);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        /* --- Menu Grid (Bento Box Style) --- */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 160px;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0.05), transparent);
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+        }
+
+        .card:hover::before { opacity: 1; }
+        .card:active { transform: scale(0.98); }
+
+        .card-icon-wrapper {
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .card-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Specific Card Styles */
+        .card-anime .card-icon-wrapper {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+        }
+        
+        .card-donghua .card-icon-wrapper {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        /* Schedule Card (Full Width) */
+        .card-schedule {
+            grid-column: span 2;
+            height: auto;
+            flex-direction: row;
+            align-items: center;
+            padding: 20px 24px;
+            gap: 15px;
+        }
+
+        .schedule-icon {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            min-width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- History Section --- */
+        .history-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         .history-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .history-item {
-            background: transparent;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding: 12px 5px;
+        .h-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            padding: 12px;
+            border-radius: 16px;
             transition: 0.2s;
             cursor: pointer;
         }
 
-        .history-item:hover {
-            background: rgba(255,255,255,0.03);
-            padding-left: 10px; /* Slight slide effect */
-            border-radius: 8px;
-            border-bottom-color: transparent;
+        .h-item:hover {
+            background: rgba(255,255,255,0.05);
         }
 
-        .h-content {
+        .h-left {
             display: flex;
             flex-direction: column;
             gap: 4px;
+            overflow: hidden;
         }
 
         .h-title {
             font-size: 0.95rem;
             font-weight: 600;
-            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
         }
 
         .h-meta {
-            font-size: 0.8rem;
-            color: var(--text-dim);
+            display: flex;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            align-items: center;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-anime { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .badge-donghua { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+
+        .h-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            color: var(--text-main);
+            transition: 0.2s;
         }
 
-        .tag {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(255,255,255,0.1);
-        }
-
-        .h-play-btn {
-            color: var(--primary);
-            opacity: 0.7;
-        }
-
-        .history-item:hover .h-play-btn {
-            opacity: 1;
+        .h-item:hover .h-action {
+            background: var(--text-main);
+            color: var(--bg-dark);
             transform: scale(1.1);
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-dim);
-            border: 1px dashed rgba(255,255,255,0.1);
-            border-radius: 12px;
+        /* --- SweetAlert Customization --- */
+        div:where(.swal2-container) div:where(.swal2-popup) {
+            background: #18181b !important;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
         }
-
-        /* --- Mobile Responsive Fixes --- */
-        @media (max-width: 400px) {
-            .logo { font-size: 1.5rem; }
-            .menu-title { font-size: 1rem; }
+        div:where(.swal2-container) .swal2-title {
+            color: #fff !important;
+            font-family: 'Outfit', sans-serif;
+        }
+        div:where(.swal2-container) .swal2-html-container {
+            color: #a1a1aa !important;
         }
     </style>
-    <script>
-        // Security Check
-        if (!localStorage.getItem('user_info')) {
-            window.location.href = 'login.html';
-        }
-    </script>
 </head>
 <body>
+
+<div class="glow-effect"></div>
 
 <div class="container">
     
     <header class="header">
-        <div class="logo">RayStream</div>
-        <div class="user-profile" onclick="logout()" title="Klik untuk Logout">
-            <span id="userName" style="font-size: 0.9rem; font-weight: 600;">Guest</span>
-            <img id="userImg" src="" class="user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=random'">
+        <div class="brand">
+            <span class="brand-name">RayStream.</span>
+            <span class="brand-sub">Premium Entertainment</span>
+        </div>
+        <div class="profile-btn" onclick="logout()">
+            <img id="userImg" src="" class="avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff'">
+            <i data-lucide="log-out" style="width: 18px; color: var(--danger);"></i>
         </div>
     </header>
 
-    <div class="hero">
-        <h2>Mau nonton apa hari ini?</h2>
-        <p>Akses cepat ke koleksi Anime & Donghua favoritmu.</p>
+    <div class="bento-grid">
+        <div class="card card-anime" onclick="goToAnime()">
+            <div class="card-icon-wrapper">
+                <i data-lucide="zap"></i>
+            </div>
+            <div>
+                <div class="card-title">Anime</div>
+                <div class="card-sub">Koleksi Jepang Terupdate</div>
+            </div>
+            <i data-lucide="arrow-right" style="position: absolute; bottom: 20px; right: 20px; opacity: 0.5;"></i>
+        </div>
+
+        <div class="card card-donghua" onclick="goToDonghua()">
+            <div class="card-icon-wrapper">
+                <i data-lucide="sword"></i>
+            </div>
+            <div>
+                <div class="card-title">Donghua</div>
+                <div class="card-sub">Aksi Kultivasi Terbaik</div>
+            </div>
+            <i data-lucide="arrow-right" style="position: absolute; bottom: 20px; right: 20px; opacity: 0.5;"></i>
+        </div>
+
+        <div class="card card-schedule" onclick="goToSchedule()">
+            <div class="schedule-icon">
+                <i data-lucide="calendar-days"></i>
+            </div>
+            <div style="flex: 1;">
+                <div class="card-title" style="font-size: 1.1rem; margin-bottom: 2px;">Jadwal Rilis</div>
+                <div class="card-sub">Cek episode yang tayang hari ini</div>
+            </div>
+            <i data-lucide="chevron-right" style="opacity: 0.5;"></i>
+        </div>
     </div>
 
-    <div class="menu-grid">
-        <div class="menu-card" onclick="goToAnime()" style="border-bottom: 3px solid #f59e0b;">
-            <i data-lucide="zap" style="color: #f59e0b;"></i>
-            <span class="menu-title">Anime</span>
-        </div>
-
-        <div class="menu-card" onclick="goToDonghua()" style="border-bottom: 3px solid #3b82f6;">
-            <i data-lucide="sword" style="color: #3b82f6;"></i>
-            <span class="menu-title">Donghua</span>
-        </div>
-
-        <div class="menu-card card-full" onclick="goToSchedule()">
-            <div class="icon-box">
-                <i data-lucide="calendar-days" style="width: 24px; height: 24px;"></i>
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-start; margin-left:15px;">
-                <span class="menu-title">Jadwal Rilis</span>
-                <span style="font-size: 0.8rem; color: var(--text-dim); font-weight: 400;">Cek episode yang tayang hari ini</span>
-            </div>
-            <i data-lucide="chevron-right" style="margin-left: auto; color: var(--text-dim); width: 20px;"></i>
-        </div>
-    </div>
-
-    <div class="history-wrapper">
-        <div class="section-header">
-            <i data-lucide="clock" style="width: 16px;"></i>
-            Lanjutkan Menonton
+    <div class="history-section">
+        <div class="section-head">
+            <i data-lucide="history" style="color: var(--primary);"></i>
+            <span class="section-title">Lanjutkan Menonton</span>
         </div>
         
         <div id="historyList" class="history-list">
@@ -307,24 +389,53 @@
 </div>
 
 <script>
-    // --- 1. User Logic ---
+    // --- 1. User & Auth ---
     function initUser() {
         const userData = JSON.parse(localStorage.getItem('user_info') || '{}');
-        document.getElementById('userName').textContent = userData.name || 'User';
         document.getElementById('userImg').src = userData.picture || 'https://ui-avatars.com/api/?name=User&background=random';
     }
 
+    // --- FUNCTION LOGOUT YANG KEREN (SweetAlert2) ---
     function logout() {
-        if(confirm('Logout dari akun ini?')) {
-            localStorage.removeItem('user_info');
-            window.location.href = 'login.html';
-        }
+        Swal.fire({
+            title: 'Logout?',
+            text: "Sesi anda saat ini akan diakhiri.",
+            icon: 'warning',
+            background: '#18181b', // Warna gelap custom
+            color: '#ffffff',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444', // Merah danger
+            cancelButtonColor: '#3f3f46', // Abu-abu
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: 'Batal',
+            reverseButtons: true, // Tombol batal di kiri
+            customClass: {
+                popup: 'my-swal-popup'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Efek loading sebentar biar keren
+                Swal.fire({
+                    title: 'Sampai Jumpa!',
+                    timer: 1500,
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        Swal.showLoading()
+                    },
+                    background: '#18181b',
+                    color: '#fff'
+                }).then(() => {
+                    localStorage.removeItem('user_info');
+                    window.location.href = 'login.html';
+                });
+            }
+        });
     }
 
     // --- 2. Navigation ---
     function goToAnime() { window.location.href = 'anime.html'; }
     function goToDonghua() { window.location.href = 'donghua.html'; }
-    function goToSchedule() { window.location.href = 'schedule.html'; } // New Page
+    function goToSchedule() { window.location.href = 'schedule.html'; }
 
     function playVideo(url, source) {
         if (source === 'anime') {
@@ -334,39 +445,39 @@
         }
     }
 
-    // --- 3. History Logic (Clean & Text Only) ---
+    // --- 3. History Logic (Clean Text Only) ---
     function loadHistory() {
         const historyData = JSON.parse(localStorage.getItem('my_history')) || [];
         const container = document.getElementById('historyList');
 
         if (historyData.length === 0) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <p>Belum ada riwayat tontonan.</p>
+                <div style="text-align:center; padding:20px; color: var(--text-muted); font-size: 0.9rem;">
+                    Belum ada riwayat tontonan
                 </div>`;
             return;
         }
 
-        // Ambil 5 riwayat terakhir
         const recent = historyData.slice(0, 5);
 
         container.innerHTML = recent.map(item => {
-            const typeLabel = item.source === 'anime' ? 'ANIME' : 'DONGHUA';
-            // Formatting tanggal simpel
+            const isAnime = item.source === 'anime';
+            const badgeClass = isAnime ? 'badge-anime' : 'badge-donghua';
+            const typeLabel = isAnime ? 'ANIME' : 'DONGHUA';
             const dateStr = item.date ? item.date.split(',')[0] : ''; 
 
             return `
-                <div class="history-item" onclick="playVideo('${item.url}', '${item.source}')">
-                    <div class="h-content">
+                <div class="h-item" onclick="playVideo('${item.url}', '${item.source}')">
+                    <div class="h-left">
                         <div class="h-title">${item.title}</div>
                         <div class="h-meta">
-                            <span class="tag">${typeLabel}</span>
-                            <span style="color: var(--primary)">${item.episode || 'Lanjut Nonton'}</span>
-                            <span style="opacity: 0.5">• ${dateStr}</span>
+                            <span class="badge ${badgeClass}">${typeLabel}</span>
+                            <span style="color: #fff;">${item.episode || 'Episode Baru'}</span>
+                            <span>• ${dateStr}</span>
                         </div>
                     </div>
-                    <div class="h-play-btn">
-                        <i data-lucide="play-circle"></i>
+                    <div class="h-action">
+                        <i data-lucide="play" style="width: 14px; margin-left:2px;"></i>
                     </div>
                 </div>
             `;
@@ -375,11 +486,16 @@
         lucide.createIcons();
     }
 
-    // --- Initialize ---
+    // --- Init ---
     document.addEventListener('DOMContentLoaded', () => {
-        initUser();
-        loadHistory();
-        lucide.createIcons();
+        // Cek login
+        if (!localStorage.getItem('user_info')) {
+            window.location.href = 'login.html';
+        } else {
+            initUser();
+            loadHistory();
+            lucide.createIcons();
+        }
     });
 </script>
 
