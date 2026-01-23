@@ -12,76 +12,311 @@
             window.location.href = 'login.html';
         }
     </script>
+    <style>
+        /* CSS Tambahan untuk Badge Tipe (Anime/Donghua) */
+        .type-badge {
+            position: absolute; top: 8px; left: 8px;
+            padding: 3px 8px; border-radius: 6px;
+            font-size: 0.65rem; font-weight: 700; z-index: 5;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .bg-donghua { background: rgba(59, 130, 246, 0.9); color: white; }
+        .bg-anime { background: rgba(245, 158, 11, 0.9); color: black; }
+        
+        /* Search Bar Styling */
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+            margin: 0 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px 45px 10px 15px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* Genre Buttons */
+        .genre-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0 30px 0;
+        }
+        
+        .genre-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .genre-btn:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        /* Load More Button */
+        .btn-load-more {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .btn-load-more:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            padding: 20px;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        /* Slider Images */
+        .slider-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 20px;
+            scrollbar-width: none;
+        }
+        
+        .slider-container::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .slider-img {
+            width: 300px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .slider-img:hover {
+            transform: scale(1.02);
+        }
+    </style>
 </head>
 <body>
 
 <header>
     <div class="logo">RayStream</div>
-    <div id="userStatus"></div>
+    
     <!-- Search Bar -->
-    <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Search..." oninput="searchContent()">
+    <div class="search-container">
+        <input type="text" id="globalSearch" class="search-input" placeholder="Search anime & donghua...">
+        <i data-lucide="search" class="search-icon"></i>
+    </div>
+    
+    <div id="userStatus">
+        <!-- User avatar akan dimuat via JS -->
     </div>
 </header>
 
-<div class="slider-container" style="display:flex; overflow-x:auto; gap:15px; padding:20px; scrollbar-width:none;">
-    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg" class="slider-img">
-    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg" class="slider-img">
-    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/0c96d013d87134ba7d2c951a889ebf15.jpg" class="slider-img">
+<!-- Slider Images -->
+<div class="slider-container">
+    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg" 
+         class="slider-img" 
+         onclick="window.location.href='series.html?slug=renegade-immortal&source=donghua'">
+    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg" 
+         class="slider-img" 
+         onclick="window.location.href='series.html?slug=one-piece&source=anime'">
+    <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/0c96d013d87134ba7d2c951a889ebf15.jpg" 
+         class="slider-img" 
+         onclick="window.location.href='series.html?slug=solo-leveling&source=anime'">
 </div>
 
 <div class="container">
+    <!-- Genres Section -->
+    <div class="section-header">
+        <h3>Genres</h3>
+    </div>
+    <div id="genreList" class="genre-grid">
+        <!-- Genre akan dimuat via JS -->
+    </div>
+
+    <!-- Popular Donghua -->
     <div class="section-header">
         <h3>Popular Donghua</h3>
     </div>
     <div id="popularData" class="grid">
-        <p style="color:#555;">Loading...</p>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
     </div>
 
+    <!-- Popular Anime -->
+    <div class="section-header">
+        <h3>Popular Anime</h3>
+    </div>
+    <div id="popularAnime" class="grid">
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+    </div>
+
+    <!-- Latest Release -->
     <div class="section-header">
         <h3>Latest Release</h3>
         <span id="pageIndicator" style="font-size:0.8rem; color:#666;">Page 1</span>
     </div>
     
     <div id="latestData" class="grid">
-        </div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+    </div>
 
-    <button id="btnLoadMore" class="btn btn-primary" onclick="loadNextPage()">
+    <!-- Completed Donghua -->
+    <div class="section-header">
+        <h3>Completed Donghua</h3>
+    </div>
+    <div id="completedDonghua" class="grid">
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+    </div>
+
+    <!-- Completed Anime -->
+    <div class="section-header">
+        <h3>Completed Anime</h3>
+    </div>
+    <div id="completedAnime" class="grid">
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+    </div>
+
+    <!-- Ongoing Donghua -->
+    <div class="section-header">
+        <h3>Ongoing Donghua</h3>
+    </div>
+    <div id="ongoingDonghua" class="grid">
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+    </div>
+
+    <!-- Ongoing Anime -->
+    <div class="section-header">
+        <h3>Ongoing Anime</h3>
+    </div>
+    <div id="ongoingAnime" class="grid">
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+    </div>
+
+    <!-- Load More Button -->
+    <button id="btnLoadMoreLatest" class="btn-load-more" onclick="loadNextPage()">
         Load Next Page
     </button>
+</div>
 
-    <!-- Genres Section -->
-    <div class="section-header">
-        <h3>Genres</h3>
-    </div>
-    <div id="genresData" class="genres-list">
-        <p style="color:#555;">Loading Genres...</p>
-    </div>
-
-    <!-- Combined Search Results Section -->
-    <div class="section-header">
-        <h3>Search Results</h3>
-    </div>
-    <div id="searchResultsData" class="grid">
-        <p style="color:#555;">Please enter a search query...</p>
+<!-- Search Modal -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="searchResultsTitle" class="modal-title">Search Results</h2>
+            <button onclick="closeSearchModal()" class="btn" style="background:#333; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">
+                ✕ Close
+            </button>
+        </div>
+        <div id="combinedSearchResults" class="grid">
+            <!-- Hasil pencarian akan ditampilkan di sini -->
+        </div>
     </div>
 </div>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active"><i data-lucide="home"></i></a>
-    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
-    <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
+    <a href="index.html" class="nav-item active"><i data-lucide="home"></i> Home</a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i> Jadwal</a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i> History</a>
 </nav>
 
 <script>
+    // API Endpoints
     const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    const API_ANIME_SEARCH = "https://donghua-qnha.vercel.app/anime/samehadaku/search?query=";
-    const API_SEARCH = "https://anichin-seven.vercel.app/api/search?s=";
-    const API_GENRES = "https://anichin-seven.vercel.app/api/genres";
-    const API_COMPLETED_DONGHUA = "https://anichin-seven.vercel.app/api/completed";
-    const API_ONGOING_DONGHUA = "https://anichin-seven.vercel.app/api/ongoing";
+    const API_ANIME = "https://donghua-qnha.vercel.app/anime/samehadaku";
+    
+    // Variabel global
+    let currentPage = parseInt(localStorage.getItem('current_page')) || 1;
+    let latestPage = 1;
 
-    // Helper: Slug Cleaner untuk Anichin
+    // Fungsi untuk membersihkan slug
     function getCleanSlug(href) {
         if (!href) return '';
         href = href.replace(/\/$/, '');
@@ -89,99 +324,449 @@
         return segment.replace(/-episode-\d+.*$/i, '');
     }
 
-    // Fetch and display genres
+    // Helper untuk escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // 1. Display User Info
+    function displayUserInfo() {
+        const user = JSON.parse(localStorage.getItem('user_info'));
+        if (user) {
+            const userStatus = document.getElementById('userStatus');
+            if (userStatus) {
+                userStatus.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='history.html'">
+                        <img src="${user.picture || 'https://via.placeholder.com/36'}" 
+                             style="width:36px; height:36px; border-radius:50%; border:2px solid var(--primary);">
+                        <span style="font-size:0.9rem; font-weight:600;">${user.name || 'User'}</span>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // 2. Load Genres
     async function loadGenres() {
         try {
-            const res = await fetch(API_GENRES);
+            const res = await fetch(`${API_DONGHUA}/genres`);
             const data = await res.json();
-            console.log("Genres Data: ", data); // Debugging
-            document.getElementById('genresData').innerHTML = data.data.map(item => `
-                <a href="#" class="genre-item" onclick="loadGenreDonghua('${item.slug}')">${item.name}</a>
-            `).join('');
-        } catch (error) {
-            console.error("Error fetching genres:", error);
-            document.getElementById('genresData').innerHTML = "<p style='color:#555;'>Failed to load genres.</p>";
-        }
-    }
-
-    // Fetch and display donghua by genre
-    async function loadGenreDonghua(genreSlug) {
-        try {
-            const res = await fetch(`${API_DONGHUA}/genres/${genreSlug}`);
-            const data = await res.json();
-            console.log("Donghua by Genre: ", data); // Debugging
-
-            if (data.data && data.data.length > 0) {
-                document.getElementById('searchResultsData').innerHTML = data.data.map(item => `
-                    <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}&type=donghua'">
-                        <span class="type-badge bg-donghua">DONGHUA</span>
-                        <img src="${item.poster}" loading="lazy">
-                        <p>${item.title}</p>
-                    </div>
+            
+            const container = document.getElementById('genreList');
+            if (data && data.data && data.data.length > 0) {
+                container.innerHTML = data.data.map(genre => `
+                    <button class="genre-btn" onclick="window.location.href='genre.html?slug=${genre.slug}&name=${encodeURIComponent(genre.name)}&type=donghua'">
+                        ${escapeHtml(genre.name)}
+                    </button>
                 `).join('');
             } else {
-                document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>No donghua found for this genre.</p>";
+                container.innerHTML = '<p style="color:#666; font-size:0.9rem;">No genres available.</p>';
             }
-        } catch (error) {
-            console.error("Error fetching genre donghua:", error);
-            document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>Failed to load donghua by genre.</p>";
+        } catch (e) {
+            console.error("Error loading genres:", e);
+            document.getElementById('genreList').innerHTML = '<p style="color:#ef4444; font-size:0.9rem;">Failed to load genres.</p>';
         }
     }
 
-    // Fetch and display search results for anime and donghua
-    async function searchContent() {
-        const query = document.getElementById('searchInput').value;
-        if (query.length < 3) {
-            document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>Please enter a search query...</p>";
-            return;
+    // 3. Load Popular Donghua
+    async function loadPopularDonghua() {
+        try {
+            const res = await fetch(`${API_DONGHUA}/popular`);
+            const data = await res.json();
+            
+            const container = document.getElementById('popularData');
+            if (data && data.data) {
+                container.innerHTML = data.data.slice(0, 6).map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}&source=donghua'">
+                        <span class="type-badge bg-donghua">Donghua</span>
+                        <img src="${escapeHtml(item.poster)}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                        <p>${escapeHtml(item.title)}</p>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error("Error loading popular donghua:", e);
+            document.getElementById('popularData').innerHTML = '<p style="color:#ef4444; grid-column:1/-1; text-align:center;">Failed to load popular donghua.</p>';
         }
+    }
+
+    // 4. Load Popular Anime
+    async function loadPopularAnime() {
+        try {
+            const res = await fetch(`${API_ANIME}/popular`);
+            const data = await res.json();
+            
+            const container = document.getElementById('popularAnime');
+            if (data && data.data && data.data.animeList) {
+                container.innerHTML = data.data.animeList.slice(0, 6).map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(item.animeId)}&source=anime'">
+                        <span class="type-badge bg-anime">Anime</span>
+                        <img src="${escapeHtml(item.poster)}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                        <p>${escapeHtml(item.title)}</p>
+                        <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
+                            ${escapeHtml(item.episodes || 'Ep ?')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error("Error loading popular anime:", e);
+            document.getElementById('popularAnime').innerHTML = '<p style="color:#ef4444; grid-column:1/-1; text-align:center;">Failed to load popular anime.</p>';
+        }
+    }
+
+    // 5. Load Latest Mixed Content
+    async function loadLatestContent(pageNum) {
+        const btn = document.getElementById('btnLoadMoreLatest');
+        const originalText = btn.innerText;
+        btn.innerText = "Loading...";
+        btn.disabled = true;
 
         try {
-            const animeRes = await fetch(`${API_ANIME_SEARCH}${query}`);
-            const animeData = await animeRes.json();
-            const donghuaRes = await fetch(`${API_SEARCH}${query}`);
-            const donghuaData = await donghuaRes.json();
+            // Fetch dari kedua API
+            const [donghuaRes, animeRes] = await Promise.all([
+                fetch(`${API_DONGHUA}/list?page=${pageNum}`).then(r => r.json()),
+                fetch(`${API_ANIME}/home`).then(r => r.json())
+            ]);
 
-            const combinedResults = [
-                ...animeData.data.animeList.map(item => ({
+            let donghuaList = [];
+            let animeList = [];
+
+            // Process Donghua data
+            if (donghuaRes && donghuaRes.data) {
+                donghuaList = donghuaRes.data.map(item => ({
                     title: item.title,
                     poster: item.poster,
-                    type: 'anime',
-                    slug: item.animeId,
-                    href: item.href,
-                    genres: item.genreList
-                })),
-                ...donghuaData.data.map(item => ({
-                    title: item.title,
-                    poster: item.poster,
-                    type: 'donghua',
+                    ep: '?',
                     slug: getCleanSlug(item.href),
-                    href: item.href,
-                    genres: item.genres
-                }))
-            ];
-
-            if (combinedResults.length > 0) {
-                document.getElementById('searchResultsData').innerHTML = combinedResults.map(item => `
-                    <div class="card" onclick="window.location.href='series.html?slug=${item.slug}&type=${item.type}'">
-                        <span class="type-badge ${item.type === 'donghua' ? 'bg-donghua' : 'bg-anime'}">${item.type.toUpperCase()}</span>
-                        <img src="${item.poster}" loading="lazy">
-                        <p>${item.title}</p>
-                    </div>
-                `).join('');
-            } else {
-                document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>No results found.</p>";
+                    type: 'donghua',
+                    source: 'donghua'
+                }));
             }
-        } catch (error) {
-            console.error("Error fetching search results:", error);
-            document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>An error occurred while fetching results. Please try again.</p>";
+
+            // Process Anime data (ambil dari recent)
+            if (animeRes && animeRes.data && animeRes.data.recent && animeRes.data.recent.animeList) {
+                animeList = animeRes.data.recent.animeList.map(item => ({
+                    title: item.title,
+                    poster: item.poster,
+                    ep: item.episodes || '?',
+                    slug: item.animeId,
+                    type: 'anime',
+                    source: 'anime',
+                    date: item.releasedOn
+                }));
+            }
+
+            // Gabungkan dan acak urutan
+            let combined = [...animeList, ...donghuaList];
+            
+            // Jika halaman pertama, clear container
+            const container = document.getElementById('latestData');
+            if (pageNum === 1) {
+                container.innerHTML = '';
+            }
+
+            // Render cards
+            combined.forEach(item => {
+                const badgeClass = item.type === 'anime' ? 'bg-anime' : 'bg-donghua';
+                const label = item.type === 'anime' ? 'ANIME' : 'DONGHUA';
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => {
+                    window.location.href = `series.html?slug=${item.slug}&source=${item.source}`;
+                };
+                
+                card.innerHTML = `
+                    <span class="type-badge ${badgeClass}">${label}</span>
+                    <img src="${escapeHtml(item.poster)}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                    <p>${escapeHtml(item.title)}</p>
+                    <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
+                        Ep ${escapeHtml(item.ep)}
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+
+            // Update page indicator
+            document.getElementById('pageIndicator').innerText = `Page ${pageNum}`;
+            
+        } catch (e) {
+            console.error("Error loading latest content:", e);
+            showToast("Failed to load content", "error");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
     }
 
-    // Init
-    loadGenres();
-    lucide.createIcons();
-</script>
+    // 6. Load Completed Donghua
+    async function loadCompletedDonghua() {
+        try {
+            const res = await fetch(`${API_DONGHUA}/completed`);
+            const data = await res.json();
+            
+            const container = document.getElementById('completedDonghua');
+            if (data && data.data) {
+                container.innerHTML = data.data.slice(0, 6).map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}&source=donghua'">
+                        <span class="type-badge bg-donghua">Donghua</span>
+                        <img src="${escapeHtml(item.poster)}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                        <p>${escapeHtml(item.title)}</p>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error("Error loading completed donghua:", e);
+        }
+    }
 
+    // 7. Load Completed Anime
+    async function loadCompletedAnime() {
+        try {
+            const res = await fetch(`${API_ANIME}/completed`);
+            const data = await res.json();
+            
+            const container = document.getElementById('completedAnime');
+            if (data && data.data && data.data.animeList) {
+                container.innerHTML = data.data.animeList.slice(0, 6).map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(item.animeId)}&source=anime'">
+                        <span class="type-badge bg-anime">Anime</span>
+                        <img src="${escapeHtml(item.poster)}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                        <p>${escapeHtml(item.title)}</p>
+                        <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
+                            ${escapeHtml(item.episodes || 'Ep ?')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error("Error loading completed anime:", e);
+        }
+    }
+
+    // 8. Load Ongoing Donghua
+    async function loadOngoingDonghua() {
+        try {
+            const res = await fetch(`${API_DONGHUA}/ongoing`);
+            const data = await res.json();
+            
+            const container = document.getElementById('ongoingDonghua');
+            if (data && data.data) {
+                container.innerHTML = data.data.slice(0, 6).map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}&source=donghua'">
+                        <span class="type-badge bg-donghua">Donghua</span>
+                        <img src="${escapeHtml(item.poster)}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                        <p>${escapeHtml(item.title)}</p>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error("Error loading ongoing donghua:", e);
+        }
+    }
+
+    // 9. Load Ongoing Anime
+    async function loadOngoingAnime() {
+        try {
+            const res = await fetch(`${API_ANIME}/ongoing`);
+            const data = await res.json();
+            
+            const container = document.getElementById('ongoingAnime');
+            if (data && data.data && data.data.animeList) {
+                container.innerHTML = data.data.animeList.slice(0, 6).map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(item.animeId)}&source=anime'">
+                        <span class="type-badge bg-anime">Anime</span>
+                        <img src="${escapeHtml(item.poster)}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                        <p>${escapeHtml(item.title)}</p>
+                        <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
+                            ${escapeHtml(item.episodes || 'Ep ?')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error("Error loading ongoing anime:", e);
+        }
+    }
+
+    // 10. Combined Search Function
+    async function performCombinedSearch(query) {
+        try {
+            // Fetch dari kedua API secara parallel
+            const [donghuaRes, animeRes] = await Promise.all([
+                fetch(`${API_DONGHUA}/search?s=${encodeURIComponent(query)}`),
+                fetch(`${API_ANIME}/search?query=${encodeURIComponent(query)}`)
+            ]);
+            
+            const donghuaData = await donghuaRes.json();
+            const animeData = await animeRes.json();
+            
+            let combinedResults = [];
+            
+            // Process Donghua results
+            if (donghuaData && donghuaData.data) {
+                donghuaData.data.forEach(item => {
+                    combinedResults.push({
+                        title: item.title,
+                        poster: item.poster,
+                        type: 'donghua',
+                        slug: getCleanSlug(item.href),
+                        source: 'donghua'
+                    });
+                });
+            }
+            
+            // Process Anime results
+            if (animeData && animeData.data && animeData.data.animeList) {
+                animeData.data.animeList.forEach(item => {
+                    combinedResults.push({
+                        title: item.title,
+                        poster: item.poster,
+                        type: 'anime',
+                        slug: item.animeId,
+                        source: 'anime'
+                    });
+                });
+            }
+            
+            return combinedResults;
+        } catch (e) {
+            console.error("Search error:", e);
+            return [];
+        }
+    }
+
+    // 11. Show Search Modal
+    function showSearchModal(query, results) {
+        const modal = document.getElementById('searchModal');
+        const title = document.getElementById('searchResultsTitle');
+        const resultsContainer = document.getElementById('combinedSearchResults');
+        
+        title.innerText = `Search Results for "${query}"`;
+        
+        if (results.length === 0) {
+            resultsContainer.innerHTML = '<p style="text-align:center; color:#555; width:100%; grid-column:1/-1;">No results found.</p>';
+        } else {
+            resultsContainer.innerHTML = results.map(item => `
+                <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(item.slug)}&source=${item.source}'">
+                    <span class="type-badge ${item.type === 'anime' ? 'bg-anime' : 'bg-donghua'}">
+                        ${item.type === 'anime' ? 'ANIME' : 'DONGHUA'}
+                    </span>
+                    <img src="${escapeHtml(item.poster)}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                    <p>${escapeHtml(item.title)}</p>
+                </div>
+            `).join('');
+        }
+        
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    // 12. Close Search Modal
+    function closeSearchModal() {
+        const modal = document.getElementById('searchModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    }
+
+    // 13. Load Next Page
+    function loadNextPage() {
+        latestPage++;
+        loadLatestContent(latestPage);
+    }
+
+    // 14. Toast Notification
+    function showToast(msg, type) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'error' ? '#ef4444' : '#22c55e'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+        `;
+        
+        toast.innerText = msg;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideUp 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // 15. Setup Search Event
+    function setupSearch() {
+        const searchInput = document.getElementById('globalSearch');
+        
+        searchInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const query = searchInput.value.trim();
+                if (query) {
+                    searchInput.blur(); // Remove focus
+                    showToast("Searching...", "info");
+                    const results = await performCombinedSearch(query);
+                    showSearchModal(query, results);
+                }
+            }
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('searchModal').addEventListener('click', (e) => {
+            if (e.target.id === 'searchModal') {
+                closeSearchModal();
+            }
+        });
+    }
+
+    // 16. Initialize all functions
+    async function initialize() {
+        try {
+            displayUserInfo();
+            loadGenres();
+            loadPopularDonghua();
+            loadPopularAnime();
+            loadLatestContent(latestPage);
+            loadCompletedDonghua();
+            loadCompletedAnime();
+            loadOngoingDonghua();
+            loadOngoingAnime();
+            setupSearch();
+            lucide.createIcons();
+        } catch (e) {
+            console.error("Initialization error:", e);
+            showToast("Failed to initialize app", "error");
+        }
+    }
+
+    // Start the app
+    document.addEventListener('DOMContentLoaded', initialize);
+    
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 0); opacity: 1; }
+            to { transform: translate(-50%, -100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
 </body>
-        </html>
+    </html>
