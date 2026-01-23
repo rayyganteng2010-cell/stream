@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donghua - RayStream</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Cek Login
+        if (!localStorage.getItem('user_info')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <style>
+        /* Donghua-specific styles */
+        .type-badge {
+            position: absolute; top: 8px; left: 8px;
+            padding: 3px 8px; border-radius: 6px;
+            font-size: 0.65rem; font-weight: 700; z-index: 5;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .bg-donghua { background: rgba(59, 130, 246, 0.9); color: white; }
+        
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+            margin: 0 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+        }
+        
+        .clear-search {
+            position: absolute;
+            right: 45px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 5px;
+            display: none;
+        }
+        
+        .clear-search:hover {
+            color: white;
+        }
+        
+        .user-dropdown {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            min-width: 180px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 9999;
+            padding: 20px;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-dim);
+            grid-column: 1 / -1;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .no-results i {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+            color: var(--text-dim);
+        }
+        
+        .loading-shimmer {
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.05) 25%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0.05) 75%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius);
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .search-count {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-top: 5px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Donghua Hero Banner */
+        .donghua-hero {
+            position: relative;
+            height: 200px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin: 20px;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .donghua-hero-content h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .donghua-hero-content p {
+            color: var(--text-dim);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <!-- Back to Dashboard -->
+    <div onclick="goToDashboard()" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="arrow-left" style="width:22px; color:var(--text-main);"></i>
+        <span style="font-weight:600;">Dashboard</span>
+    </div>
+    
+    <!-- Logo -->
+    <div class="logo">DONGHUA</div>
+    
+    <!-- Search Bar -->
+    <div class="search-container">
+        <input type="text" id="globalSearch" class="search-input" placeholder="Cari donghua..." autocomplete="off">
+        <button class="clear-search" id="clearSearch" onclick="clearSearch()">
+            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+        <i data-lucide="search" class="search-icon"></i>
+    </div>
+    
+    <!-- User Menu -->
+    <div class="user-dropdown" id="userDropdown">
+        <div id="userStatus" onclick="toggleDropdown()">
+            <!-- User avatar akan dimuat via JS -->
+        </div>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <div class="dropdown-item" onclick="window.location.href='history.html'">
+                <i data-lucide="history"></i>
+                <span>Riwayat</span>
+            </div>
+            <div class="dropdown-item" onclick="refreshAllDonghua()">
+                <i data-lucide="refresh-cw"></i>
+                <span>Refresh</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" onclick="logout()" style="color: #ef4444;">
+                <i data-lucide="log-out"></i>
+                <span>Logout</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Donghua Hero Banner -->
+<div class="donghua-hero">
+    <div class="donghua-hero-content">
+        <h1>Koleksi Donghua</h1>
+        <p>Nikmati donghua China terbaru dan terpopuler dengan subtitle bahasa Indonesia</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Popular Donghua -->
+    <div class="section-header">
+        <h3>Popular Donghua</h3>
+    </div>
+    <div id="popularDonghua" class="grid">
+        <div class="card loading-shimmer" style="height:200px;"></div>
+        <div class="card loading-shimmer" style="height:200px;"></div>
+        <div class="card loading-shimmer" style="height:200px;"></div>
+    </div>
+
+    <!-- Latest Donghua -->
+    <div class="section-header">
+        <h3>Latest Release</h3>
+    </div>
+    <div id="latestDonghua" class="grid">
+        <div class="card loading-shimmer" style="height:200px;"></div>
+        <div class="card loading-shimmer" style="height:200px;"></div>
+        <div class="card loading-shimmer" style="height:200px;"></div>
+    </div>
+
+    <!-- Completed Donghua -->
+    <div class="section-header">
+        <h3>Completed Donghua</h3>
+    </div>
+    <div id="completedDonghua" class="grid">
+        <div class="card loading-shimmer" style="height:200px;"></div>
+        <div class="card loading-shimmer" style="height:200px;"></div>
+        <div class="card loading-shimmer" style="height:200px;"></div>
+    </div>
+
+    <!-- Ongoing Donghua -->
+    <div class="section-header">
+        <h3>Ongoing Donghua</h3>
+    </div>
+    <div id="ongoingDonghua" class="grid">
+        <div class="card loading-shimmer" style="height:200px;"></div>
+        <div class="card loading-shimmer" style="height:200px;"></div>
+        <div class="card loading-shimmer" style="height:200px;"></div>
+    </div>
+
+    <!-- Load More Button -->
+    <button id="btnLoadMore" class="btn-load-more" onclick="loadMoreDonghua()" style="display: none;">
+        Muat Lebih Banyak
+    </button>
+</div>
+
+<!-- Search Modal -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h2 id="searchResultsTitle" class="modal-title">Hasil Pencarian Donghua</h2>
+                <div id="searchResultsCount" class="search-count"></div>
+            </div>
+            <button onclick="closeSearchModal()" class="btn" style="background:#333; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-family: 'Inter', sans-serif; font-weight: 600;">
+                ✕ Tutup
+            </button>
+        </div>
+        
+        <!-- Search Results -->
+        <div id="donghuaSearchResults" class="grid">
+            <div class="no-results">
+                <i data-lucide="search"></i>
+                <p>Masukkan kata kunci untuk mencari donghua</p>
+            </div>
+        </div>
+        
+        <!-- No Results Message -->
+        <div id="noSearchResults" class="no-results" style="display: none;">
+            <i data-lucide="search-x"></i>
+            <h3>Tidak ada donghua ditemukan</h3>
+            <p>Coba dengan kata kunci lain</p>
+        </div>
+        
+        <!-- Search Loading -->
+        <div id="searchLoading" class="no-results" style="display: none;">
+            <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
+            <p>Mencari donghua...</p>
+        </div>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><i data-lucide="home"></i> Home</a>
+    <a href="anime.html" class="nav-item"><i data-lucide="tv"></i> Anime</a>
+    <a href="donghua.html" class="nav-item active"><i data-lucide="tv-2"></i> Donghua</a>
+</nav>
+
+<script>
+    // =============================================
+    // API ENDPOINTS
+    // =============================================
+    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
+    
+    // State variables
+    let isLoading = false;
+    let searchTimeout = null;
+    let currentSearchQuery = '';
+    let currentPage = 1;
+    
+    // =============================================
+    // 1. NAVIGATION
+    // =============================================
+    function goToDashboard() {
+        window.location.href = 'index.html';
+    }
+    
+    // =============================================
+    // 2. USER MANAGEMENT
+    // =============================================
+    function displayUserInfo() {
+        try {
+            const userData = localStorage.getItem('user_info');
+            if (!userData) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const user = JSON.parse(userData);
+            const userStatus = document.getElementById('userStatus');
+            
+            if (userStatus) {
+                userStatus.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="${user.picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=36&h=36&fit=crop&crop=face'}" 
+                             style="width:36px; height:36px; border-radius:50%; border:2px solid #3b82f6; object-fit:cover;">
+                        <span style="font-size:0.9rem; font-weight:600;">${user.name || 'User'}</span>
+                        <i data-lucide="chevron-down" style="width:16px; height:16px;"></i>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        } catch (error) {
+            console.error('Error displaying user info:', error);
+        }
+    }
+    
+    function toggleDropdown() {
+        const dropdown = document.getElementById('dropdownMenu');
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    }
+    
+    function logout() {
+        if (confirm('Yakin ingin logout?')) {
+            localStorage.removeItem('user_info');
+            window.location.href = 'login.html';
+        }
+    }
+    
+    // =============================================
+    // 3. LOAD DONGHUA DATA
+    // =============================================
+    async function loadPopularDonghua() {
+        try {
+            const response = await fetch(`${API_DONGHUA}/popular`);
+            const data = await response.json();
+            
+            const container = document.getElementById('popularDonghua');
+            
+            if (data && data.data && Array.isArray(data.data)) {
+                renderDonghuaCards(container, data.data.slice(0, 6), 'popular');
+            } else {
+                showNoData(container, 'Popular Donghua');
+            }
+        } catch (error) {
+            console.error('Error loading popular donghua:', error);
+            showError(document.getElementById('popularDonghua'), 'Popular Donghua');
+        }
+    }
+    
+    async function loadLatestDonghua() {
+        try {
+            const response = await fetch(`${API_DONGHUA}/list?page=${currentPage}`);
+            const data = await response.json();
+            
+            const container = document.getElementById('latestDonghua');
+            
+            if (data && data.data && Array.isArray(data.data)) {
+                renderDonghuaCards(container, data.data.slice(0, 6), 'latest');
+            } else {
+                showNoData(container, 'Latest Donghua');
+            }
+        } catch (error) {
+            console.error('Error loading latest donghua:', error);
+            showError(document.getElementById('latestDonghua'), 'Latest Donghua');
+        }
+    }
+    
+    async function loadCompletedDonghua() {
+        try {
+            const response = await fetch(`${API_DONGHUA}/completed`);
+            const data = await response.json();
+            
+            const container = document.getElementById('completedDonghua');
+            
+            if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+                renderDonghuaCards(container, data.data.slice(0, 6), 'completed');
+            } else {
+                showNoData(container, 'Completed Donghua');
+            }
+        } catch (error) {
+            console.error('Error loading completed donghua:', error);
+            showError(document.getElementById('completedDonghua'), 'Completed Donghua');
+        }
+    }
+    
+    async function loadOngoingDonghua() {
+        try {
+            const response = await fetch(`${API_DONGHUA}/ongoing`);
+            const data = await response.json();
+            
+            const container = document.getElementById('ongoingDonghua');
+            
+            if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+                renderDonghuaCards(container, data.data.slice(0, 6), 'ongoing');
+            } else {
+                showNoData(container, 'Ongoing Donghua');
+            }
+        } catch (error) {
+            console.error('Error loading ongoing donghua:', error);
+            showError(document.getElementById('ongoingDonghua'), 'Ongoing Donghua');
+        }
+    }
+    
+    function loadMoreDonghua() {
+        currentPage++;
+        loadLatestDonghua();
+        showToast(`Memuat halaman ${currentPage}...`, 'info');
+    }
+    
+    function refreshAllDonghua() {
+        showToast('Memperbarui semua data donghua...', 'info');
+        currentPage = 1;
+        loadPopularDonghua();
+        loadLatestDonghua();
+        loadCompletedDonghua();
+        loadOngoingDonghua();
+        setTimeout(() => {
+            showToast('Data donghua diperbarui', 'success');
+        }, 1000);
+    }
+    
+    // =============================================
+    // 4. SEARCH SYSTEM
+    // =============================================
+    async function searchDonghua(query) {
+        if (!query || query.trim().length < 2) {
+            return [];
+        }
+        
+        currentSearchQuery = query;
+        
+        // Show loading
+        document.getElementById('searchLoading').style.display = 'block';
+        document.getElementById('donghuaSearchResults').style.display = 'none';
+        document.getElementById('noSearchResults').style.display = 'none';
+        
+        try {
+            const response = await fetch(`${API_DONGHUA}/search?s=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            if (data && data.data && Array.isArray(data.data)) {
+                return data.data.slice(0, 30);
+            }
+            
+            return [];
+            
+        } catch (error) {
+            console.error('Error searching donghua:', error);
+            showToast('Gagal mencari donghua', 'error');
+            return [];
+        }
+    }
+    
+    async function showSearchResults(query, results) {
+        const resultsContainer = document.getElementById('donghuaSearchResults');
+        const noResultsElement = document.getElementById('noSearchResults');
+        const searchLoading = document.getElementById('searchLoading');
+        const title = document.getElementById('searchResultsTitle');
+        const count = document.getElementById('searchResultsCount');
+        
+        // Hide loading
+        searchLoading.style.display = 'none';
+        
+        title.textContent = `Hasil pencarian untuk "${escapeHtml(query)}"`;
+        
+        if (results.length === 0) {
+            resultsContainer.style.display = 'none';
+            noResultsElement.style.display = 'block';
+            count.textContent = '0 donghua ditemukan';
+        } else {
+            resultsContainer.style.display = 'grid';
+            noResultsElement.style.display = 'none';
+            
+            // Render results
+            resultsContainer.innerHTML = results.map(item => {
+                // Get clean slug from href
+                const href = item.href || '';
+                let slug = '';
+                if (href) {
+                    slug = href.split('/').pop();
+                    // Remove episode number if present
+                    slug = slug.replace(/-episode-\d+.*$/i, '');
+                }
+                
+                const poster = item.poster || 'https://via.placeholder.com/150x200/1a1a2e/ffffff?text=No+Image';
+                const title = item.title || 'Unknown';
+                
+                return `
+                    <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(slug)}&source=donghua'">
+                        <span class="type-badge bg-donghua">DONGHUA</span>
+                        <img src="${escapeHtml(poster)}" 
+                             loading="lazy" 
+                             onerror="this.src='https://via.placeholder.com/150x200/1a1a2e/ffffff?text=Error'">
+                        <p>${escapeHtml(title)}</p>
+                    </div>
+                `;
+            }).join('');
+            
+            count.textContent = `${results.length} donghua ditemukan`;
+        }
+    }
+    
+    function closeSearchModal() {
+        const modal = document.getElementById('searchModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('globalSearch').value = '';
+        document.getElementById('clearSearch').style.display = 'none';
+    }
+    
+    function clearSearch() {
+        document.getElementById('globalSearch').value = '';
+        document.getElementById('clearSearch').style.display = 'none';
+        closeSearchModal();
+    }
+    
+    // =============================================
+    // 5. RENDER FUNCTIONS
+    // =============================================
+    function renderDonghuaCards(container, items, sectionType) {
+        if (!items || items.length === 0) {
+            showNoData(container, sectionType);
+            return;
+        }
+        
+        container.innerHTML = items.map(item => {
+            // Get clean slug from href
+            const href = item.href || '';
+            let slug = '';
+            if (href) {
+                slug = href.split('/').pop();
+                // Remove episode number if present
+                slug = slug.replace(/-episode-\d+.*$/i, '');
+            }
+            
+            const poster = item.poster || 'https://via.placeholder.com/150x200/1a1a2e/ffffff?text=No+Image';
+            const title = item.title || 'Unknown';
+            
+            return `
+                <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(slug)}&source=donghua'">
+                    <span class="type-badge bg-donghua">DONGHUA</span>
+                    <img src="${escapeHtml(poster)}" 
+                         loading="lazy" 
+                         onerror="this.src='https://via.placeholder.com/150x200/1a1a2e/ffffff?text=Error'">
+                    <p>${escapeHtml(title)}</p>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function showNoData(container, sectionName) {
+        container.innerHTML = `
+            <div class="no-results">
+                <i data-lucide="inbox"></i>
+                <p>Tidak ada data ${sectionName}</p>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+    
+    function showError(container, sectionName) {
+        container.innerHTML = `
+            <div class="no-results">
+                <i data-lucide="alert-circle"></i>
+                <p>Gagal memuat ${sectionName}</p>
+                <button class="btn btn-primary" onclick="refreshAllDonghua()" style="margin-top: 10px; padding: 8px 16px; font-size: 0.8rem;">
+                    Coba Lagi
+                </button>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#3b82f6'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideUp 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    // =============================================
+    // 6. EVENT LISTENERS
+    // =============================================
+    function setupEventListeners() {
+        const searchInput = document.getElementById('globalSearch');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        
+        // Search input
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value;
+            
+            clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
+            
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(async () => {
+                    const modal = document.getElementById('searchModal');
+                    modal.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                    
+                    const results = await searchDonghua(query);
+                    await showSearchResults(query, results);
+                }, 800);
+            }
+        });
+        
+        // Enter key
+        searchInput.addEventListener('keydown', async function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = searchInput.value.trim();
+                if (query.length >= 2) {
+                    const modal = document.getElementById('searchModal');
+                    modal.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                    
+                    const results = await searchDonghua(query);
+                    await showSearchResults(query, results);
+                }
+            }
+        });
+        
+        // Close modal on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeSearchModal();
+            }
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('searchModal').addEventListener('click', (e) => {
+            if (e.target.id === 'searchModal') {
+                closeSearchModal();
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('dropdownMenu');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (dropdown && userDropdown && 
+                !userDropdown.contains(e.target) && 
+                dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+    
+    // =============================================
+    // 7. INITIALIZE DONGHUA PAGE
+    // =============================================
+    async function initializeDonghuaPage() {
+        try {
+            // Load icons
+            lucide.createIcons();
+            
+            // Display user info
+            displayUserInfo();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Load all donghua data
+            await Promise.all([
+                loadPopularDonghua(),
+                loadLatestDonghua(),
+                loadCompletedDonghua(),
+                loadOngoingDonghua()
+            ]);
+            
+            // Show load more button
+            document.getElementById('btnLoadMore').style.display = 'block';
+            
+        } catch (error) {
+            console.error('Error initializing donghua page:', error);
+            showToast('Gagal memuat beberapa data donghua', 'error');
+        }
+    }
+    
+    // =============================================
+    // 8. START THE PAGE
+    // =============================================
+    document.addEventListener('DOMContentLoaded', () => {
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from { transform: translate(-50%, -100%); opacity: 0; }
+                to { transform: translate(-50%, 0); opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translate(-50%, 0); opacity: 1; }
+                to { transform: translate(-50%, -100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initialize page
+        initializeDonghuaPage();
+    });
+</script>
+</body>
+</html>
