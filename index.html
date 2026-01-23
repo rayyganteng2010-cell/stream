@@ -80,7 +80,7 @@
     const API_GENRES = "https://anichin-seven.vercel.app/api/genres";
     const API_COMPLETED_DONGHUA = "https://anichin-seven.vercel.app/api/completed";
     const API_ONGOING_DONGHUA = "https://anichin-seven.vercel.app/api/ongoing";
-    
+
     // Helper: Slug Cleaner untuk Anichin
     function getCleanSlug(href) {
         if (!href) return '';
@@ -89,7 +89,46 @@
         return segment.replace(/-episode-\d+.*$/i, '');
     }
 
-    // Fetch and display search results
+    // Fetch and display genres
+    async function loadGenres() {
+        try {
+            const res = await fetch(API_GENRES);
+            const data = await res.json();
+            console.log("Genres Data: ", data); // Debugging
+            document.getElementById('genresData').innerHTML = data.data.map(item => `
+                <a href="#" class="genre-item" onclick="loadGenreDonghua('${item.slug}')">${item.name}</a>
+            `).join('');
+        } catch (error) {
+            console.error("Error fetching genres:", error);
+            document.getElementById('genresData').innerHTML = "<p style='color:#555;'>Failed to load genres.</p>";
+        }
+    }
+
+    // Fetch and display donghua by genre
+    async function loadGenreDonghua(genreSlug) {
+        try {
+            const res = await fetch(`${API_DONGHUA}/genres/${genreSlug}`);
+            const data = await res.json();
+            console.log("Donghua by Genre: ", data); // Debugging
+
+            if (data.data && data.data.length > 0) {
+                document.getElementById('searchResultsData').innerHTML = data.data.map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}&type=donghua'">
+                        <span class="type-badge bg-donghua">DONGHUA</span>
+                        <img src="${item.poster}" loading="lazy">
+                        <p>${item.title}</p>
+                    </div>
+                `).join('');
+            } else {
+                document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>No donghua found for this genre.</p>";
+            }
+        } catch (error) {
+            console.error("Error fetching genre donghua:", error);
+            document.getElementById('searchResultsData').innerHTML = "<p style='color:#555;'>Failed to load donghua by genre.</p>";
+        }
+    }
+
+    // Fetch and display search results for anime and donghua
     async function searchContent() {
         const query = document.getElementById('searchInput').value;
         if (query.length < 3) {
@@ -139,24 +178,10 @@
         }
     }
 
-    // Fetch and display genres
-    async function loadGenres() {
-        try {
-            const res = await fetch(API_GENRES);
-            const data = await res.json();
-            document.getElementById('genresData').innerHTML = data.data.map(item => `
-                <a href="${item.anichinUrl}" class="genre-item">${item.name}</a>
-            `).join('');
-        } catch (error) {
-            console.error("Error fetching genres:", error);
-            document.getElementById('genresData').innerHTML = "<p style='color:#555;'>Failed to load genres.</p>";
-        }
-    }
-
     // Init
     loadGenres();
     lucide.createIcons();
 </script>
 
 </body>
-</html>
+        </html>
