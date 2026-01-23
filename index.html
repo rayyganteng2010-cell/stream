@@ -1,232 +1,326 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RayStream - Home</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        if (!localStorage.getItem('user_info')) window.location.href = 'login.html';
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RayStream</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    // wajib login
+    if (!localStorage.getItem('user_info')) window.location.href = 'login.html';
+  </script>
 </head>
 <body>
 
-<header>
-    <div class="logo">RayStream</div>
-    <div id="userStatus" onclick="window.location.href='history.html'" style="cursor:pointer;"></div>
+<header class="rs-header">
+  <div class="rs-brand" onclick="location.href='index.html'">
+    <div class="rs-logo">RayStream</div>
+    <div class="rs-sub">Anime + Donghua, disatuin biar otak kamu nggak perlu multitasking</div>
+  </div>
+
+  <div class="rs-actions">
+    <div class="rs-search">
+      <i data-lucide="search" class="rs-ico"></i>
+      <input id="q" type="search" placeholder="Cari judul... (anime & donghua)" autocomplete="off" />
+      <button id="btnClear" class="rs-clear" title="Clear" style="display:none;">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+  </div>
 </header>
 
-<div class="tab-container">
-    <button class="tab-btn active" onclick="switchTab('home')">Home</button>
-    <button class="tab-btn" onclick="switchTab('ongoing')">Ongoing</button>
-    <button class="tab-btn" onclick="switchTab('completed')">Completed</button>
+<div class="tabs-wrap">
+  <button class="tab-btn active" data-tab="latest">
+    <i data-lucide="sparkles"></i><span>Latest</span>
+  </button>
+  <button class="tab-btn" data-tab="ongoing">
+    <i data-lucide="play-circle"></i><span>Ongoing</span>
+  </button>
+  <button class="tab-btn" data-tab="completed">
+    <i data-lucide="check-circle-2"></i><span>Completed</span>
+  </button>
 </div>
 
-<div id="view-home">
-    <div class="slider-container">
-        <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg" class="slider-img">
-        <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg" class="slider-img">
+<main class="container">
+  <div class="panel rs-panel">
+    <div class="rs-panel-head">
+      <div class="rs-status" id="statusText">Memuat...</div>
+
+      <div class="rs-pager">
+        <button id="btnPrev" class="btn btn-ghost" disabled title="Prev">
+          <i data-lucide="chevron-left"></i>
+        </button>
+        <div class="rs-page">Page <span id="pageNum">1</span></div>
+        <button id="btnNext" class="btn btn-ghost" title="Next">
+          <i data-lucide="chevron-right"></i>
+        </button>
+      </div>
     </div>
 
-    <div class="container">
-        <div class="section-title">
-            <h3>Popular Today</h3>
-        </div>
-        <div id="popularData" class="grid">
-            <div class="card skeleton"></div><div class="card skeleton"></div><div class="card skeleton"></div>
-        </div>
+    <!-- DONGHUA -->
+    <section class="rs-section">
+      <div class="rs-section-title">
+        <div class="rs-pill rs-pill-donghua"><span>DONGHUA</span></div>
+        <h3 id="titleDonghua">Donghua</h3>
+      </div>
+      <div id="gridDonghua" class="grid"></div>
+      <div id="emptyDonghua" class="rs-empty" style="display:none;">Tidak ada data donghua.</div>
+    </section>
 
-        <div class="section-title">
-            <h3>Latest Updates</h3>
-        </div>
-        <div id="homeData" class="grid"></div>
-        <div style="text-align:center; padding:20px;">
-            <button onclick="loadMixedHome()" style="background:#222; border:1px solid #333; color:white; padding:10px 20px; border-radius:20px;">Load More</button>
-        </div>
-    </div>
-</div>
+    <!-- ANIME -->
+    <section class="rs-section">
+      <div class="rs-section-title">
+        <div class="rs-pill rs-pill-anime"><span>ANIME</span></div>
+        <h3 id="titleAnime">Anime</h3>
+      </div>
+      <div id="gridAnime" class="grid"></div>
+      <div id="emptyAnime" class="rs-empty" style="display:none;">Tidak ada data anime.</div>
+    </section>
 
-<div id="view-ongoing" style="display:none;">
-    <div class="container">
-        <div class="section-title"><h3>Ongoing Series</h3></div>
-        <div id="ongoingData" class="grid"></div>
+    <div id="loading" class="rs-loading" style="display:none;">
+      <div class="spinner"></div>
+      <div>Loading...</div>
     </div>
-</div>
-
-<div id="view-completed" style="display:none;">
-    <div class="container">
-        <div class="section-title"><h3>Completed Series</h3></div>
-        <div id="completedData" class="grid"></div>
-    </div>
-</div>
+  </div>
+</main>
 
 <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active"><i data-lucide="home"></i></a>
-    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
-    <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
+  <a href="index.html" class="nav-item active"><i data-lucide="home"></i></a>
+  <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
+  <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
+  <a href="home.html" class="nav-item"><i data-lucide="layout-grid"></i></a>
 </nav>
 
 <script>
-    // --- API ENDPOINTS ---
-    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    // Using proxy for Samehadaku access
-    const API_ANIME = "https://donghua-qnha.vercel.app/anime/samehadaku";
+  const API_DONGHUA = "https://anichin-seven.vercel.app/api";
+  const API_ANIME   = "https://donghua-qnha.vercel.app/anime/samehadaku";
 
-    // --- USER AVATAR ---
-    const user = JSON.parse(localStorage.getItem('user_info'));
-    if(user) {
-        document.getElementById('userStatus').innerHTML = `<img src="${user.picture}" style="width:34px; height:34px; border-radius:50%; border:2px solid var(--primary);">`;
+  const ENDPOINT = {
+    latest: {
+      donghua: (page) => `${API_DONGHUA}/list?page=${page}`,
+      anime:   (page) => `${API_ANIME}/home?page=${page}` // fallback handled
+    },
+    ongoing: {
+      donghua: (page) => `${API_DONGHUA}/ongoing?page=${page}`,
+      anime:   (page) => `${API_ANIME}/ongoing?page=${page}`
+    },
+    completed: {
+      donghua: (page) => `${API_DONGHUA}/completed?page=${page}`,
+      anime:   (page) => `${API_ANIME}/completed?page=${page}`
+    },
+    search: {
+      donghua: (q) => `${API_DONGHUA}/search?s=${encodeURIComponent(q)}`,
+      anime:   (q) => `${API_ANIME}/search?query=${encodeURIComponent(q)}`
     }
+  };
 
-    // --- TAB SWITCHER ---
-    function switchTab(tabName) {
-        // Hide All Views
-        document.getElementById('view-home').style.display = 'none';
-        document.getElementById('view-ongoing').style.display = 'none';
-        document.getElementById('view-completed').style.display = 'none';
-        
-        // Reset Buttons
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
-        // Show Selected
-        document.getElementById(`view-${tabName}`).style.display = 'block';
-        event.target.classList.add('active'); // Highlight button clicked
+  let state = { tab: "latest", page: 1, q: "" };
 
-        // Load Data if empty
-        if(tabName === 'ongoing' && document.getElementById('ongoingData').innerHTML === "") loadOngoing();
-        if(tabName === 'completed' && document.getElementById('completedData').innerHTML === "") loadCompleted();
-    }
+  const el = {
+    q: document.getElementById("q"),
+    btnClear: document.getElementById("btnClear"),
+    loading: document.getElementById("loading"),
+    status: document.getElementById("statusText"),
+    pageNum: document.getElementById("pageNum"),
+    btnPrev: document.getElementById("btnPrev"),
+    btnNext: document.getElementById("btnNext"),
+    gridD: document.getElementById("gridDonghua"),
+    gridA: document.getElementById("gridAnime"),
+    emptyD: document.getElementById("emptyDonghua"),
+    emptyA: document.getElementById("emptyAnime"),
+    titleD: document.getElementById("titleDonghua"),
+    titleA: document.getElementById("titleAnime")
+  };
 
-    // --- 1. LOAD HOME (POPULAR + LATEST) ---
-    async function loadHome() {
-        // Popular (Donghua Only for simplicity)
-        fetch(`${API_DONGHUA}/popular`)
-            .then(r=>r.json())
-            .then(d => renderCards(d.data.slice(0,6), 'popularData', 'donghua'));
+  function setLoading(on){ el.loading.style.display = on ? "flex" : "none"; }
+  function setEmpty(which, on){ (which === "donghua" ? el.emptyD : el.emptyA).style.display = on ? "block" : "none"; }
 
-        loadMixedHome();
-    }
+  function clearGrid(){
+    el.gridD.innerHTML = "";
+    el.gridA.innerHTML = "";
+    setEmpty("donghua", false);
+    setEmpty("anime", false);
+  }
 
-    let homePage = 1;
-    async function loadMixedHome() {
-        // Fetch Donghua List & Anime Recent in parallel
-        const [resD, resA] = await Promise.all([
-            fetch(`${API_DONGHUA}/list?page=${homePage}`).then(r=>r.json()),
-            fetch(`${API_ANIME}/home`).then(r=>r.json()) // Anime recent
-        ]);
+  function titleCase(s){ return (s || "").charAt(0).toUpperCase() + (s || "").slice(1); }
 
-        const listD = normalizeDonghua(resD.data);
-        // Be careful, anime recent structure might vary
-        const listA = resA.data?.recent?.animeList ? normalizeAnime(resA.data.recent.animeList) : [];
+  function normalizeDonghua(json){
+    const arr = json?.data;
+    return Array.isArray(arr) ? arr : [];
+  }
 
-        // Merge & Render
-        const mixed = [...listA, ...listD]; 
-        renderCards(mixed, 'homeData', 'mixed');
-        homePage++;
-    }
+  function normalizeAnime(json){
+    const a = json?.data?.animeList;
+    if (Array.isArray(a)) return a;
+    const b = json?.data;
+    if (Array.isArray(b)) return b;
+    return [];
+  }
 
-    // --- 2. LOAD ONGOING ---
-    async function loadOngoing() {
-        const container = document.getElementById('ongoingData');
-        container.innerHTML = '<p style="color:#666;">Loading Ongoing...</p>';
+  function getAnimePagination(json){ return json?.pagination || null; }
 
-        try {
-            const [resD, resA] = await Promise.all([
-                fetch(`${API_DONGHUA}/ongoing?page=1`).then(r=>r.json()),
-                fetch(`${API_ANIME}/ongoing?page=1`).then(r=>r.json())
-            ]);
+  function renderCards(list, kind){
+    const grid = (kind === "donghua") ? el.gridD : el.gridA;
 
-            const listD = normalizeDonghua(resD.data);
-            // Check Anime Ongoing structure (usually data.animeList)
-            const listA = resA.data?.animeList ? normalizeAnime(resA.data.animeList) : [];
+    grid.innerHTML = list.map(item => {
+      const title = (item.title || "").trim();
+      const poster = item.poster || "";
+      const status = (item.status || "").trim();
+      const type = (item.type || "").trim();
+      const score = (item.score || item.rating || "").toString().trim();
+      const sub = (item.sub || "").trim();
 
-            renderCards([...listA, ...listD], 'ongoingData', 'mixed');
-        } catch(e) { console.error(e); }
-    }
+      const slug = kind === "donghua"
+        ? (item.slug || (item.anichinUrl ? item.anichinUrl.split('/').filter(Boolean).pop() : ""))
+        : (item.animeId || "");
 
-    // --- 3. LOAD COMPLETED ---
-    async function loadCompleted() {
-        const container = document.getElementById('completedData');
-        container.innerHTML = '<p style="color:#666;">Loading Completed...</p>';
+      const badgeClass = kind === "donghua" ? "tag-donghua" : "tag-anime";
+      const badgeText  = kind === "donghua" ? "DONGHUA" : "ANIME";
 
-        try {
-            const [resD, resA] = await Promise.all([
-                fetch(`${API_DONGHUA}/completed?page=1`).then(r=>r.json()),
-                fetch(`${API_ANIME}/completed?page=1`).then(r=>r.json())
-            ]);
+      const left = status || type || "—";
+      const right = score ? `⭐ ${score}` : (sub ? sub : "");
 
-            const listD = normalizeDonghua(resD.data);
-            const listA = resA.data?.animeList ? normalizeAnime(resA.data.animeList) : [];
+      const link = `series.html?slug=${encodeURIComponent(slug)}&source=${kind}`;
 
-            renderCards([...listA, ...listD], 'completedData', 'mixed');
-        } catch(e) { console.error(e); }
-    }
-
-    // --- HELPERS: NORMALIZE DATA ---
-    function normalizeDonghua(list) {
-        if(!list) return [];
-        return list.map(item => ({
-            title: item.title,
-            poster: item.poster,
-            ep: item.current_episode || item.episode || "Ep ?", // Handle different field names
-            slug: getCleanSlug(item.href),
-            type: 'donghua'
-        }));
-    }
-
-    function normalizeAnime(list) {
-        if(!list) return [];
-        return list.map(item => ({
-            title: item.title,
-            poster: item.poster,
-            ep: item.episodes || "Ep ?",
-            slug: item.animeId, // Anime ID is usually clean
-            type: 'anime'
-        }));
-    }
-
-    function getCleanSlug(url) {
-        if(!url) return "";
-        return url.replace(/\/$/, '').split('/').pop().replace(/-episode-\d+.*$/i, '');
-    }
-
-    // --- CARD RENDERER ---
-    function renderCards(list, elementId, mode) {
-        const container = document.getElementById(elementId);
-        if(container.innerHTML.includes('Loading')) container.innerHTML = ""; // Clear loader
-
-        const html = list.map(item => {
-            // Determine destination link
-            let link = `series.html?slug=${item.slug}&source=${item.type}`;
-            
-            // Badge Class
-            let badgeClass = item.type === 'anime' ? 'tag-anime' : 'tag-donghua';
-            let label = item.type.toUpperCase();
-
-            return `
-            <div class="card" onclick="window.location.href='${link}'">
-                <span class="type-tag ${badgeClass}">${label}</span>
-                <img src="${item.poster}" loading="lazy">
-                <div class="card-info">
-                    <div class="card-title">${item.title}</div>
-                    <div class="card-ep">${item.ep}</div>
-                </div>
+      return `
+        <article class="card rs-card" onclick="window.location.href='${link}'">
+          <span class="type-tag ${badgeClass}">${badgeText}</span>
+          <img src="${poster}" loading="lazy" alt="${title}">
+          <div class="card-info">
+            <div class="card-title">${title}</div>
+            <div class="card-ep">
+              <span>${left}</span>
+              <span>${right}</span>
             </div>
-            `;
-        }).join('');
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
 
-        if (mode === 'popularData' || mode === 'mixed') {
-             if (container.innerHTML === "") container.innerHTML = html; // First load
-             else container.insertAdjacentHTML('beforeend', html); // Load more
-        } else {
-             container.innerHTML = html; // Replace content
-        }
+  async function fetchJson(url){
+    const r = await fetch(url);
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  }
+
+  async function load(){
+    setLoading(true);
+    clearGrid();
+
+    const isSearch = state.q.length > 0;
+
+    el.titleD.textContent = isSearch ? `Hasil Search: "${state.q}"` : `${titleCase(state.tab)} Donghua`;
+    el.titleA.textContent = isSearch ? `Hasil Search: "${state.q}"` : `${titleCase(state.tab)} Anime`;
+
+    el.pageNum.textContent = state.page;
+    el.btnPrev.disabled = (state.page <= 1) || isSearch;
+
+    el.status.textContent = isSearch
+      ? `Mencari di 2 sumber...`
+      : `Menampilkan ${titleCase(state.tab)} (2 sumber)`;
+
+    try{
+      const [jD, jA] = await Promise.all([
+        isSearch
+          ? fetchJson(ENDPOINT.search.donghua(state.q))
+          : fetchJson(ENDPOINT[state.tab].donghua(state.page)),
+        isSearch
+          ? fetchJson(ENDPOINT.search.anime(state.q))
+          : fetchJson(ENDPOINT[state.tab].anime(state.page))
+            .catch(async () => {
+              // fallback khusus latest anime
+              if(state.tab !== "latest") throw new Error("anime endpoint fail");
+              try { return await fetchJson(`${API_ANIME}/latest?page=${state.page}`); }
+              catch { return await fetchJson(`${API_ANIME}/list?page=${state.page}`); }
+            })
+      ]);
+
+      const donghuaList = normalizeDonghua(jD);
+      const animeList = normalizeAnime(jA);
+
+      if(donghuaList.length) renderCards(donghuaList, "donghua");
+      else setEmpty("donghua", true);
+
+      if(animeList.length) renderCards(animeList, "anime");
+      else setEmpty("anime", true);
+
+      if(isSearch){
+        el.btnNext.disabled = true;
+      } else {
+        const pA = getAnimePagination(jA);
+        const animeHasNext = (pA && typeof pA.hasNextPage === "boolean") ? pA.hasNextPage : true;
+        const donghuaHasNext = donghuaList.length > 0;
+        el.btnNext.disabled = !(animeHasNext || donghuaHasNext);
+      }
+    } catch(err){
+      console.error(err);
+      el.status.textContent = "Gagal load data. Cek console, atau API lagi drama.";
+      setEmpty("donghua", true);
+      setEmpty("anime", true);
+      el.btnNext.disabled = true;
+    } finally {
+      setLoading(false);
+      lucide.createIcons();
     }
+  }
 
-    // Init
-    loadHome();
-    lucide.createIcons();
+  // tabs
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      state.tab = btn.dataset.tab;
+      state.page = 1;
+
+      // keluar dari search kalau ganti tab
+      if(state.q){
+        state.q = "";
+        el.q.value = "";
+        el.btnClear.style.display = "none";
+      }
+
+      load();
+    });
+  });
+
+  document.getElementById("btnPrev").addEventListener("click", () => {
+    if(state.page <= 1) return;
+    state.page--;
+    load();
+  });
+
+  document.getElementById("btnNext").addEventListener("click", () => {
+    state.page++;
+    load();
+  });
+
+  // search debounce
+  let tmr = null;
+  el.q.addEventListener("input", () => {
+    const v = el.q.value.trim();
+    el.btnClear.style.display = v ? "flex" : "none";
+    clearTimeout(tmr);
+    tmr = setTimeout(() => {
+      state.q = v;
+      state.page = 1;
+      load();
+    }, 350);
+  });
+
+  el.btnClear.addEventListener("click", () => {
+    el.q.value = "";
+    el.btnClear.style.display = "none";
+    state.q = "";
+    state.page = 1;
+    load();
+  });
+
+  load();
+  lucide.createIcons();
 </script>
+
 </body>
-</html>
+    </html>
