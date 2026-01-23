@@ -3,109 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Anime</title>
+    <title>Series Detail</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
 <header style="background:transparent; position:absolute; border:none;">
-    <div class="logo" onclick="history.back()" style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:50%;">
-        <i data-lucide="arrow-left" style="color:white;"></i>
+    <div class="logo" onclick="history.back()" style="background:rgba(0,0,0,0.5); padding:8px; border-radius:50%; cursor:pointer;">
+        <i data-lucide="arrow-left" style="color:white; width:24px; height:24px;"></i>
     </div>
 </header>
 
-<div style="position:relative; height:300px;">
-    <img id="heroImg" src="" style="width:100%; height:100%; object-fit:cover; opacity:0.6;">
-    <div style="position:absolute; bottom:0; left:0; width:100%; background:linear-gradient(to top, var(--bg-main), transparent); height:150px;"></div>
+<div style="position:relative; height:350px;">
+    <img id="heroImg" src="" style="width:100%; height:100%; object-fit:cover; opacity:0.6; mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);">
+    <div style="position:absolute; bottom:0; left:0; width:100%; height:150px; background:linear-gradient(to top, var(--bg-body), transparent);"></div>
     
-    <div style="position:absolute; bottom:20px; left:20px; right:20px; display:flex; align-items:flex-end; gap:15px;">
-        <img id="posterImg" src="" style="width:100px; border-radius:8px; box-shadow:0 5px 15px rgba(0,0,0,0.5);">
-        <div>
-            <h2 id="title" style="margin:0; font-size:1.2rem; line-height:1.2; text-shadow:2px 2px 4px black;">Loading...</h2>
-            <p id="meta" style="font-size:0.8rem; color:#ccc; margin-top:5px;"></p>
+    <div style="position:absolute; bottom:20px; left:20px; right:20px; display:flex; align-items:flex-end; gap:20px;">
+        <img id="posterImg" src="" style="width:110px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1);">
+        <div style="flex:1;">
+            <div id="badgeType" style="display:inline-block; font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:6px; margin-bottom:8px; text-transform:uppercase;"></div>
+            <h2 id="title" style="margin:0; font-size:1.4rem; line-height:1.2; text-shadow:0 2px 10px rgba(0,0,0,0.8);">Loading...</h2>
+            <p id="meta" style="font-size:0.85rem; color:#ccc; margin-top:8px; display:flex; gap:10px; align-items:center;"></p>
         </div>
     </div>
 </div>
 
-<div style="padding:20px;">
-    <div id="genres" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;"></div>
+<div class="container">
+    <div id="genres" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:25px;"></div>
     
-    <div style="background:var(--bg-card); padding:15px; border-radius:var(--radius); margin-bottom:20px;">
-        <h4 style="margin:0 0 10px 0;">Sinopsis</h4>
-        <p id="synopsis" style="font-size:0.85rem; color:#aaa; line-height:1.6; margin:0;">...</p>
+    <div style="background:var(--bg-surface); padding:20px; border-radius:var(--radius); margin-bottom:30px; border:1px solid rgba(255,255,255,0.05);">
+        <h4 style="margin:0 0 10px 0; color:var(--text-muted); text-transform:uppercase; font-size:0.8rem; letter-spacing:1px;">Sinopsis</h4>
+        <p id="synopsis" style="font-size:0.9rem; color:#ddd; line-height:1.7; margin:0; text-align:justify;">...</p>
     </div>
 
-    <h3 style="margin-bottom:15px;">Episodes</h3>
-    <div id="epsGrid" class="grid" style="grid-template-columns: repeat(4, 1fr); padding:0;"></div>
+    <h3 class="section-header" style="padding:0; margin-bottom:15px;">Episodes</h3>
+    
+    <div id="epsGrid" class="eps-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px;"></div>
 </div>
 
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><i data-lucide="home"></i></a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
+</nav>
+
 <script>
-        const API_BASE = "https://anichin-seven.vercel.app/api";
+    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
+    const API_ANIME = "https://www.sankavollerei.com/anime/samehadaku"; // Base API Anime
+
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // Support dua cara: ?url=... (legacy) atau ?slug=... (baru)
-    const slug = urlParams.get('slug');
-    const fullUrl = urlParams.get('url');
+    const slug = urlParams.get('slug');      // Contoh: one-piece (Anime) atau renegade-immortal (Donghua)
+    const source = urlParams.get('source');  // 'anime' atau 'donghua'
 
     async function loadSeries() {
-        if(!slug && !fullUrl) return alert("Data tidak ditemukan");
+        if(!slug) return alert("Slug Series tidak ditemukan");
         
-        // Tentukan nilai parameter untuk API
-        // Jika ada slug, kita pakai itu. Jika user bilang "tanpa url juga bisa",
-        // kita coba kirim slug langsung ke API.
-        let paramValue = "";
-        
-        if (slug) {
-            // Opsi 1: Kirim slug mentah (sesuai request kamu)
-            // Contoh API Call: /api/series?url=Renegade-Immortal
-            paramValue = slug; 
-            
-            // Opsi 2 (Cadangan): Kalau Opsi 1 gagal, gunakan full url manual
-            // paramValue = `https://anichin.moe/${slug}/`; 
-        } else {
-            paramValue = fullUrl;
-        }
-
         try {
-            console.log("Requesting: " + paramValue); // Cek console buat debug
-            const res = await fetch(`${API_BASE}/series?url=${paramValue}`);
-            const json = await res.json();
+            let data = {};
             
-            // ... (Kode render title, poster, dll sama seperti sebelumnya) ...
-            // Pastikan copy bagian render dari jawaban sebelumnya
-            
-            // Render Header
-            document.getElementById('title').innerText = json.title;
-            document.getElementById('heroImg').src = json.poster;
-            document.getElementById('posterImg').src = json.poster;
-            document.getElementById('synopsis').innerText = json.short_description || json.synopsis;
-            
-            // Render Info
-            if(json.info) {
-                 document.getElementById('meta').innerText = `${json.info.status} • ${json.info.type}`;
+            // --- LOGIKA PERCABANGAN API ---
+            if (source === 'anime') {
+                // Fetch API Anime (Samehadaku)
+                // Endpoint: https://www.sankavollerei.com/anime/samehadaku/anime/{slug}
+                const res = await fetch(`${API_ANIME}/anime/${slug}`);
+                const json = await res.json();
+                const d = json.data;
+
+                // Mapping Data Anime ke Format Standar kita
+                data = {
+                    title: d.japanese || d.english || "Unknown Title",
+                    poster: d.poster,
+                    status: d.status,
+                    type: "Anime",
+                    studio: d.studios,
+                    synopsis: d.synopsis ? d.synopsis.paragraphs.join("\n\n") : "Sinopsis tidak tersedia.",
+                    genres: d.genreList.map(g => ({ name: g.title })),
+                    // Anime episode list
+                    episodes: d.episodeList.map(ep => ({
+                        num: ep.title, // Di API Anime, title = nomor episode (1155)
+                        // KITA BUTUH ID EPISODE untuk stream.html
+                        // ID nya ada di episodeId: "one-piece-episode-1155"
+                        urlParam: ep.episodeId 
+                    }))
+                };
+
+            } else {
+                // Fetch API Donghua (Anichin - Default)
+                const res = await fetch(`${API_DONGHUA}/series?url=${slug}`);
+                const d = await res.json();
+
+                // Mapping Data Donghua
+                data = {
+                    title: d.title,
+                    poster: d.poster,
+                    status: d.info.status,
+                    type: "Donghua",
+                    studio: d.info.studio,
+                    synopsis: d.short_description || d.synopsis,
+                    genres: d.genres,
+                    episodes: d.episodes_list.map(ep => ({
+                        num: ep.episode.match(/Episode\s+(\d+)/i)?.[1] || "Ep",
+                        // Donghua pake full URL di param
+                        urlParam: ep.anichinUrl 
+                    }))
+                };
             }
 
-            // Render Genres
-            document.getElementById('genres').innerHTML = json.genres.map(g => 
-                `<span style="background:var(--bg-element); padding:4px 10px; border-radius:20px; font-size:0.7rem;">${g.name}</span>`
+            // --- RENDER KE HTML ---
+            document.getElementById('title').innerText = data.title;
+            document.getElementById('heroImg').src = data.poster;
+            document.getElementById('posterImg').src = data.poster;
+            document.getElementById('synopsis').innerText = data.synopsis;
+            
+            // Badge Type
+            const badge = document.getElementById('badgeType');
+            badge.innerText = data.type;
+            badge.style.background = data.type === 'Anime' ? 'var(--warning)' : 'var(--primary)';
+            badge.style.color = data.type === 'Anime' ? '#000' : '#fff';
+
+            // Meta Info
+            document.getElementById('meta').innerHTML = `
+                <span>${data.status}</span> • <span>${data.studio}</span>
+            `;
+
+            // Genres
+            document.getElementById('genres').innerHTML = data.genres.map(g => 
+                `<span style="background:var(--bg-surface); border:1px solid rgba(255,255,255,0.1); padding:6px 14px; border-radius:20px; font-size:0.75rem;">${g.name}</span>`
             ).join('');
 
-            // Render Episode Grid
-            document.getElementById('epsGrid').innerHTML = json.episodes_list.map(ep => {
-                const num = ep.episode.match(/Episode\s+(\d+)/i)?.[1] || "Ep";
-                return `<button class="btn" style="background:var(--bg-element);" onclick="window.location.href='stream.html?url=${ep.anichinUrl}'">${num}</button>`;
-            }).join('');
+            // Episode Grid
+            const epsContainer = document.getElementById('epsGrid');
+            if(data.episodes && data.episodes.length > 0) {
+                epsContainer.innerHTML = data.episodes.map(ep => {
+                    // Link menuju stream.html
+                    // Kita bawa parameter 'id' (buat anime) atau 'url' (buat donghua)
+                    // Dan jangan lupa bawa 'source' lagi
+                    
+                    let link = "";
+                    if(source === 'anime') {
+                        // Anime pake ID (one-piece-episode-1155)
+                        link = `stream.html?id=${ep.urlParam}&source=anime`;
+                    } else {
+                        // Donghua pake URL full
+                        link = `stream.html?url=${ep.urlParam}&source=donghua`;
+                    }
+
+                    return `<button class="eps-btn" onclick="window.location.href='${link}'" 
+                            style="background:var(--bg-element); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; cursor:pointer; color:white;">
+                            ${ep.num}
+                        </button>`;
+                }).join('');
+            } else {
+                epsContainer.innerHTML = "<p>Belum ada episode.</p>";
+            }
 
             lucide.createIcons();
 
         } catch(e) { 
-            console.log(e);
-            alert("Gagal load series. Coba refresh.");
+            console.error(e);
+            alert("Gagal memuat data series.");
         }
     }
     loadSeries();
-
 </script>
 </body>
 </html>
