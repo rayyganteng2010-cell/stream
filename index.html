@@ -3,232 +3,1277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RayStream Premium</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        // Auth sederhana
-        if (!localStorage.getItem('user_info')) window.location.href = 'login.html';
-    </script>
+    <title>Stream Anime - RayStream</title>
+    <style>
+        /* RESET & BASE STYLES */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #ff4757;
+            --secondary: #3b82f6;
+            --dark: #0f0f1a;
+            --darker: #070711;
+            --card: #1a1a2e;
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        
+        body {
+            background: var(--darker);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-top: 60px;
+        }
+        
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        
+        /* VIDEO PLAYER SECTION */
+        .video-section {
+            background: var(--dark);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
+            background: #000;
+        }
+        
+        #videoPlayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+        }
+        
+        .video-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .video-error {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .video-error h3 {
+            color: var(--error);
+            margin-bottom: 8px;
+        }
+        
+        /* EPISODE INFO */
+        .episode-info {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .episode-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .episode-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge.primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .badge.secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .badge.success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .badge.warning {
+            background: var(--warning);
+            color: black;
+        }
+        
+        /* NAVIGATION BUTTONS */
+        .nav-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+        }
+        
+        .nav-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .nav-btn.prev {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+        
+        .nav-btn.next {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* SERVER SELECTION */
+        .servers-section {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
+        
+        .server-btn {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .server-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .server-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .quality-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 8px 0 4px;
+        }
+        
+        /* DOWNLOAD SECTION */
+        .download-section {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .download-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        
+        .download-content {
+            display: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 16px;
+        }
+        
+        .download-content.show {
+            display: block;
+        }
+        
+        .download-grid {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .download-group {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .download-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--secondary);
+        }
+        
+        .download-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .download-link {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        
+        .download-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--primary);
+        }
+        
+        /* TOAST NOTIFICATION */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            animation: slideUp 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .toast.error {
+            background: var(--error);
+        }
+        
+        .toast.success {
+            background: var(--success);
+        }
+        
+        .toast.warning {
+            background: var(--warning);
+            color: black;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .servers-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            
+            .nav-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* LOADING SKELETON */
+        .skeleton {
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.05) 25%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
 </head>
 <body>
-
-<header>
-    <div class="logo">RAYSTREAM</div>
-    <div class="search-icon-btn" onclick="window.location.href='search.html'">
-        <i data-lucide="search" style="color:#fff; width:20px;"></i>
-    </div>
-</header>
-
-<div class="container">
-    
-    <div class="genre-scroll">
-        <a href="search.html" class="genre-chip active">All</a>
-        <a href="search.html?query=action" class="genre-chip">Action</a>
-        <a href="search.html?query=adventure" class="genre-chip">Adventure</a>
-        <a href="search.html?query=fantasy" class="genre-chip">Fantasy</a>
-        <a href="search.html?query=isekai" class="genre-chip">Isekai</a>
-        <a href="search.html?query=magic" class="genre-chip">Magic</a>
-        <a href="search.html?query=romance" class="genre-chip">Romance</a>
-    </div>
-
-    <div class="section-header">
-        <div class="section-title">New Releases</div>
-        <a href="search.html?type=ongoing" class="section-link">View All</a>
-    </div>
-    
-    <div id="latestGrid" class="grid">
-        <div class="card skeleton"></div>
-        <div class="card skeleton"></div>
-        <div class="card skeleton"></div>
-    </div>
-
-    <div style="margin-top: 40px; text-align: center;">
-        <div class="tab-container">
-            <button class="tab-btn active" onclick="switchTab('popular', this)">Popular</button>
-            <button class="tab-btn" onclick="switchTab('completed', this)">Completed</button>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="goBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Kembali
+            </button>
+            <div class="logo">RayStream</div>
         </div>
-    </div>
-    
-    <div id="dynamicGrid" class="grid">
-        <div class="card skeleton"></div>
-        <div class="card skeleton"></div>
-    </div>
+    </header>
 
-    <button class="load-more-btn" onclick="window.location.href='search.html'">Explore More Content</button>
-
-</div>
-
-<nav class="bottom-nav">
-    <a href="index.html" class="nav-item active"><i data-lucide="home"></i></a>
-    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
-    <a href="history.html" class="nav-item"><i data-lucide="clock"></i></a>
-</nav>
-
-<script>
-    // --- KONFIGURASI API ---
-    const API_ANIME   = "https://donghua-qnha.vercel.app/anime/samehadaku";
-    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-
-    // --- 1. LOAD ONGOING (LATEST) ---
-    async function loadLatest() {
-        const grid = document.getElementById('latestGrid');
-        try {
-            // Kita fetch Anime Ongoing (Sesuai endpoint kamu) & Donghua List
-            const [resA, resD] = await Promise.all([
-                fetch(`${API_ANIME}/ongoing?page=1`),
-                fetch(`${API_DONGHUA}/list?page=1`)
-            ]);
-
-            const jsonA = await resA.json(); // Struktur: { data: { animeList: [] } }
-            const jsonD = await resD.json(); // Struktur: { result: [] } (Asumsi Donghua)
-
-            // Parsing Data Anime (Perbaikan Utama)
-            const animeList = (jsonA.data?.animeList || []).slice(0, 6).map(item => ({
-                title: item.title,
-                poster: item.poster,
-                id: item.animeId, // Menggunakan animeId sesuai JSON
-                score: item.score || '?',
-                source: 'anime',
-                type: item.type || 'TV'
-            }));
-
-            // Parsing Data Donghua
-            const donghuaList = (jsonD.result || []).slice(0, 6).map(item => ({
-                title: item.title,
-                poster: item.thumbnail,
-                id: item.url, // URL untuk donghua
-                score: item.update || 'On',
-                source: 'donghua',
-                type: 'ONA'
-            }));
-
-            // Gabung & Render
-            const combined = interleave(animeList, donghuaList);
-            renderGrid(grid, combined);
-
-        } catch(e) {
-            console.error("Load Latest Error:", e);
-            grid.innerHTML = `<p style="color:#ef4444;">Gagal memuat data. Periksa koneksi.</p>`;
-        }
-    }
-
-    // --- 2. SWITCH TAB (POPULAR / COMPLETED) ---
-    async function switchTab(type, btn) {
-        // UI Handling
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const grid = document.getElementById('dynamicGrid');
-        grid.innerHTML = '<div class="card skeleton"></div><div class="card skeleton"></div>';
-
-        try {
-            let animeData = [];
-            let donghuaData = [];
-
-            if (type === 'completed') {
-                // Fetch Completed Anime
-                const resA = await fetch(`${API_ANIME}/completed?page=1`);
-                const jsonA = await resA.json();
-                animeData = (jsonA.data?.animeList || []).slice(0, 8).map(item => ({
-                    title: item.title,
-                    poster: item.poster,
-                    id: item.animeId, // FIX: pakai animeId
-                    score: item.score,
-                    source: 'anime',
-                    type: 'END'
-                }));
-
-                // Fetch Completed Donghua
-                const resD = await fetch(`${API_DONGHUA}/completed`);
-                const jsonD = await resD.json();
-                donghuaData = (jsonD.result || []).slice(0, 8).map(item => ({
-                    title: item.title,
-                    poster: item.thumbnail,
-                    id: item.url,
-                    score: 'End',
-                    source: 'donghua',
-                    type: 'END'
-                }));
-            } 
-            else if (type === 'popular') {
-                // Fetch Popular (Asumsi endpoint popular anime strukturnya sama)
-                const resA = await fetch(`${API_ANIME}/popular?page=1`);
-                const jsonA = await resA.json();
-                animeData = (jsonA.data?.animeList || []).slice(0, 8).map(item => ({
-                    title: item.title,
-                    poster: item.poster,
-                    id: item.animeId,
-                    score: item.score,
-                    source: 'anime',
-                    type: 'HOT'
-                }));
-
-                const resD = await fetch(`${API_DONGHUA}/popular`);
-                const jsonD = await resD.json();
-                donghuaData = (jsonD.result || []).slice(0, 8).map(item => ({
-                    title: item.title,
-                    poster: item.thumbnail,
-                    id: item.url,
-                    score: 'Hot',
-                    source: 'donghua',
-                    type: 'HOT'
-                }));
-            }
-
-            renderGrid(grid, interleave(animeData, donghuaData));
-
-        } catch(e) {
-            console.error(e);
-            grid.innerHTML = `<p style="color:#ef4444;">Gagal memuat tab ${type}.</p>`;
-        }
-    }
-
-    // --- HELPER FUNCTIONS ---
-    
-    // Fungsi render kartu HTML
-    function renderGrid(container, items) {
-        container.innerHTML = items.map(item => {
-            const badgeClass = item.source === 'anime' ? 'bg-anime' : 'bg-donghua';
-            // Untuk link: Anime pakai ID, Donghua pakai URL
-            return `
-            <div class="card" onclick="goToSeries('${item.id}', '${item.source}')">
-                <div class="badge-top ${badgeClass}">${item.source}</div>
-                <img src="${item.poster}" alt="${item.title}" loading="lazy">
-                <div class="card-content">
-                    <div class="card-title">${item.title}</div>
-                    <div class="badge-score">
-                        <i data-lucide="star" style="width:12px; fill:#ffd700;"></i>
-                        ${item.score}
-                    </div>
+    <!-- MAIN CONTENT -->
+    <main class="container">
+        <!-- VIDEO PLAYER -->
+        <section class="video-section">
+            <div class="video-container">
+                <div id="videoLoading" class="video-loading">
+                    <div class="spinner"></div>
+                    <p>Memuat video...</p>
+                </div>
+                
+                <div id="videoError" class="video-error" style="display: none;">
+                    <h3>Gagal Memuat Video</h3>
+                    <p id="errorMessage">Server video tidak dapat diakses</p>
+                    <button onclick="retryLoadVideo()" class="nav-btn" style="margin-top: 12px;">
+                        Coba Lagi
+                    </button>
+                </div>
+                
+                <iframe 
+                    id="videoPlayer"
+                    src=""
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowfullscreen
+                    scrolling="no"
+                    frameborder="0"
+                    webkitallowfullscreen
+                    mozallowfullscreen>
+                </iframe>
+            </div>
+            
+            <div class="episode-info">
+                <h1 id="episodeTitle" class="episode-title">Memuat...</h1>
+                <div class="episode-meta">
+                    <span id="sourceBadge" class="badge primary">SAMEHADAKU</span>
+                    <span id="qualityBadge" class="badge secondary">HD</span>
+                    <span id="dateInfo" class="badge warning">Hari ini</span>
+                    <span id="serverCount" style="font-size: 12px; color: var(--text-secondary); margin-left: auto;">
+                        0 server
+                    </span>
                 </div>
             </div>
-            `;
-        }).join('');
-        lucide.createIcons();
-    }
+            
+            <div class="nav-buttons">
+                <button id="prevBtn" class="nav-btn prev" onclick="navigateTo('prev')" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    Episode Sebelumnya
+                </button>
+                <button id="nextBtn" class="nav-btn next" onclick="navigateTo('next')" disabled>
+                    Episode Selanjutnya
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </section>
 
-    function goToSeries(id, source) {
-        // Encode URI component agar aman
-        window.location.href = `series.html?slug=${encodeURIComponent(id)}&source=${source}`;
-    }
+        <!-- SERVERS SELECTION -->
+        <section class="servers-section">
+            <div class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                Pilih Server Streaming
+            </div>
+            
+            <div id="serversContainer">
+                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                    <div class="spinner" style="margin: 0 auto 12px;"></div>
+                    <p>Memuat daftar server...</p>
+                </div>
+            </div>
+        </section>
 
-    // Fungsi untuk selang-seling (mix) array Anime dan Donghua
-    function interleave(arr1, arr2) {
-        const result = [];
-        const maxLength = Math.max(arr1.length, arr2.length);
-        for (let i = 0; i < maxLength; i++) {
-            if (i < arr1.length) result.push(arr1[i]);
-            if (i < arr2.length) result.push(arr2[i]);
+        <!-- DOWNLOAD SECTION -->
+        <section class="download-section">
+            <div class="download-header" onclick="toggleDownloads()">
+                <div class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Download Links
+                </div>
+                <svg id="downloadArrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </div>
+            
+            <div id="downloadContent" class="download-content">
+                <div id="downloadsContainer">
+                    <p style="text-align: center; color: var(--text-secondary);">
+                        Memuat link download...
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // CONFIGURATION
+        const CONFIG = {
+            api: {
+                // Multiple fallback proxy servers
+                proxies: [
+                    'https://api.allorigins.win/get?url=',
+                    'https://corsproxy.io/?',
+                    'https://api.codetabs.com/v1/proxy?quest='
+                ],
+                // Direct fetch as fallback
+                direct: true
+            },
+            video: {
+                // Timeout untuk video loading (ms)
+                timeout: 10000,
+                // Max retry attempts
+                maxRetries: 3
+            }
+        };
+
+        // STATE MANAGEMENT
+        let state = {
+            currentEpisode: null,
+            servers: [],
+            currentServer: null,
+            downloads: [],
+            episodeInfo: {},
+            retryCount: 0
+        };
+
+        // DOM ELEMENTS
+        const elements = {
+            videoPlayer: document.getElementById('videoPlayer'),
+            videoLoading: document.getElementById('videoLoading'),
+            videoError: document.getElementById('videoError'),
+            errorMessage: document.getElementById('errorMessage'),
+            episodeTitle: document.getElementById('episodeTitle'),
+            sourceBadge: document.getElementById('sourceBadge'),
+            qualityBadge: document.getElementById('qualityBadge'),
+            dateInfo: document.getElementById('dateInfo'),
+            serverCount: document.getElementById('serverCount'),
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            serversContainer: document.getElementById('serversContainer'),
+            downloadsContainer: document.getElementById('downloadsContainer'),
+            downloadContent: document.getElementById('downloadContent'),
+            toastContainer: document.getElementById('toastContainer')
+        };
+
+        // URL PARSING
+        function getEpisodeUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const url = params.get('url');
+            
+            if (id) {
+                return `https://samehadaku.how/${id}/`;
+            } else if (url) {
+                return url;
+            } else {
+                // Default untuk testing - Jujutsu Kaisen
+                return 'https://samehadaku.how/jujutsu-kaisen-season-3-episode-4/';
+            }
         }
-        return result;
-    }
 
-    // INIT
-    loadLatest();
-    // Load tab popular sebagai default saat tombol pertama diklik otomatis
-    document.querySelector('.tab-btn.active').click();
-    lucide.createIcons();
-</script>
+        // PROXY FETCH FUNCTIONS
+        async function fetchWithProxy(url) {
+            let lastError = null;
+            
+            // Coba semua proxy
+            for (const proxy of CONFIG.api.proxies) {
+                try {
+                    const proxyUrl = proxy + encodeURIComponent(url);
+                    console.log('Trying proxy:', proxy);
+                    
+                    const response = await fetch(proxyUrl, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                            'Referer': 'https://samehadaku.how/'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const text = await response.text();
+                        // Handle allorigins response format
+                        if (proxy.includes('allorigins.win')) {
+                            const data = JSON.parse(text);
+                            return data.contents;
+                        }
+                        return text;
+                    }
+                } catch (error) {
+                    lastError = error;
+                    console.warn('Proxy failed:', error);
+                    continue;
+                }
+            }
+            
+            // Jika semua proxy gagal, coba direct fetch (mungkin bisa di development)
+            if (CONFIG.api.direct) {
+                try {
+                    const response = await fetch(url, {
+                        mode: 'no-cors',
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
+                    });
+                    return response.text();
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+            
+            throw lastError || new Error('All proxies failed');
+        }
+
+        // VIDEO EMBED FIXES
+        function fixVideoEmbed(url) {
+            let fixedUrl = url;
+            
+            // Blogger video fix
+            if (url.includes('blogger.com/video.g')) {
+                // Tambahkan parameter untuk iframe yang lebih baik
+                fixedUrl = url + '&playerType=HTML5&autoPlay=true&mute=false';
+            }
+            
+            // Google Drive fix
+            if (url.includes('drive.google.com')) {
+                // Ubah ke embed format
+                if (url.includes('/file/d/')) {
+                    const match = url.match(/\/file\/d\/([^\/]+)/);
+                    if (match) {
+                        fixedUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+                    }
+                }
+            }
+            
+            // YouTube fix
+            if (url.includes('youtube.com/watch')) {
+                fixedUrl = url.replace('watch?v=', 'embed/');
+            }
+            
+            return fixedUrl;
+        }
+
+        // LOAD EPISODE DATA
+        async function loadEpisodeData() {
+            try {
+                const episodeUrl = getEpisodeUrl();
+                showToast('Memuat data episode...', 'info');
+                
+                console.log('Loading episode:', episodeUrl);
+                
+                // Fetch page HTML
+                const html = await fetchWithProxy(episodeUrl);
+                
+                if (!html) {
+                    throw new Error('Gagal mengambil halaman episode');
+                }
+                
+                // Parse HTML menggunakan DOMParser
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Extract episode info
+                extractEpisodeInfo(doc);
+                
+                // Extract streaming servers
+                await extractStreamingServers(doc);
+                
+                // Extract download links
+                extractDownloadLinks(doc);
+                
+                // Extract navigation
+                extractNavigation(doc);
+                
+                // Render UI
+                renderEpisodeInfo();
+                renderServers();
+                renderDownloads();
+                
+                // Auto select first server
+                if (state.servers.length > 0) {
+                    setTimeout(() => {
+                        selectServer(state.servers[0]);
+                    }, 500);
+                }
+                
+                showToast('Data berhasil dimuat', 'success');
+                
+            } catch (error) {
+                console.error('Error loading episode:', error);
+                showToast(`Gagal memuat: ${error.message}`, 'error');
+                
+                // Fallback: tampilkan form manual input
+                showManualServerInput();
+            }
+        }
+
+        // EXTRACT EPISODE INFO
+        function extractEpisodeInfo(doc) {
+            const title = doc.querySelector('h1.entry-title, h1.title')?.textContent?.trim() || 
+                         'Episode Anime';
+            
+            const date = doc.querySelector('.date, time, .post-date')?.textContent?.trim() || 
+                        new Date().toLocaleDateString('id-ID');
+            
+            const poster = doc.querySelector('.thumb img, .poster img')?.src || '';
+            
+            state.episodeInfo = {
+                title: title,
+                date: date,
+                poster: poster,
+                url: getEpisodeUrl()
+            };
+        }
+
+        // EXTRACT STREAMING SERVERS - IMPROVED
+        async function extractStreamingServers(doc) {
+            state.servers = [];
+            
+            // METHOD 1: Langsung ambil iframe src
+            const iframes = doc.querySelectorAll('iframe');
+            iframes.forEach((iframe, index) => {
+                const src = iframe.src;
+                if (src && src.startsWith('http')) {
+                    state.servers.push({
+                        id: `iframe-${index}`,
+                        name: `Player ${index + 1}`,
+                        quality: 'HD',
+                        url: fixVideoEmbed(src),
+                        type: 'iframe',
+                        provider: getVideoProvider(src)
+                    });
+                }
+            });
+            
+            // METHOD 2: Cari di script untuk video URLs
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(script => {
+                const scriptText = script.textContent;
+                
+                // Cari blogger video token
+                const bloggerRegex = /https:\/\/www\.blogger\.com\/video\.g\?token=[^'"\s]+/g;
+                const bloggerMatches = scriptText.match(bloggerRegex);
+                if (bloggerMatches) {
+                    bloggerMatches.forEach((url, idx) => {
+                        state.servers.push({
+                            id: `blogger-${idx}`,
+                            name: `Blogger Player`,
+                            quality: 'HD',
+                            url: fixVideoEmbed(url),
+                            type: 'iframe',
+                            provider: 'blogger'
+                        });
+                    });
+                }
+                
+                // Cari URL video langsung
+                const videoRegex = /(https?:\/\/[^'"\s]+\.(mp4|m3u8|avi|mkv|webm))[^'"\s]*/gi;
+                const videoMatches = scriptText.match(videoRegex);
+                if (videoMatches) {
+                    videoMatches.forEach((url, idx) => {
+                        const quality = url.includes('1080') ? '1080p' :
+                                      url.includes('720') ? '720p' :
+                                      url.includes('480') ? '480p' : 'SD';
+                        
+                        state.servers.push({
+                            id: `direct-${idx}`,
+                            name: `Direct Video (${quality})`,
+                            quality: quality,
+                            url: url,
+                            type: 'direct',
+                            provider: 'direct'
+                        });
+                    });
+                }
+            });
+            
+            // METHOD 3: Cari di download/streaming sections
+            const streamSections = doc.querySelectorAll('.download-eps, .mirrorstream, .player, .streaming');
+            streamSections.forEach((section, sectionIdx) => {
+                const links = section.querySelectorAll('a[href*="http"]');
+                links.forEach((link, linkIdx) => {
+                    const href = link.href;
+                    const text = link.textContent.trim();
+                    
+                    if (href && !href.includes('javascript:')) {
+                        const isVideoLink = href.includes('.mp4') || 
+                                           href.includes('.m3u8') || 
+                                           href.includes('video') ||
+                                           href.includes('stream');
+                        
+                        if (isVideoLink) {
+                            state.servers.push({
+                                id: `section-${sectionIdx}-${linkIdx}`,
+                                name: text || `Stream ${sectionIdx + 1}.${linkIdx + 1}`,
+                                quality: getQualityFromText(text),
+                                url: fixVideoEmbed(href),
+                                type: 'direct',
+                                provider: 'direct'
+                            });
+                        }
+                    }
+                });
+            });
+            
+            // METHOD 4: Jika tidak ada server, buat server fallback
+            if (state.servers.length === 0) {
+                console.log('No servers found, creating fallback...');
+                
+                // Coba buat URL berdasarkan pola
+                const episodeUrl = getEpisodeUrl();
+                const episodeSlug = episodeUrl.split('/').filter(Boolean).pop();
+                
+                // Common video hosting patterns
+                const fallbackServers = [
+                    {
+                        id: 'fallback-1',
+                        name: 'Fallback Stream',
+                        quality: 'HD',
+                        url: `https://www.blogger.com/video.g?token=${btoa(episodeSlug)}`,
+                        type: 'iframe',
+                        provider: 'blogger'
+                    }
+                ];
+                
+                state.servers = fallbackServers;
+            }
+            
+            // Remove duplicates
+            state.servers = state.servers.filter((server, index, self) =>
+                index === self.findIndex(s => s.url === server.url)
+            );
+            
+            console.log('Extracted servers:', state.servers);
+        }
+
+        // EXTRACT DOWNLOAD LINKS
+        function extractDownloadLinks(doc) {
+            state.downloads = [];
+            
+            const downloadSections = doc.querySelectorAll('.download-list, .dlbox, .download');
+            downloadSections.forEach((section, idx) => {
+                const group = {
+                    title: section.querySelector('h3, h4, strong')?.textContent?.trim() || `Download Group ${idx + 1}`,
+                    links: []
+                };
+                
+                const links = section.querySelectorAll('a[href*="http"]');
+                links.forEach(link => {
+                    const href = link.href;
+                    const text = link.textContent.trim();
+                    
+                    if (href && (href.includes('.rar') || href.includes('.zip') || 
+                        href.includes('download') || href.includes('drive.google.com'))) {
+                        group.links.push({
+                            url: href,
+                            name: text || 'Download Link',
+                            size: getFileSizeFromText(text)
+                        });
+                    }
+                });
+                
+                if (group.links.length > 0) {
+                    state.downloads.push(group);
+                }
+            });
+        }
+
+        // EXTRACT NAVIGATION
+        function extractNavigation(doc) {
+            const prevLink = doc.querySelector('a.prev, .nav-prev a, a[rel="prev"]')?.href;
+            const nextLink = doc.querySelector('a.next, .nav-next a, a[rel="next"]')?.href;
+            
+            state.episodeInfo.prev = prevLink;
+            state.episodeInfo.next = nextLink;
+        }
+
+        // RENDER FUNCTIONS
+        function renderEpisodeInfo() {
+            elements.episodeTitle.textContent = state.episodeInfo.title;
+            elements.dateInfo.textContent = state.episodeInfo.date;
+            elements.serverCount.textContent = `${state.servers.length} server tersedia`;
+            
+            // Update navigation buttons
+            if (state.episodeInfo.prev) {
+                elements.prevBtn.disabled = false;
+            }
+            if (state.episodeInfo.next) {
+                elements.nextBtn.disabled = false;
+            }
+        }
+
+        function renderServers() {
+            if (state.servers.length === 0) {
+                elements.serversContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                        <p style="margin-top: 12px;">Tidak ada server yang ditemukan</p>
+                        <button onclick="retryLoadServers()" class="server-btn" style="margin-top: 12px;">
+                            Coba Lagi
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group servers by quality
+            const serversByQuality = {};
+            state.servers.forEach(server => {
+                if (!serversByQuality[server.quality]) {
+                    serversByQuality[server.quality] = [];
+                }
+                serversByQuality[server.quality].push(server);
+            });
+            
+            let html = '';
+            
+            // Sort qualities
+            const qualities = ['1080p', '720p', 'HD', '480p', '360p', 'SD'];
+            qualities.forEach(quality => {
+                const servers = serversByQuality[quality];
+                if (servers && servers.length > 0) {
+                    html += `<div class="quality-label">${quality}</div>`;
+                    html += `<div class="servers-grid">`;
+                    
+                    servers.forEach(server => {
+                        const isActive = state.currentServer?.id === server.id;
+                        html += `
+                            <button class="server-btn ${isActive ? 'active' : ''}" 
+                                    onclick="selectServer(${JSON.stringify(server).replace(/"/g, '&quot;')})"
+                                    data-id="${server.id}">
+                                ${server.name}
+                            </button>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            elements.serversContainer.innerHTML = html;
+        }
+
+        function renderDownloads() {
+            if (state.downloads.length === 0) {
+                elements.downloadsContainer.innerHTML = `
+                    <p style="text-align: center; color: var(--text-secondary);">
+                        Tidak ada link download yang ditemukan
+                    </p>
+                `;
+                return;
+            }
+            
+            let html = '<div class="download-grid">';
+            
+            state.downloads.forEach((group, idx) => {
+                html += `
+                    <div class="download-group">
+                        <div class="download-group-title">${group.title}</div>
+                        <div class="download-links">
+                `;
+                
+                group.links.forEach((link, linkIdx) => {
+                    html += `
+                        <a href="${link.url}" target="_blank" class="download-link">
+                            ${link.name} ${link.size ? `(${link.size})` : ''}
+                        </a>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            elements.downloadsContainer.innerHTML = html;
+        }
+
+        // SERVER SELECTION
+        async function selectServer(server) {
+            try {
+                showToast(`Memuat ${server.name}...`, 'info');
+                
+                // Update state
+                state.currentServer = server;
+                state.retryCount = 0;
+                
+                // Update UI
+                elements.videoLoading.style.display = 'flex';
+                elements.videoError.style.display = 'none';
+                elements.qualityBadge.textContent = server.quality;
+                
+                // Render servers dengan active state
+                renderServers();
+                
+                // Set video source dengan timeout
+                await loadVideoWithTimeout(server.url);
+                
+                showToast(`Berhasil memuat ${server.name}`, 'success');
+                
+            } catch (error) {
+                console.error('Error selecting server:', error);
+                state.retryCount++;
+                
+                if (state.retryCount < CONFIG.video.maxRetries) {
+                    showToast(`Gagal, mencoba server lain...`, 'warning');
+                    
+                    // Coba server berikutnya
+                    const currentIndex = state.servers.findIndex(s => s.id === server.id);
+                    const nextIndex = (currentIndex + 1) % state.servers.length;
+                    const nextServer = state.servers[nextIndex];
+                    
+                    if (nextServer) {
+                        setTimeout(() => selectServer(nextServer), 1000);
+                    }
+                } else {
+                    showVideoError('Gagal memuat semua server video');
+                }
+            }
+        }
+
+        async function loadVideoWithTimeout(url) {
+            return new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Video loading timeout'));
+                }, CONFIG.video.timeout);
+                
+                elements.videoPlayer.onload = () => {
+                    clearTimeout(timeout);
+                    setTimeout(() => {
+                        elements.videoLoading.style.display = 'none';
+                        resolve();
+                    }, 1000);
+                };
+                
+                elements.videoPlayer.onerror = () => {
+                    clearTimeout(timeout);
+                    reject(new Error('Video player error'));
+                };
+                
+                // Set iframe source dengan sandbox permissions
+                elements.videoPlayer.src = url;
+                elements.videoPlayer.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation');
+            });
+        }
+
+        // MANUAL SERVER INPUT (fallback)
+        function showManualServerInput() {
+            elements.serversContainer.innerHTML = `
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 12px;">Masukkan URL Video Manual</h3>
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <input type="text" id="manualUrl" 
+                               placeholder="https://example.com/video.mp4" 
+                               style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); 
+                                      border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; 
+                                      color: white;">
+                        <button onclick="useManualUrl()" class="nav-btn next" style="padding: 10px 16px;">
+                            Load
+                        </button>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <p>Contoh URL yang didukung:</p>
+                        <ul style="margin-left: 20px; margin-top: 8px;">
+                            <li>Blogger: https://www.blogger.com/video.g?token=...</li>
+                            <li>Google Drive: https://drive.google.com/file/d/...</li>
+                            <li>Direct MP4: https://example.com/video.mp4</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        function useManualUrl() {
+            const urlInput = document.getElementById('manualUrl');
+            const url = urlInput.value.trim();
+            
+            if (url) {
+                selectServer({
+                    id: 'manual',
+                    name: 'Manual URL',
+                    quality: 'Unknown',
+                    url: fixVideoEmbed(url),
+                    type: 'direct',
+                    provider: 'manual'
+                });
+            }
+        }
+
+        // UTILITY FUNCTIONS
+        function getVideoProvider(url) {
+            if (url.includes('blogger.com')) return 'blogger';
+            if (url.includes('drive.google.com')) return 'google-drive';
+            if (url.includes('youtube.com')) return 'youtube';
+            if (url.includes('dailymotion.com')) return 'dailymotion';
+            if (url.includes('.mp4') || url.includes('.m3u8')) return 'direct';
+            return 'unknown';
+        }
+
+        function getQualityFromText(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('1080')) return '1080p';
+            if (lower.includes('720')) return '720p';
+            if (lower.includes('480')) return '480p';
+            if (lower.includes('360')) return '360p';
+            if (lower.includes('hd')) return 'HD';
+            return 'SD';
+        }
+
+        function getFileSizeFromText(text) {
+            const match = text.match(/(\d+(\.\d+)?)\s*(MB|GB|KB)/i);
+            return match ? match[0] : null;
+        }
+
+        // ERROR HANDLING
+        function showVideoError(message) {
+            elements.videoLoading.style.display = 'none';
+            elements.videoError.style.display = 'flex';
+            elements.errorMessage.textContent = message;
+        }
+
+        function retryLoadVideo() {
+            if (state.currentServer) {
+                selectServer(state.currentServer);
+            } else if (state.servers.length > 0) {
+                selectServer(state.servers[0]);
+            } else {
+                loadEpisodeData();
+            }
+        }
+
+        function retryLoadServers() {
+            loadEpisodeData();
+        }
+
+        // UI FUNCTIONS
+        function toggleDownloads() {
+            const isVisible = elements.downloadContent.classList.contains('show');
+            elements.downloadContent.classList.toggle('show');
+            
+            const arrow = document.getElementById('downloadArrow');
+            arrow.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function navigateTo(direction) {
+            const url = direction === 'prev' ? state.episodeInfo.prev : state.episodeInfo.next;
+            if (url) {
+                window.location.href = `stream.html?url=${encodeURIComponent(url)}`;
+            }
+        }
+
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${type === 'error' ? '<path d="M18 6L6 18M6 6l12 12"/>' :
+                      type === 'success' ? '<path d="M20 6L9 17l-5-5"/>' :
+                      '<path d="M12 16v-4m0-4h.01"/>'}
+                </svg>
+                <span>${message}</span>
+            `;
+            
+            elements.toastContainer.appendChild(toast);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideUp 0.3s ease reverse';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            // Start loading episode data
+            loadEpisodeData();
+            
+            // Add video player event listeners
+            elements.videoPlayer.addEventListener('load', () => {
+                console.log('Video player loaded successfully');
+            });
+            
+            elements.videoPlayer.addEventListener('error', (e) => {
+                console.error('Video player error:', e);
+                showToast('Video player error, coba server lain', 'error');
+            });
+        });
+
+        // Make functions globally available
+        window.selectServer = selectServer;
+        window.retryLoadVideo = retryLoadVideo;
+        window.retryLoadServers = retryLoadServers;
+        window.navigateTo = navigateTo;
+        window.goBack = goBack;
+        window.toggleDownloads = toggleDownloads;
+        window.useManualUrl = useManualUrl;
+    </script>
 </body>
-</html>
+    </html>
