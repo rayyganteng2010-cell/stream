@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cari & Jelajah - RayStream</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<header>
+    <div onclick="history.back()" style="cursor:pointer;"><i data-lucide="arrow-left"></i></div>
+    <div class="logo">EXPLORE</div>
+    <div style="width:24px;"></div>
+</header>
+
+<div class="container">
+    <div class="search-box" style="margin-bottom:20px; display:flex; gap:10px;">
+        <input type="text" id="searchInput" placeholder="Cari Anime / Donghua..." 
+               style="flex:1; background:#222; border:1px solid rgba(255,255,255,0.1); padding:12px 20px; border-radius:30px; color:white;">
+        <button onclick="performSearch()" style="background:var(--primary); border:none; width:45px; height:45px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+            <i data-lucide="search" style="color:white; width:20px;"></i>
+        </button>
+    </div>
+
+    <h3 id="pageTitle" class="section-title">Hasil Pencarian</h3>
+
+    <div id="resultGrid" class="grid"></div>
+
+    <div class="load-more-container">
+        <button id="btnLoadMore" class="btn-load" onclick="loadMore()">Load More</button>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><i data-lucide="home"></i></a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
+</nav>
+
+<script>
+    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
+    const API_ANIME   = "https://donghua-qnha.vercel.app/anime/samehadaku";
+
+    // State Variables
+    let currentPage = 1;
+    let currentMode = ''; // 'search', 'genre', 'popular', 'ongoing', 'completed'
+    let currentQuery = '';
+    
+    // Parse URL Params
+    const urlParams = new URLSearchParams(window.location.search);
+    const q = urlParams.get('query');
+    const g = urlParams.get('genre');
+    const t = urlParams.get('type');
+
+    async function init() {
+        if (q) {
+            document.getElementById('searchInput').value = q;
+            currentMode = 'search';
+            currentQuery = q;
+            document.getElementById('pageTitle').innerText = `Search: "${q}"`;
+            await fetchData(true);
+        } else if (g) {
+            currentMode = 'genre';
+            currentQuery = g; // Genre slug/url
+            document.getElementById('pageTitle').innerText = `Genre: ${g.replace('/genres/','')}`;
+            await fetchData(true);
+        } else if (t) {
+            currentMode = t; // ongoing / completed / popular
+            document.getElementById('pageTitle').innerText = t.toUpperCase();
+            await fetchData(true);
+        } else {
+            // Default view (All Ongoing)
+            currentMode = 'ongoing';
+            document.getElementById('pageTitle').innerText = "Sedang Berlangsung";
+            await fetchData(true);
+        }
+        lucide.createIcons();
+    }
+
+    async function fetchData(reset = false) {
+        if (reset) {
+            currentPage = 1;
+            document.getElementById('resultGrid').innerHTML = '';
+        }
+        
+        const btn = document.getElementById('btnLoadMore');
+        btn.innerText = "Loading...";
+        btn.disabled = true;
+
+        try {
+            let items = [];
+
+            // --- LOGIKA FETCH BERDASARKAN MODE ---
+            
+            if (currentMode === 'search') {
+                // Search Combined (Anime + Donghua)
+                // Note: Search biasanya tidak support pagination di API ini, jadi kita load sekali saja
+                if(currentPage === 1) {
+                    const [resD, resA] = await Promise.all([
+                        fetch(`${API_DONGHUA}/search?s=${currentQuery}`),
+                        fetch(`${API_ANIME}/search?query=${currentQuery}`)
+                    ]);
+                    
+                    const jsonD = await resD.json();
+                    const jsonA = await resA.json();
+
+                    // Mapping Donghua
+                    const dItems = (jsonD.result || []).map(i => ({
+                        title: i.title, poster: i.thumbnail, url: i.url, source: 'donghua', label: 'Donghua'
+                    }));
+
+                    // Mapping Anime
+                    const aItems = (jsonA.data || []).map(i => ({
+                        title: i.title, poster: i.poster, url: i.slug, source: 'anime', label: 'Anime'
+                    }));
+
+                    items = [...dItems, ...aItems];
+                    btn.style.display = 'none'; // Sembunyikan load more karena search API terbatas
+                }
+            } 
+            
+            else if (currentMode === 'genre') {
+                // Genre (Utamakan Donghua sesuai prompt, karena Anime genre beda endpoint)
+                // Endpoint: /api/genres/{slug}/page/{page} (perlu cek endpoint paginasi anichin)
+                // Jika URL genre dari home sudah lengkap (misal: /genres/action), kita pakai itu.
+                
+                // Construct URL: API + currentQuery (misal: /genres/action) + /page/ + currentPage
+                // API Anichin agak unik, mari coba pattern umum: /genres/action/page/1
+                
+                // Bersihkan slug genre
+                let genreSlug = currentQuery.replace(/\/$/, ''); // hapus slash akhir
+                // Jika dari API genre list endpointnya full "/genres/action", ambil "action" saja
+                if(genreSlug.includes('/genres/')) genreSlug = genreSlug.split('/genres/')[1];
+
+                const res = await fetch(`${API_DONGHUA}/genres/${genreSlug}/page/${currentPage}`);
+                const json = await res.json();
+                
+                items = (json.result || []).map(i => ({
+                    title: i.title, poster: i.thumbnail, url: i.url, source: 'donghua', label: 'Donghua'
+                }));
+            }
+
+            else if (['ongoing', 'completed', 'popular'].includes(currentMode)) {
+                // Fetch Pagination (Mixed Anime & Donghua if possible, or just one source for pagination stability)
+                // Untuk stabilitas pagination gabungan, kita load paralel tapi page sama.
+                
+                const [resD, resA] = await Promise.all([
+                    fetch(`${API_DONGHUA}/${currentMode === 'popular' ? 'popular' : (currentMode === 'ongoing' ? 'list' : 'completed')}?page=${currentPage}`), // Anichin 'list' = ongoing
+                    fetch(`${API_ANIME}/${currentMode}?page=${currentPage}`)
+                ]);
+
+                const jsonD = await resD.json();
+                const jsonA = await resA.json();
+
+                const dItems = (jsonD.result || jsonD || []).map(i => ({
+                    title: i.title, poster: i.thumbnail, url: i.url, source: 'donghua', label: 'Donghua'
+                }));
+                const aItems = (jsonA.data || []).map(i => ({
+                    title: i.title, poster: i.poster, url: i.slug, source: 'anime', label: 'Anime'
+                }));
+                
+                items = [...dItems, ...aItems];
+            }
+
+            // --- RENDER ---
+            if (items.length > 0) {
+                const grid = document.getElementById('resultGrid');
+                items.forEach(item => {
+                    const badgeColor = item.source === 'anime' ? '#f59e0b' : '#6366f1';
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.onclick = () => window.location.href = `series.html?slug=${encodeURIComponent(item.url)}&source=${item.source}`;
+                    div.innerHTML = `
+                        <span class="card-badge" style="background:${badgeColor}">${item.label}</span>
+                        <img src="${item.poster}" loading="lazy">
+                        <p>${item.title}</p>
+                    `;
+                    grid.appendChild(div);
+                });
+                
+                btn.innerText = "Load More";
+                btn.disabled = false;
+            } else {
+                btn.innerText = "No More Data";
+                btn.style.display = 'none';
+            }
+
+        } catch (e) {
+            console.error(e);
+            btn.innerText = "Error / End";
+        }
+    }
+
+    function loadMore() {
+        currentPage++;
+        fetchData(false);
+    }
+
+    function performSearch() {
+        const val = document.getElementById('searchInput').value;
+        if(val) window.location.href = `search.html?query=${encodeURIComponent(val)}`;
+    }
+
+    // Enter key di search box
+    document.getElementById('searchInput').addEventListener("keydown", function(event) {
+        if (event.key === "Enter") performSearch();
+    });
+
+    init();
+</script>
+</body>
+</html>
