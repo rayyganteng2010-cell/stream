@@ -3,368 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donghua - RayStream</title>
+    <title>Donghua Universe - RayStream</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <script>
-        // Cek Login
+        // Cek Login (Keamanan Sederhana)
         if (!localStorage.getItem('user_info')) {
-            window.location.href = 'login.html';
+            // Uncomment baris di bawah jika file login.html sudah ada
+            // window.location.href = 'login.html';
         }
     </script>
+
     <style>
-        /* Donghua-specific styles */
-        .type-badge {
-            position: absolute; top: 8px; left: 8px;
-            padding: 3px 8px; border-radius: 6px;
-            font-size: 0.65rem; font-weight: 700; z-index: 5;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --accent: #8b5cf6;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
         }
-        .bg-donghua { background: rgba(59, 130, 246, 0.9); color: white; }
-        
-        .search-container {
-            position: relative;
-            flex: 1;
-            max-width: 400px;
-            margin: 0 20px;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 12px 45px 12px 15px;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            font-size: 1rem;
+
+        body {
+            background-color: var(--bg-dark);
             font-family: 'Inter', sans-serif;
-            transition: all 0.3s ease;
-        }
-        
-        .search-input:focus {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: #3b82f6;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .search-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.6);
-            width: 20px;
-            height: 20px;
-            pointer-events: none;
-        }
-        
-        .clear-search {
-            position: absolute;
-            right: 45px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.5);
-            cursor: pointer;
-            padding: 5px;
-            display: none;
-        }
-        
-        .clear-search:hover {
-            color: white;
-        }
-        
-        .user-dropdown {
-            position: relative;
-            cursor: pointer;
-        }
-        
-        .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: var(--bg-surface);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 10px;
-            min-width: 180px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: none;
-            z-index: 1000;
-        }
-        
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
             color: var(--text-main);
-            text-decoration: none;
-            border-radius: 8px;
-            transition: background 0.3s;
-            cursor: pointer;
+            margin: 0;
+            padding-bottom: 80px; /* Space for bottom nav */
         }
-        
-        .dropdown-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* --- Header Styles --- */
+        header {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 15px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
-        
-        .dropdown-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 5px 0;
-        }
-        
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.98);
-            z-index: 9999;
-            padding: 20px;
-            overflow-y: auto;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .modal-content {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-        }
-        
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: white;
-        }
-        
-        .no-results {
-            text-align: center;
-            padding: 50px 20px;
-            color: var(--text-dim);
-            grid-column: 1 / -1;
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .no-results i {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 20px;
-            color: var(--text-dim);
-        }
-        
-        .loading-shimmer {
-            background: linear-gradient(
-                90deg,
-                rgba(255, 255, 255, 0.05) 25%,
-                rgba(255, 255, 255, 0.1) 50%,
-                rgba(255, 255, 255, 0.05) 75%
-            );
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: var(--radius);
-        }
-        
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        
-        .search-count {
-            font-size: 0.9rem;
-            color: var(--text-dim);
-            margin-top: 5px;
-            font-family: 'Inter', sans-serif;
-        }
-        
-        /* Donghua Hero Banner */
-        .donghua-hero {
-            position: relative;
-            height: 200px;
-            border-radius: var(--radius);
-            overflow: hidden;
-            margin: 20px;
-            background: linear-gradient(90deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.1) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 30px;
-        }
-        
-        .donghua-hero-content h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800; font-size: 1.5rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        /* --- Enhanced Search Bar --- */
+        .search-trigger {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px 16px;
+            width: 100%; max-width: 400px;
+            display: flex; align-items: center; gap: 10px;
+            color: var(--text-muted);
+            cursor: text;
+            transition: all 0.3s ease;
+        }
+        .search-trigger:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        /* --- Hero Section --- */
+        .hero-banner {
+            position: relative;
+            margin: 20px;
+            border-radius: 24px;
+            overflow: hidden;
+            height: 280px;
+            display: flex; align-items: flex-end;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
         
-        .donghua-hero-content p {
-            color: var(--text-dim);
-            max-width: 500px;
-            margin: 0 auto;
+        .hero-bg {
+            position: absolute; inset: 0;
+            background: url('https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1000&auto=format&fit=crop') center/cover;
+            transition: transform 10s ease;
         }
+        .hero-banner:hover .hero-bg { transform: scale(1.05); }
+        
+        .hero-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, #0f172a 10%, rgba(15,23,42,0.6) 50%, transparent 100%);
+        }
+
+        .hero-content {
+            position: relative; z-index: 2;
+            padding: 30px;
+            width: 100%;
+        }
+
+        .hero-badge {
+            background: var(--primary); color: white;
+            padding: 5px 12px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block; margin-bottom: 10px;
+        }
+
+        .hero-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2rem; font-weight: 800;
+            margin: 0 0 10px 0;
+            line-height: 1.2;
+        }
+
+        .hero-stats {
+            display: flex; gap: 15px;
+            font-size: 0.9rem; color: var(--text-muted);
+        }
+
+        /* --- Grid & Card Design --- */
+        .container {
+            padding: 0 20px 40px 20px;
+            max-width: 1200px; margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-title {
+            font-size: 1.25rem; font-weight: 700;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-title i { color: var(--primary); }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            aspect-ratio: 2/3;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-image-wrapper {
+            position: relative;
+            width: 100%; height: 100%;
+        }
+
+        .card-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .card:hover .card-img { transform: scale(1.1); }
+
+        .card-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 40%, transparent 100%);
+            display: flex; flex-direction: column; justify-content: flex-end;
+            padding: 15px;
+        }
+
+        .card-badges {
+            position: absolute; top: 10px; left: 10px;
+            display: flex; gap: 5px; z-index: 5;
+        }
+
+        .badge {
+            padding: 4px 8px; border-radius: 6px;
+            font-size: 0.65rem; font-weight: 700;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .badge-donghua { background: rgba(59, 130, 246, 0.9); color: white; }
+        .badge-hot { background: rgba(239, 68, 68, 0.9); color: white; }
+
+        .card-info { color: white; }
+        
+        .card-title {
+            font-weight: 600; font-size: 0.95rem;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .card-meta {
+            font-size: 0.75rem; color: #cbd5e1;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        /* --- Search Modal Enhanced --- */
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 100; padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            max-width: 800px; margin: 40px auto 0;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .search-header-input {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .main-search-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding: 15px 50px 15px 0;
+            font-size: 1.5rem; color: white; font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+        }
+        .main-search-input:focus { border-color: var(--primary); }
+
+        .close-search {
+            position: absolute; right: 0; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none; color: white;
+            cursor: pointer; opacity: 0.7;
+        }
+
+        .search-history-chips {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .history-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 0.85rem; color: var(--text-muted);
+            cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .history-chip:hover { background: rgba(255,255,255,0.1); color: white; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Loading Shimmer --- */
+        .shimmer {
+            background: #1e293b;
+            background-image: linear-gradient(to right, #1e293b 0%, #334155 20%, #1e293b 40%, #1e293b 100%);
+            background-repeat: no-repeat;
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 16px;
+        }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+
+        /* --- Bottom Nav (Mobile) --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-around;
+            padding: 12px 0; z-index: 40;
+        }
+        .nav-item {
+            color: var(--text-muted); text-decoration: none;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            font-size: 0.75rem;
+        }
+        .nav-item.active { color: var(--primary); }
     </style>
 </head>
 <body>
 
 <header>
-    <!-- Back to Dashboard -->
-    <div onclick="goToDashboard()" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
-        <i data-lucide="arrow-left" style="width:22px; color:var(--text-main);"></i>
-        <span style="font-weight:600;">Dashboard</span>
+    <div onclick="window.location.href='index.html'" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="chevron-left"></i>
+        <div class="logo">DONGHUA</div>
     </div>
     
-    <!-- Logo -->
-    <div class="logo">DONGHUA</div>
-    
-    <!-- Search Bar -->
-    <div class="search-container">
-        <input type="text" id="globalSearch" class="search-input" placeholder="Cari donghua..." autocomplete="off">
-        <button class="clear-search" id="clearSearch" onclick="clearSearch()">
-            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
-        </button>
-        <i data-lucide="search" class="search-icon"></i>
-    </div>
-    
-    <!-- User Menu -->
-    <div class="user-dropdown" id="userDropdown">
-        <div id="userStatus" onclick="toggleDropdown()">
-            <!-- User avatar akan dimuat via JS -->
-        </div>
-        <div class="dropdown-menu" id="dropdownMenu">
-            <div class="dropdown-item" onclick="window.location.href='history.html'">
-                <i data-lucide="history"></i>
-                <span>Riwayat</span>
-            </div>
-            <div class="dropdown-item" onclick="refreshAllDonghua()">
-                <i data-lucide="refresh-cw"></i>
-                <span>Refresh</span>
-            </div>
-            <div class="dropdown-divider"></div>
-            <div class="dropdown-item" onclick="logout()" style="color: #ef4444;">
-                <i data-lucide="log-out"></i>
-                <span>Logout</span>
-            </div>
-        </div>
+    <div class="user-profile" id="userProfileIcon">
+        <div style="width:36px; height:36px; background:#334155; border-radius:50%;"></div>
     </div>
 </header>
 
-<!-- Donghua Hero Banner -->
-<div class="donghua-hero">
-    <div class="donghua-hero-content">
-        <h1>Koleksi Donghua</h1>
-        <p>Nikmati donghua China terbaru dan terpopuler dengan subtitle bahasa Indonesia</p>
+<div class="hero-banner" onclick="window.location.href='#popularSection'">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <span class="hero-badge">Trending Sekarang</span>
+        <h1 class="hero-title">Jelajahi Dunia Kultivasi</h1>
+        <div class="hero-stats">
+            <span><i data-lucide="play-circle" style="width:14px; display:inline;"></i> Ribuan Episode</span>
+            <span><i data-lucide="star" style="width:14px; display:inline;"></i> Subtitle Indonesia</span>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom: 0;">
+    <div class="search-trigger" onclick="openSearchModal()">
+        <i data-lucide="search" style="width: 18px;"></i>
+        <span>Cari judul donghua, genre...</span>
+        <span style="margin-left:auto; font-size:0.8rem; padding:2px 6px; border:1px solid #334155; border-radius:4px;">CMD+K</span>
     </div>
 </div>
 
 <div class="container">
-    <!-- Popular Donghua -->
-    <div class="section-header">
-        <h3>Popular Donghua</h3>
+    <div id="popularSection" class="section-header">
+        <div class="section-title">
+            <i data-lucide="flame"></i>
+            <span>Paling Populer</span>
+        </div>
+        <button class="btn-text" onclick="refreshSection('popular')"><i data-lucide="refresh-cw" style="width:14px;"></i></button>
     </div>
-    <div id="popularDonghua" class="grid">
-        <div class="card loading-shimmer" style="height:200px;"></div>
-        <div class="card loading-shimmer" style="height:200px;"></div>
-        <div class="card loading-shimmer" style="height:200px;"></div>
-    </div>
-
-    <!-- Latest Donghua -->
-    <div class="section-header">
-        <h3>Latest Release</h3>
-    </div>
-    <div id="latestDonghua" class="grid">
-        <div class="card loading-shimmer" style="height:200px;"></div>
-        <div class="card loading-shimmer" style="height:200px;"></div>
-        <div class="card loading-shimmer" style="height:200px;"></div>
+    <div id="popularDonghua" class="grid-cards">
+        <div class="card shimmer"></div><div class="card shimmer"></div>
+        <div class="card shimmer"></div><div class="card shimmer"></div>
     </div>
 
-    <!-- Completed Donghua -->
     <div class="section-header">
-        <h3>Completed Donghua</h3>
+        <div class="section-title">
+            <i data-lucide="clock"></i>
+            <span>Rilis Terbaru</span>
+        </div>
     </div>
-    <div id="completedDonghua" class="grid">
-        <div class="card loading-shimmer" style="height:200px;"></div>
-        <div class="card loading-shimmer" style="height:200px;"></div>
-        <div class="card loading-shimmer" style="height:200px;"></div>
+    <div id="latestDonghua" class="grid-cards">
+        <div class="card shimmer"></div><div class="card shimmer"></div>
+        <div class="card shimmer"></div><div class="card shimmer"></div>
     </div>
 
-    <!-- Ongoing Donghua -->
-    <div class="section-header">
-        <h3>Ongoing Donghua</h3>
+    <div style="text-align: center; margin-top: 40px;">
+        <button onclick="loadMoreDonghua()" style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.1); color:white; padding:12px 30px; border-radius:30px; cursor:pointer; font-weight:600; transition:0.3s;">
+            Muat Lebih Banyak
+        </button>
     </div>
-    <div id="ongoingDonghua" class="grid">
-        <div class="card loading-shimmer" style="height:200px;"></div>
-        <div class="card loading-shimmer" style="height:200px;"></div>
-        <div class="card loading-shimmer" style="height:200px;"></div>
-    </div>
-
-    <!-- Load More Button -->
-    <button id="btnLoadMore" class="btn-load-more" onclick="loadMoreDonghua()" style="display: none;">
-        Muat Lebih Banyak
-    </button>
 </div>
 
-<!-- Search Modal -->
 <div id="searchModal" class="modal">
     <div class="modal-content">
-        <div class="modal-header">
-            <div>
-                <h2 id="searchResultsTitle" class="modal-title">Hasil Pencarian Donghua</h2>
-                <div id="searchResultsCount" class="search-count"></div>
-            </div>
-            <button onclick="closeSearchModal()" class="btn" style="background:#333; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-family: 'Inter', sans-serif; font-weight: 600;">
-                ✕ Tutup
-            </button>
+        <div class="search-header-input">
+            <input type="text" id="searchInput" class="main-search-input" placeholder="Apa yang ingin kamu tonton?" autocomplete="off">
+            <button class="close-search" onclick="closeSearchModal()"><i data-lucide="x" style="width:24px; height:24px;"></i></button>
         </div>
         
-        <!-- Search Results -->
-        <div id="donghuaSearchResults" class="grid">
-            <div class="no-results">
-                <i data-lucide="search"></i>
-                <p>Masukkan kata kunci untuk mencari donghua</p>
-            </div>
+        <div id="searchHistoryContainer">
+            <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">Riwayat Pencarian</h4>
+            <div id="searchHistoryChips" class="search-history-chips">
+                </div>
         </div>
-        
-        <!-- No Results Message -->
-        <div id="noSearchResults" class="no-results" style="display: none;">
-            <i data-lucide="search-x"></i>
-            <h3>Tidak ada donghua ditemukan</h3>
-            <p>Coba dengan kata kunci lain</p>
-        </div>
-        
-        <!-- Search Loading -->
-        <div id="searchLoading" class="no-results" style="display: none;">
-            <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
-            <p>Mencari donghua...</p>
+
+        <div id="searchResultsArea" style="display:none; overflow-y:auto; max-height:60vh; padding-right:10px;">
+            <div id="searchStatus" style="margin-bottom:15px; color:var(--text-muted);"></div>
+            <div id="searchGrid" class="grid-cards"></div>
         </div>
     </div>
 </div>
@@ -372,473 +392,232 @@
 <nav class="bottom-nav">
     <a href="index.html" class="nav-item"><i data-lucide="home"></i> Home</a>
     <a href="anime.html" class="nav-item"><i data-lucide="tv"></i> Anime</a>
-    <a href="donghua.html" class="nav-item active"><i data-lucide="tv-2"></i> Donghua</a>
+    <a href="donghua.html" class="nav-item active"><i data-lucide="zap"></i> Donghua</a>
+    <a href="#" class="nav-item"><i data-lucide="user"></i> Akun</a>
 </nav>
 
 <script>
-    // =============================================
-    // API ENDPOINTS
-    // =============================================
-    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    
-    // State variables
-    let isLoading = false;
-    let searchTimeout = null;
-    let currentSearchQuery = '';
+    // ================= CONFIGURATION =================
+    const API_BASE = "https://anichin-seven.vercel.app/api";
     let currentPage = 1;
-    
-    // =============================================
-    // 1. NAVIGATION
-    // =============================================
-    function goToDashboard() {
-        window.location.href = 'index.html';
-    }
-    
-    // =============================================
-    // 2. USER MANAGEMENT
-    // =============================================
-    function displayUserInfo() {
+    let searchDebounce;
+
+    // ================= INITIALIZATION =================
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        displayUser();
+        initData();
+        loadSearchHistory();
+    });
+
+    function displayUser() {
         try {
-            const userData = localStorage.getItem('user_info');
-            if (!userData) {
-                window.location.href = 'login.html';
+            const user = JSON.parse(localStorage.getItem('user_info') || '{}');
+            const container = document.getElementById('userProfileIcon');
+            if (user.picture) {
+                container.innerHTML = `<img src="${user.picture}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--primary);">`;
+            }
+        } catch (e) { console.log("User not logged in"); }
+    }
+
+    async function initData() {
+        await Promise.all([
+            fetchData('popular', document.getElementById('popularDonghua'), true),
+            fetchData('list?page=1', document.getElementById('latestDonghua'), false)
+        ]);
+    }
+
+    // ================= CORE DATA FETCHING =================
+    async function fetchData(endpoint, container, isHighlight) {
+        try {
+            const res = await fetch(`${API_BASE}/${endpoint}`);
+            const json = await res.json();
+            const data = json.data || [];
+            
+            // Bersihkan shimmer loading
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:gray;">Data tidak ditemukan</div>';
                 return;
             }
+
+            // Batasi jumlah untuk tampilan awal
+            const limit = isHighlight ? 5 : 10;
+            const itemsToRender = data.slice(0, limit);
+
+            itemsToRender.forEach(item => {
+                const card = createCard(item);
+                container.appendChild(card);
+            });
             
-            const user = JSON.parse(userData);
-            const userStatus = document.getElementById('userStatus');
-            
-            if (userStatus) {
-                userStatus.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${user.picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=36&h=36&fit=crop&crop=face'}" 
-                             style="width:36px; height:36px; border-radius:50%; border:2px solid #3b82f6; object-fit:cover;">
-                        <span style="font-size:0.9rem; font-weight:600;">${user.name || 'User'}</span>
-                        <i data-lucide="chevron-down" style="width:16px; height:16px;"></i>
+            lucide.createIcons();
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = '<div style="color:red; font-size:0.8rem;">Gagal memuat data.</div>';
+        }
+    }
+
+    // ================= CARD COMPONENT =================
+    function createCard(item) {
+        // Cleaning data
+        const title = item.title || 'Tanpa Judul';
+        const poster = item.poster || 'https://via.placeholder.com/200x300?text=No+Img';
+        // Ekstrak slug dari href
+        const slug = item.href ? item.href.split('/').filter(Boolean).pop().replace(/-episode-\d+.*$/, '') : '#';
+        
+        // Deteksi genre sederhana (Mockup karena API list jarang return genre)
+        // Kita gunakan logika visual: Jika judul mengandung kata tertentu, kita beri label 'Action'
+        const isCultivation = title.toLowerCase().includes('soul') || title.toLowerCase().includes('land') || title.toLowerCase().includes('martial');
+        const genreLabel = isCultivation ? 'Cultivation' : 'Action';
+
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.onclick = () => window.location.href = `series.html?slug=${slug}&source=donghua`;
+        
+        div.innerHTML = `
+            <div class="card-image-wrapper">
+                <div class="card-badges">
+                    <span class="badge badge-donghua">DONGHUA</span>
+                    ${Math.random() > 0.5 ? '<span class="badge badge-hot">HOT</span>' : ''}
+                </div>
+                <img src="${poster}" class="card-img" loading="lazy" alt="${title}">
+                <div class="card-overlay">
+                    <div class="card-info">
+                        <div class="card-title">${title}</div>
+                        <div class="card-meta">
+                            <span><i data-lucide="tag" style="width:10px;"></i> ${genreLabel}</span>
+                            <span><i data-lucide="play" style="width:10px;"></i> Tonton</span>
+                        </div>
                     </div>
-                `;
-                lucide.createIcons();
-            }
-        } catch (error) {
-            console.error('Error displaying user info:', error);
-        }
+                </div>
+            </div>
+        `;
+        return div;
     }
-    
-    function toggleDropdown() {
-        const dropdown = document.getElementById('dropdownMenu');
-        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+
+    // ================= ADVANCED SEARCH SYSTEM =================
+    function openSearchModal() {
+        document.getElementById('searchModal').style.display = 'block';
+        document.getElementById('searchInput').focus();
+        document.body.style.overflow = 'hidden';
     }
-    
-    function logout() {
-        if (confirm('Yakin ingin logout?')) {
-            localStorage.removeItem('user_info');
-            window.location.href = 'login.html';
-        }
-    }
-    
-    // =============================================
-    // 3. LOAD DONGHUA DATA
-    // =============================================
-    async function loadPopularDonghua() {
-        try {
-            const response = await fetch(`${API_DONGHUA}/popular`);
-            const data = await response.json();
-            
-            const container = document.getElementById('popularDonghua');
-            
-            if (data && data.data && Array.isArray(data.data)) {
-                renderDonghuaCards(container, data.data.slice(0, 6), 'popular');
-            } else {
-                showNoData(container, 'Popular Donghua');
-            }
-        } catch (error) {
-            console.error('Error loading popular donghua:', error);
-            showError(document.getElementById('popularDonghua'), 'Popular Donghua');
-        }
-    }
-    
-    async function loadLatestDonghua() {
-        try {
-            const response = await fetch(`${API_DONGHUA}/list?page=${currentPage}`);
-            const data = await response.json();
-            
-            const container = document.getElementById('latestDonghua');
-            
-            if (data && data.data && Array.isArray(data.data)) {
-                renderDonghuaCards(container, data.data.slice(0, 6), 'latest');
-            } else {
-                showNoData(container, 'Latest Donghua');
-            }
-        } catch (error) {
-            console.error('Error loading latest donghua:', error);
-            showError(document.getElementById('latestDonghua'), 'Latest Donghua');
-        }
-    }
-    
-    async function loadCompletedDonghua() {
-        try {
-            const response = await fetch(`${API_DONGHUA}/completed`);
-            const data = await response.json();
-            
-            const container = document.getElementById('completedDonghua');
-            
-            if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
-                renderDonghuaCards(container, data.data.slice(0, 6), 'completed');
-            } else {
-                showNoData(container, 'Completed Donghua');
-            }
-        } catch (error) {
-            console.error('Error loading completed donghua:', error);
-            showError(document.getElementById('completedDonghua'), 'Completed Donghua');
-        }
-    }
-    
-    async function loadOngoingDonghua() {
-        try {
-            const response = await fetch(`${API_DONGHUA}/ongoing`);
-            const data = await response.json();
-            
-            const container = document.getElementById('ongoingDonghua');
-            
-            if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
-                renderDonghuaCards(container, data.data.slice(0, 6), 'ongoing');
-            } else {
-                showNoData(container, 'Ongoing Donghua');
-            }
-        } catch (error) {
-            console.error('Error loading ongoing donghua:', error);
-            showError(document.getElementById('ongoingDonghua'), 'Ongoing Donghua');
-        }
-    }
-    
-    function loadMoreDonghua() {
-        currentPage++;
-        loadLatestDonghua();
-        showToast(`Memuat halaman ${currentPage}...`, 'info');
-    }
-    
-    function refreshAllDonghua() {
-        showToast('Memperbarui semua data donghua...', 'info');
-        currentPage = 1;
-        loadPopularDonghua();
-        loadLatestDonghua();
-        loadCompletedDonghua();
-        loadOngoingDonghua();
-        setTimeout(() => {
-            showToast('Data donghua diperbarui', 'success');
-        }, 1000);
-    }
-    
-    // =============================================
-    // 4. SEARCH SYSTEM
-    // =============================================
-    async function searchDonghua(query) {
-        if (!query || query.trim().length < 2) {
-            return [];
-        }
-        
-        currentSearchQuery = query;
-        
-        // Show loading
-        document.getElementById('searchLoading').style.display = 'block';
-        document.getElementById('donghuaSearchResults').style.display = 'none';
-        document.getElementById('noSearchResults').style.display = 'none';
-        
-        try {
-            const response = await fetch(`${API_DONGHUA}/search?s=${encodeURIComponent(query)}`);
-            const data = await response.json();
-            
-            if (data && data.data && Array.isArray(data.data)) {
-                return data.data.slice(0, 30);
-            }
-            
-            return [];
-            
-        } catch (error) {
-            console.error('Error searching donghua:', error);
-            showToast('Gagal mencari donghua', 'error');
-            return [];
-        }
-    }
-    
-    async function showSearchResults(query, results) {
-        const resultsContainer = document.getElementById('donghuaSearchResults');
-        const noResultsElement = document.getElementById('noSearchResults');
-        const searchLoading = document.getElementById('searchLoading');
-        const title = document.getElementById('searchResultsTitle');
-        const count = document.getElementById('searchResultsCount');
-        
-        // Hide loading
-        searchLoading.style.display = 'none';
-        
-        title.textContent = `Hasil pencarian untuk "${escapeHtml(query)}"`;
-        
-        if (results.length === 0) {
-            resultsContainer.style.display = 'none';
-            noResultsElement.style.display = 'block';
-            count.textContent = '0 donghua ditemukan';
-        } else {
-            resultsContainer.style.display = 'grid';
-            noResultsElement.style.display = 'none';
-            
-            // Render results
-            resultsContainer.innerHTML = results.map(item => {
-                // Get clean slug from href
-                const href = item.href || '';
-                let slug = '';
-                if (href) {
-                    slug = href.split('/').pop();
-                    // Remove episode number if present
-                    slug = slug.replace(/-episode-\d+.*$/i, '');
-                }
-                
-                const poster = item.poster || 'https://via.placeholder.com/150x200/1a1a2e/ffffff?text=No+Image';
-                const title = item.title || 'Unknown';
-                
-                return `
-                    <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(slug)}&source=donghua'">
-                        <span class="type-badge bg-donghua">DONGHUA</span>
-                        <img src="${escapeHtml(poster)}" 
-                             loading="lazy" 
-                             onerror="this.src='https://via.placeholder.com/150x200/1a1a2e/ffffff?text=Error'">
-                        <p>${escapeHtml(title)}</p>
-                    </div>
-                `;
-            }).join('');
-            
-            count.textContent = `${results.length} donghua ditemukan`;
-        }
-    }
-    
+
     function closeSearchModal() {
-        const modal = document.getElementById('searchModal');
-        modal.style.display = 'none';
+        document.getElementById('searchModal').style.display = 'none';
         document.body.style.overflow = 'auto';
-        document.getElementById('globalSearch').value = '';
-        document.getElementById('clearSearch').style.display = 'none';
     }
-    
-    function clearSearch() {
-        document.getElementById('globalSearch').value = '';
-        document.getElementById('clearSearch').style.display = 'none';
-        closeSearchModal();
-    }
-    
-    // =============================================
-    // 5. RENDER FUNCTIONS
-    // =============================================
-    function renderDonghuaCards(container, items, sectionType) {
-        if (!items || items.length === 0) {
-            showNoData(container, sectionType);
+
+    // Event Listener Search Input
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        const historyContainer = document.getElementById('searchHistoryContainer');
+        const resultsArea = document.getElementById('searchResultsArea');
+
+        if (query.length === 0) {
+            historyContainer.style.display = 'block';
+            resultsArea.style.display = 'none';
             return;
         }
+
+        historyContainer.style.display = 'none';
+        resultsArea.style.display = 'block';
+
+        // Debounce search
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => performSearch(query), 600);
+    });
+
+    async function performSearch(query) {
+        const grid = document.getElementById('searchGrid');
+        const status = document.getElementById('searchStatus');
         
-        container.innerHTML = items.map(item => {
-            // Get clean slug from href
-            const href = item.href || '';
-            let slug = '';
-            if (href) {
-                slug = href.split('/').pop();
-                // Remove episode number if present
-                slug = slug.replace(/-episode-\d+.*$/i, '');
-            }
-            
-            const poster = item.poster || 'https://via.placeholder.com/150x200/1a1a2e/ffffff?text=No+Image';
-            const title = item.title || 'Unknown';
-            
-            return `
-                <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(slug)}&source=donghua'">
-                    <span class="type-badge bg-donghua">DONGHUA</span>
-                    <img src="${escapeHtml(poster)}" 
-                         loading="lazy" 
-                         onerror="this.src='https://via.placeholder.com/150x200/1a1a2e/ffffff?text=Error'">
-                    <p>${escapeHtml(title)}</p>
-                </div>
-            `;
-        }).join('');
-    }
-    
-    function showNoData(container, sectionName) {
-        container.innerHTML = `
-            <div class="no-results">
-                <i data-lucide="inbox"></i>
-                <p>Tidak ada data ${sectionName}</p>
-            </div>
-        `;
-        lucide.createIcons();
-    }
-    
-    function showError(container, sectionName) {
-        container.innerHTML = `
-            <div class="no-results">
-                <i data-lucide="alert-circle"></i>
-                <p>Gagal memuat ${sectionName}</p>
-                <button class="btn btn-primary" onclick="refreshAllDonghua()" style="margin-top: 10px; padding: 8px 16px; font-size: 0.8rem;">
-                    Coba Lagi
-                </button>
-            </div>
-        `;
-        lucide.createIcons();
-    }
-    
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#3b82f6'};
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            z-index: 1000;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            animation: slideDown 0.3s ease;
-            font-family: 'Inter', sans-serif;
-        `;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.animation = 'slideUp 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-    
-    // =============================================
-    // 6. EVENT LISTENERS
-    // =============================================
-    function setupEventListeners() {
-        const searchInput = document.getElementById('globalSearch');
-        const clearSearchBtn = document.getElementById('clearSearch');
-        
-        // Search input
-        searchInput.addEventListener('input', function(e) {
-            const query = e.target.value;
-            
-            clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
-            
-            if (searchTimeout) {
-                clearTimeout(searchTimeout);
-            }
-            
-            if (query.length >= 2) {
-                searchTimeout = setTimeout(async () => {
-                    const modal = document.getElementById('searchModal');
-                    modal.style.display = 'block';
-                    document.body.style.overflow = 'hidden';
-                    
-                    const results = await searchDonghua(query);
-                    await showSearchResults(query, results);
-                }, 800);
-            }
-        });
-        
-        // Enter key
-        searchInput.addEventListener('keydown', async function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const query = searchInput.value.trim();
-                if (query.length >= 2) {
-                    const modal = document.getElementById('searchModal');
-                    modal.style.display = 'block';
-                    document.body.style.overflow = 'hidden';
-                    
-                    const results = await searchDonghua(query);
-                    await showSearchResults(query, results);
-                }
-            }
-        });
-        
-        // Close modal on escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeSearchModal();
-            }
-        });
-        
-        // Close modal when clicking outside
-        document.getElementById('searchModal').addEventListener('click', (e) => {
-            if (e.target.id === 'searchModal') {
-                closeSearchModal();
-            }
-        });
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('dropdownMenu');
-            const userDropdown = document.getElementById('userDropdown');
-            
-            if (dropdown && userDropdown && 
-                !userDropdown.contains(e.target) && 
-                dropdown.style.display === 'block') {
-                dropdown.style.display = 'none';
-            }
-        });
-    }
-    
-    // =============================================
-    // 7. INITIALIZE DONGHUA PAGE
-    // =============================================
-    async function initializeDonghuaPage() {
+        status.innerHTML = `<div style="display:flex; gap:10px; align-items:center;"><div class="shimmer" style="width:20px; height:20px; border-radius:50%;"></div> Mencari "${query}"...</div>`;
+        grid.innerHTML = '';
+
         try {
-            // Load icons
+            const res = await fetch(`${API_BASE}/search?s=${encodeURIComponent(query)}`);
+            const json = await res.json();
+            const results = json.data || [];
+
+            status.textContent = `Ditemukan ${results.length} hasil untuk "${query}"`;
+            
+            // Simpan ke history jika ada hasil
+            if (results.length > 0) saveSearchHistory(query);
+
+            if (results.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);">
+                        <i data-lucide="search-x" style="width:48px; height:48px; margin-bottom:10px;"></i>
+                        <p>Tidak ada donghua yang cocok.</p>
+                    </div>
+                `;
+            } else {
+                results.forEach(item => {
+                    grid.appendChild(createCard(item));
+                });
+            }
             lucide.createIcons();
-            
-            // Display user info
-            displayUserInfo();
-            
-            // Setup event listeners
-            setupEventListeners();
-            
-            // Load all donghua data
-            await Promise.all([
-                loadPopularDonghua(),
-                loadLatestDonghua(),
-                loadCompletedDonghua(),
-                loadOngoingDonghua()
-            ]);
-            
-            // Show load more button
-            document.getElementById('btnLoadMore').style.display = 'block';
-            
-        } catch (error) {
-            console.error('Error initializing donghua page:', error);
-            showToast('Gagal memuat beberapa data donghua', 'error');
+        } catch (e) {
+            status.textContent = "Terjadi kesalahan saat mencari.";
         }
     }
-    
-    // =============================================
-    // 8. START THE PAGE
-    // =============================================
-    document.addEventListener('DOMContentLoaded', () => {
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideDown {
-                from { transform: translate(-50%, -100%); opacity: 0; }
-                to { transform: translate(-50%, 0); opacity: 1; }
-            }
-            @keyframes slideUp {
-                from { transform: translate(-50%, 0); opacity: 1; }
-                to { transform: translate(-50%, -100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
+
+    // ================= HISTORY MANAGEMENT =================
+    function saveSearchHistory(query) {
+        let history = JSON.parse(localStorage.getItem('search_history') || '[]');
+        // Hapus jika sudah ada (supaya naik ke paling atas/baru)
+        history = history.filter(item => item.toLowerCase() !== query.toLowerCase());
+        // Tambah ke awal
+        history.unshift(query);
+        // Simpan max 8
+        history = history.slice(0, 8);
+        localStorage.setItem('search_history', JSON.stringify(history));
+        loadSearchHistory();
+    }
+
+    function loadSearchHistory() {
+        const history = JSON.parse(localStorage.getItem('search_history') || '[]');
+        const container = document.getElementById('searchHistoryChips');
         
-        // Initialize page
-        initializeDonghuaPage();
+        if (history.length === 0) {
+            container.innerHTML = '<span style="color:var(--text-muted); font-size:0.8rem;">Belum ada riwayat.</span>';
+            return;
+        }
+
+        container.innerHTML = history.map(text => `
+            <div class="history-chip" onclick="clickHistory('${text}')">
+                <i data-lucide="clock" style="width:12px;"></i> ${text}
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    function clickHistory(text) {
+        const input = document.getElementById('searchInput');
+        input.value = text;
+        input.dispatchEvent(new Event('input')); // Trigger search
+    }
+
+    // ================= UTILS =================
+    function loadMoreDonghua() {
+        currentPage++;
+        const btn = event.target;
+        btn.textContent = "Memuat...";
+        fetchData(`list?page=${currentPage}`, document.getElementById('latestDonghua'), false).then(() => {
+            btn.textContent = "Muat Lebih Banyak";
+        });
+    }
+
+    // Keyboard Shortcut (CMD/CTRL + K)
+    document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            openSearchModal();
+        }
+        if (e.key === 'Escape') closeSearchModal();
     });
+
 </script>
 </body>
 </html>
