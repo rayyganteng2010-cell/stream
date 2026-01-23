@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genre - RayStream</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<header>
+    <div onclick="history.back()" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="arrow-left" style="width:22px;"></i>
+        <span>Back</span>
+    </div>
+    <div class="logo" id="genreTitle">GENRE</div>
+    <div style="width:24px;"></div>
+</header>
+
+<div class="container">
+    <div id="genreContent" class="grid">
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+        <div class="card skeleton" style="height:200px;"></div>
+    </div>
+    
+    <button id="btnLoadMore" class="btn-load-more" onclick="loadMore()" style="display:none;">
+        Load More
+    </button>
+</div>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><i data-lucide="home"></i> Home</a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i> Jadwal</a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i> History</a>
+</nav>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const genreSlug = urlParams.get('slug');
+    const genreName = urlParams.get('name');
+    const type = urlParams.get('type') || 'donghua'; // 'donghua' atau 'anime'
+    
+    let currentPage = 1;
+    let isLoading = false;
+    
+    // Set title
+    document.getElementById('genreTitle').innerText = genreName?.toUpperCase() || 'GENRE';
+    
+    async function loadGenreContent() {
+        if (isLoading) return;
+        
+        isLoading = true;
+        const container = document.getElementById('genreContent');
+        
+        try {
+            let apiUrl = '';
+            
+            if (type === 'donghua') {
+                apiUrl = `https://anichin-seven.vercel.app/api/genres/${genreSlug}?page=${currentPage}`;
+            } else {
+                // Untuk anime, perlu endpoint khusus genre
+                apiUrl = `https://donghua-qnha.vercel.app/anime/samehadaku/genre/${genreSlug}?page=${currentPage}`;
+            }
+            
+            const res = await fetch(apiUrl);
+            const data = await res.json();
+            
+            if (currentPage === 1) {
+                container.innerHTML = ''; // Clear skeletons
+            }
+            
+            if (data && data.data) {
+                const items = type === 'donghua' ? data.data : (data.data.animeList || []);
+                
+                if (items.length === 0 && currentPage === 1) {
+                    container.innerHTML = '<p style="text-align:center; color:#555; width:100%;">No content found for this genre.</p>';
+                    return;
+                }
+                
+                items.forEach(item => {
+                    const slug = type === 'donghua' ? 
+                        getCleanSlug(item.href) : 
+                        (item.animeId || '');
+                    
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.onclick = () => {
+                        window.location.href = `series.html?slug=${slug}&source=${type}`;
+                    };
+                    
+                    card.innerHTML = `
+                        <span class="type-badge ${type === 'anime' ? 'bg-anime' : 'bg-donghua'}">
+                            ${type === 'anime' ? 'ANIME' : 'DONGHUA'}
+                        </span>
+                        <img src="${item.poster}" loading="lazy">
+                        <p>${item.title}</p>
+                    `;
+                    
+                    container.appendChild(card);
+                });
+                
+                // Tampilkan load more button jika masih ada data
+                if (items.length >= 12) { // Asumsi 12 item per page
+                    document.getElementById('btnLoadMore').style.display = 'block';
+                } else {
+                    document.getElementById('btnLoadMore').style.display = 'none';
+                }
+            }
+        } catch (e) {
+            console.error("Error loading genre content:", e);
+            if (currentPage === 1) {
+                container.innerHTML = '<p style="text-align:center; color:#ef4444; width:100%;">Failed to load content.</p>';
+            }
+        }
+        
+        isLoading = false;
+    }
+    
+    function loadMore() {
+        currentPage++;
+        loadGenreContent();
+    }
+    
+    function getCleanSlug(href) {
+        if (!href) return '';
+        href = href.replace(/\/$/, '');
+        let segment = href.substring(href.lastIndexOf('/') + 1);
+        return segment.replace(/-episode-\d+.*$/i, '');
+    }
+    
+    // Initial load
+    loadGenreContent();
+    lucide.createIcons();
+</script>
+</body>
+</html>
