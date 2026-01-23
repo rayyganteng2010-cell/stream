@@ -25,7 +25,7 @@
         .bg-donghua { background: rgba(59, 130, 246, 0.9); color: white; }
         .bg-anime { background: rgba(245, 158, 11, 0.9); color: black; }
         
-        /* Search Bar Styling */
+        /* Search Bar Styling - FIXED */
         .search-container {
             position: relative;
             flex: 1;
@@ -35,12 +35,12 @@
         
         .search-input {
             width: 100%;
-            padding: 10px 45px 10px 15px;
+            padding: 12px 45px 12px 15px;
             border-radius: 30px;
             background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-family: 'Inter', sans-serif;
             transition: all 0.3s ease;
         }
@@ -62,8 +62,9 @@
             top: 50%;
             transform: translateY(-50%);
             color: rgba(255, 255, 255, 0.6);
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
         }
         
         /* Genre Buttons */
@@ -80,7 +81,7 @@
             color: var(--text-main);
             padding: 8px 16px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -97,12 +98,12 @@
         /* Load More Button */
         .btn-load-more {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-main);
             border-radius: 10px;
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             margin: 20px 0;
@@ -112,6 +113,7 @@
         
         .btn-load-more:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
         }
         
         .btn-load-more:disabled {
@@ -127,7 +129,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.98);
             z-index: 9999;
             padding: 20px;
             overflow-y: auto;
@@ -149,11 +151,15 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
         }
         
         .modal-title {
             font-size: 1.5rem;
             font-weight: 700;
+            color: white;
         }
         
         /* Slider Images */
@@ -189,6 +195,7 @@
             padding: 50px 20px;
             color: var(--text-dim);
             grid-column: 1 / -1;
+            font-family: 'Inter', sans-serif;
         }
         
         .no-results i {
@@ -215,6 +222,32 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+        
+        /* Search Results Counter */
+        .search-count {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-top: 5px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Clear Search Button */
+        .clear-search {
+            position: absolute;
+            right: 45px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 5px;
+            display: none;
+        }
+        
+        .clear-search:hover {
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -222,9 +255,12 @@
 <header>
     <div class="logo">RayStream</div>
     
-    <!-- Search Bar -->
+    <!-- Search Bar - FIXED -->
     <div class="search-container">
         <input type="text" id="globalSearch" class="search-input" placeholder="Cari anime & donghua...">
+        <button class="clear-search" id="clearSearch" onclick="clearSearch()">
+            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
         <i data-lucide="search" class="search-icon"></i>
     </div>
     
@@ -278,7 +314,7 @@
     <!-- Latest Release -->
     <div class="section-header">
         <h3>Latest Release</h3>
-        <span id="pageIndicator" style="font-size:0.8rem; color:#666;">Page 1</span>
+        <span id="pageIndicator" style="font-size:0.8rem; color:#666;">Halaman 1</span>
     </div>
     
     <div id="latestData" class="grid">
@@ -329,7 +365,7 @@
 
     <!-- Load More Button -->
     <button id="btnLoadMoreLatest" class="btn-load-more" onclick="loadNextPage()">
-        Load Next Page
+        Muat Halaman Berikutnya
     </button>
 </div>
 
@@ -337,8 +373,11 @@
 <div id="searchModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="searchResultsTitle" class="modal-title">Hasil Pencarian</h2>
-            <button onclick="closeSearchModal()" class="btn" style="background:#333; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-family: 'Inter', sans-serif;">
+            <div>
+                <h2 id="searchResultsTitle" class="modal-title">Hasil Pencarian</h2>
+                <div id="searchResultsCount" class="search-count"></div>
+            </div>
+            <button onclick="closeSearchModal()" class="btn" style="background:#333; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-family: 'Inter', sans-serif; font-weight: 600;">
                 ✕ Tutup
             </button>
         </div>
@@ -356,30 +395,25 @@
 
 <script>
     // =============================================
-    // API ENDPOINTS - PERBAIKAN
+    // API ENDPOINTS & CACHE SYSTEM
     // =============================================
     const API_DONGHUA = "https://anichin-seven.vercel.app/api";
+    const API_ANIME = "https://donghua-qnha.vercel.app/anime/samehadaku";
     
-    // ENDPOINT ANIME YANG BERFUNGSI
-    // Coba beberapa endpoint alternatif untuk anime:
-    const ANIME_ENDPOINTS = {
-        // Endpoint utama
-        primary: "https://donghua-qnha.vercel.app/anime/samehadaku",
-        // Alternatif 1
-        alt1: "https://api.consumet.org/anime/gogoanime",
-        // Alternatif 2 (untuk testing)
-        test: "https://samehadaku-rest-api.vercel.app"
+    // Cache system
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    let cache = {
+        popularDonghua: null,
+        popularAnime: null,
+        latestDonghua: {},
+        latestAnime: {},
+        completedDonghua: null,
+        ongoingDonghua: null,
+        completedAnime: null,
+        ongoingAnime: null,
+        genres: null,
+        search: {}
     };
-    
-    // Pilih endpoint yang bekerja
-    const API_ANIME = ANIME_ENDPOINTS.primary;
-    
-    // =============================================
-    // VARIABEL GLOBAL
-    // =============================================
-    let currentPage = parseInt(localStorage.getItem('current_page')) || 1;
-    let latestPage = 1;
-    let isSearching = false;
     
     // =============================================
     // HELPER FUNCTIONS
@@ -399,29 +433,102 @@
     }
     
     function getAnimeSlug(item) {
-        // Coba beberapa kemungkinan field untuk slug
-        return item.animeId || 
-               item.id || 
-               getCleanSlug(item.href) || 
-               encodeURIComponent(item.title || '');
+        return item.animeId || item.id || getCleanSlug(item.href) || encodeURIComponent(item.title || '');
     }
     
     function getAnimePoster(item) {
-        return item.poster || 
-               item.image || 
-               item.img || 
-               'https://via.placeholder.com/150x200/1a1a2e/ffffff?text=No+Image';
+        return item.poster || item.image || item.img || 'https://via.placeholder.com/150x200/1a1a2e/ffffff?text=No+Image';
     }
     
     function getAnimeTitle(item) {
-        return item.title || 
-               item.animeTitle || 
-               item.name || 
-               'Untitled';
+        return item.title || item.animeTitle || item.name || 'Untitled';
     }
     
     // =============================================
-    // 1. DISPLAY USER INFO
+    // CACHE MANAGEMENT
+    // =============================================
+    function getCachedData(key) {
+        const cached = localStorage.getItem(`cache_${key}`);
+        if (!cached) return null;
+        
+        const { data, timestamp } = JSON.parse(cached);
+        const now = Date.now();
+        
+        // Check if cache is still valid
+        if (now - timestamp < CACHE_DURATION) {
+            return data;
+        }
+        
+        // Cache expired
+        localStorage.removeItem(`cache_${key}`);
+        return null;
+    }
+    
+    function setCachedData(key, data) {
+        const cacheItem = {
+            data: data,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(`cache_${key}`, JSON.stringify(cacheItem));
+        cache[key] = data;
+    }
+    
+    function clearCache(key = null) {
+        if (key) {
+            localStorage.removeItem(`cache_${key}`);
+            cache[key] = null;
+        } else {
+            // Clear all cache
+            Object.keys(cache).forEach(k => {
+                localStorage.removeItem(`cache_${k}`);
+                cache[k] = null;
+            });
+        }
+    }
+    
+    // =============================================
+    // API FUNCTIONS WITH CACHE
+    // =============================================
+    async function fetchWithCache(url, cacheKey, forceRefresh = false) {
+        // Check cache first
+        if (!forceRefresh) {
+            const cachedData = getCachedData(cacheKey);
+            if (cachedData) {
+                console.log(`Using cached data for: ${cacheKey}`);
+                return cachedData;
+            }
+        }
+        
+        try {
+            console.log(`Fetching fresh data for: ${cacheKey}`);
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Cache the data
+            setCachedData(cacheKey, data);
+            
+            return data;
+        } catch (error) {
+            console.error(`Error fetching ${cacheKey}:`, error);
+            
+            // Try to return cached data even if expired
+            const cachedData = getCachedData(cacheKey);
+            if (cachedData) {
+                console.log(`Using expired cache for: ${cacheKey}`);
+                return cachedData;
+            }
+            
+            throw error;
+        }
+    }
+    
+    // =============================================
+    // 1. USER INFO
     // =============================================
     function displayUserInfo() {
         try {
@@ -446,14 +553,15 @@
     }
     
     // =============================================
-    // 2. LOAD GENRES (DONGHUA ONLY)
+    // 2. LOAD GENRES WITH CACHE
     // =============================================
     async function loadGenres() {
         try {
-            const res = await fetch(`${API_DONGHUA}/genres`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await fetchWithCache(
+                `${API_DONGHUA}/genres`,
+                'genres'
+            );
             
-            const data = await res.json();
             const container = document.getElementById('genreList');
             
             if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
@@ -481,14 +589,15 @@
     }
     
     // =============================================
-    // 3. LOAD POPULAR DONGHUA
+    // 3. LOAD POPULAR DONGHUA WITH CACHE
     // =============================================
     async function loadPopularDonghua() {
         try {
-            const res = await fetch(`${API_DONGHUA}/popular`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await fetchWithCache(
+                `${API_DONGHUA}/popular`,
+                'popularDonghua'
+            );
             
-            const data = await res.json();
             const container = document.getElementById('popularData');
             
             if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
@@ -511,36 +620,32 @@
     }
     
     // =============================================
-    // 4. LOAD POPULAR ANIME - PERBAIKAN
+    // 4. LOAD POPULAR ANIME WITH CACHE
     // =============================================
     async function loadPopularAnime() {
-        const container = document.getElementById('popularAnime');
-        
         try {
-            // Coba endpoint popular anime
-            const res = await fetch(`${API_ANIME}/popular`);
+            const data = await fetchWithCache(
+                `${API_ANIME}/popular`,
+                'popularAnime'
+            );
             
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
+            const container = document.getElementById('popularAnime');
             
-            const data = await res.json();
-            console.log('Popular Anime Response:', data); // Debug
-            
-            // Periksa struktur response
+            // Check different response structures
             let animeList = [];
             
             if (data && data.data) {
-                // Cek berbagai kemungkinan struktur
                 if (data.data.animeList && Array.isArray(data.data.animeList)) {
                     animeList = data.data.animeList;
                 } else if (Array.isArray(data.data)) {
                     animeList = data.data;
                 } else if (data.data.results && Array.isArray(data.data.results)) {
                     animeList = data.data.results;
-                } else if (Array.isArray(data.results)) {
-                    animeList = data.results;
                 }
+            } else if (Array.isArray(data)) {
+                animeList = data;
+            } else if (data && data.results && Array.isArray(data.results)) {
+                animeList = data.results;
             }
             
             if (animeList.length > 0) {
@@ -551,95 +656,53 @@
                              loading="lazy" 
                              onerror="this.src='https://via.placeholder.com/150x200/1a1a2e/ffffff?text=Error'">
                         <p>${escapeHtml(getAnimeTitle(item))}</p>
-                        ${item.episodes ? `
+                        ${item.episodes || item.totalEpisodes ? `
                             <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
-                                ${escapeHtml(item.episodes)}
+                                ${escapeHtml(item.episodes || item.totalEpisodes || '')}
                             </div>
                         ` : ''}
                     </div>
                 `).join('');
             } else {
-                // Fallback: Gunakan data statis untuk testing
-                showFallbackAnime(container);
+                showNoData(container, 'Popular Anime');
             }
             
         } catch (error) {
             console.error('Error loading popular anime:', error);
-            // Fallback ke data statis jika API error
-            showFallbackAnime(container);
+            showError(document.getElementById('popularAnime'), 'Popular Anime');
         }
     }
     
-    function showFallbackAnime(container) {
-        const fallbackAnime = [
-            {
-                title: "One Piece",
-                poster: "https://cdn.myanimelist.net/images/anime/6/73245.jpg",
-                animeId: "one-piece",
-                episodes: "1100+"
-            },
-            {
-                title: "Jujutsu Kaisen",
-                poster: "https://cdn.myanimelist.net/images/anime/1171/109222.jpg",
-                animeId: "jujutsu-kaisen",
-                episodes: "47"
-            },
-            {
-                title: "Demon Slayer",
-                poster: "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
-                animeId: "kimetsu-no-yaiba",
-                episodes: "55"
-            },
-            {
-                title: "Attack on Titan",
-                poster: "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
-                animeId: "shingeki-no-kyojin",
-                episodes: "89"
-            },
-            {
-                title: "My Hero Academia",
-                poster: "https://cdn.myanimelist.net/images/anime/10/78745.jpg",
-                animeId: "boku-no-hero-academia",
-                episodes: "138"
-            },
-            {
-                title: "Chainsaw Man",
-                poster: "https://cdn.myanimelist.net/images/anime/1806/126216.jpg",
-                animeId: "chainsaw-man",
-                episodes: "12"
-            }
-        ];
-        
-        container.innerHTML = fallbackAnime.map(item => `
-            <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(item.animeId)}&source=anime'">
-                <span class="type-badge bg-anime">Anime</span>
-                <img src="${escapeHtml(item.poster)}" loading="lazy">
-                <p>${escapeHtml(item.title)}</p>
-                <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
-                    ${escapeHtml(item.episodes)}
-                </div>
-            </div>
-        `).join('');
-    }
+    // =============================================
+    // 5. LOAD LATEST CONTENT WITH PAGINATION FIX
+    // =============================================
+    let currentPage = 1;
+    let isLoadingLatest = false;
+    let hasMoreLatest = true;
     
-    // =============================================
-    // 5. LOAD LATEST CONTENT
-    // =============================================
-    async function loadLatestContent(pageNum) {
-        if (isSearching) return;
+    async function loadLatestContent(pageNum = 1, forceRefresh = false) {
+        if (isLoadingLatest || (!forceRefresh && pageNum > 1 && !hasMoreLatest)) return;
         
+        isLoadingLatest = true;
         const btn = document.getElementById('btnLoadMoreLatest');
         const originalText = btn.innerText;
         
         btn.innerText = "Memuat...";
         btn.disabled = true;
-        isSearching = true;
         
         try {
-            // Ambil data dari kedua API
+            // Fetch donghua and anime data
             const [donghuaData, animeData] = await Promise.allSettled([
-                fetch(`${API_DONGHUA}/list?page=${pageNum}`).then(r => r.ok ? r.json() : null),
-                fetch(`${API_ANIME}/recent-episodes`).then(r => r.ok ? r.json() : null)
+                fetchWithCache(
+                    `${API_DONGHUA}/list?page=${pageNum}`,
+                    `latestDonghua_page${pageNum}`,
+                    forceRefresh
+                ),
+                fetchWithCache(
+                    `${API_ANIME}/recent-episodes`,
+                    'latestAnime',
+                    forceRefresh
+                )
             ]);
             
             let items = [];
@@ -659,7 +722,7 @@
             if (animeData.status === 'fulfilled' && animeData.value) {
                 let animeItems = [];
                 
-                // Cek berbagai struktur response
+                // Check different response structures
                 if (animeData.value.data && Array.isArray(animeData.value.data)) {
                     animeItems = animeData.value.data;
                 } else if (Array.isArray(animeData.value)) {
@@ -674,14 +737,15 @@
                     source: 'anime',
                     slug: getAnimeSlug(item),
                     poster: getAnimePoster(item),
-                    title: getAnimeTitle(item)
+                    title: getAnimeTitle(item),
+                    episodes: item.episode || item.episodeNumber || ''
                 }));
                 
                 items = items.concat(processedAnime);
             }
             
-            // Acak urutan untuk variasi
-            items = shuffleArray(items);
+            // Check if we have more data
+            hasMoreLatest = items.length >= 12; // Assuming 12 items per page
             
             // Render items
             const container = document.getElementById('latestData');
@@ -711,7 +775,7 @@
                         <p>${escapeHtml(item.title || 'Untitled')}</p>
                         ${item.episodes ? `
                             <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
-                                ${escapeHtml(item.episodes)}
+                                Ep ${escapeHtml(item.episodes)}
                             </div>
                         ` : ''}
                     `;
@@ -723,25 +787,136 @@
             // Update page indicator
             document.getElementById('pageIndicator').innerText = `Halaman ${pageNum}`;
             
+            // Update button text based on whether there's more data
+            if (!hasMoreLatest && pageNum > 1) {
+                btn.innerText = "Tidak ada data lagi";
+                btn.disabled = true;
+            } else {
+                btn.innerText = "Muat Halaman Berikutnya";
+                btn.disabled = false;
+            }
+            
+            currentPage = pageNum;
+            
         } catch (error) {
             console.error('Error loading latest content:', error);
             showToast('Gagal memuat konten terbaru', 'error');
-        } finally {
             btn.innerText = originalText;
             btn.disabled = false;
-            isSearching = false;
+        } finally {
+            isLoadingLatest = false;
+        }
+    }
+    
+    function loadNextPage() {
+        loadLatestContent(currentPage + 1);
+    }
+    
+    // =============================================
+    // 6. LOAD COMPLETED & ONGOING ANIME - FIXED
+    // =============================================
+    async function loadCompletedAnime() {
+        try {
+            const data = await fetchWithCache(
+                `${API_ANIME}/completed`,
+                'completedAnime'
+            );
+            
+            const container = document.getElementById('completedAnime');
+            
+            let animeList = [];
+            
+            if (data && data.data) {
+                if (data.data.animeList && Array.isArray(data.data.animeList)) {
+                    animeList = data.data.animeList;
+                } else if (Array.isArray(data.data)) {
+                    animeList = data.data;
+                } else if (data.data.results && Array.isArray(data.data.results)) {
+                    animeList = data.data.results;
+                }
+            }
+            
+            if (animeList.length > 0) {
+                container.innerHTML = animeList.slice(0, 6).map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(getAnimeSlug(item))}&source=anime'">
+                        <span class="type-badge bg-anime">Anime</span>
+                        <img src="${escapeHtml(getAnimePoster(item))}" 
+                             loading="lazy" 
+                             onerror="this.src='https://via.placeholder.com/150x200/1a1a2e/ffffff?text=Error'">
+                        <p>${escapeHtml(getAnimeTitle(item))}</p>
+                        ${item.episodes ? `
+                            <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
+                                ${escapeHtml(item.episodes)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } else {
+                showNoData(container, 'Completed Anime');
+            }
+            
+        } catch (error) {
+            console.error('Error loading completed anime:', error);
+            showError(document.getElementById('completedAnime'), 'Completed Anime');
+        }
+    }
+    
+    async function loadOngoingAnime() {
+        try {
+            const data = await fetchWithCache(
+                `${API_ANIME}/ongoing`,
+                'ongoingAnime'
+            );
+            
+            const container = document.getElementById('ongoingAnime');
+            
+            let animeList = [];
+            
+            if (data && data.data) {
+                if (data.data.animeList && Array.isArray(data.data.animeList)) {
+                    animeList = data.data.animeList;
+                } else if (Array.isArray(data.data)) {
+                    animeList = data.data;
+                } else if (data.data.results && Array.isArray(data.data.results)) {
+                    animeList = data.data.results;
+                }
+            }
+            
+            if (animeList.length > 0) {
+                container.innerHTML = animeList.slice(0, 6).map(item => `
+                    <div class="card" onclick="window.location.href='series.html?slug=${escapeHtml(getAnimeSlug(item))}&source=anime'">
+                        <span class="type-badge bg-anime">Anime</span>
+                        <img src="${escapeHtml(getAnimePoster(item))}" 
+                             loading="lazy" 
+                             onerror="this.src='https://via.placeholder.com/150x200/1a1a2e/ffffff?text=Error'">
+                        <p>${escapeHtml(getAnimeTitle(item))}</p>
+                        ${item.episodes ? `
+                            <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px;">
+                                ${escapeHtml(item.episodes)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } else {
+                showNoData(container, 'Ongoing Anime');
+            }
+            
+        } catch (error) {
+            console.error('Error loading ongoing anime:', error);
+            showError(document.getElementById('ongoingAnime'), 'Ongoing Anime');
         }
     }
     
     // =============================================
-    // 6. LOAD OTHER SECTIONS
+    // 7. LOAD DONGHUA SECTIONS
     // =============================================
     async function loadCompletedDonghua() {
         try {
-            const res = await fetch(`${API_DONGHUA}/completed`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await fetchWithCache(
+                `${API_DONGHUA}/completed`,
+                'completedDonghua'
+            );
             
-            const data = await res.json();
             const container = document.getElementById('completedDonghua');
             
             if (data && data.data && data.data.length > 0) {
@@ -757,10 +932,11 @@
     
     async function loadOngoingDonghua() {
         try {
-            const res = await fetch(`${API_DONGHUA}/ongoing`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await fetchWithCache(
+                `${API_DONGHUA}/ongoing`,
+                'ongoingDonghua'
+            );
             
-            const data = await res.json();
             const container = document.getElementById('ongoingDonghua');
             
             if (data && data.data && data.data.length > 0) {
@@ -774,29 +950,32 @@
         }
     }
     
-    // Untuk Anime sections (completed/ongoing) kita skip dulu karena API mungkin tidak support
-    async function loadCompletedAnime() {
-        const container = document.getElementById('completedAnime');
-        showNoData(container, 'Completed Anime');
-    }
-    
-    async function loadOngoingAnime() {
-        const container = document.getElementById('ongoingAnime');
-        showNoData(container, 'Ongoing Anime');
-    }
-    
     // =============================================
-    // 7. COMBINED SEARCH - PERBAIKAN
+    // 8. SEARCH SYSTEM - FIXED (NO REVERSE TEXT)
     // =============================================
+    let searchTimeout = null;
+    let currentSearchQuery = '';
+    
     async function performCombinedSearch(query) {
         if (!query || query.trim().length < 2) {
             return [];
         }
         
+        currentSearchQuery = query;
+        
+        // Check cache first
+        const cacheKey = `search_${query.toLowerCase()}`;
+        const cachedResults = getCachedData(cacheKey);
+        
+        if (cachedResults) {
+            console.log('Using cached search results');
+            return cachedResults;
+        }
+        
         showToast(`Mencari "${query}"...`, 'info');
         
         try {
-            // Search donghua dan anime secara parallel
+            // Search donghua and anime
             const [donghuaSearch, animeSearch] = await Promise.allSettled([
                 fetch(`${API_DONGHUA}/search?s=${encodeURIComponent(query)}`).then(r => r.ok ? r.json() : null),
                 fetch(`${API_ANIME}/search?query=${encodeURIComponent(query)}`).then(r => r.ok ? r.json() : null)
@@ -820,7 +999,6 @@
             if (animeSearch.status === 'fulfilled' && animeSearch.value) {
                 let animeResults = [];
                 
-                // Cek struktur response
                 if (animeSearch.value.data && animeSearch.value.data.animeList) {
                     animeResults = animeSearch.value.data.animeList;
                 } else if (animeSearch.value.results) {
@@ -840,7 +1018,13 @@
                 results = results.concat(processedAnime);
             }
             
-            return results.slice(0, 30); // Batasi hasil
+            // Cache the results
+            if (results.length > 0) {
+                setCachedData(cacheKey, results);
+            }
+            
+            return results.slice(0, 30);
+            
         } catch (error) {
             console.error('Search error:', error);
             showToast('Gagal melakukan pencarian', 'error');
@@ -849,14 +1033,16 @@
     }
     
     // =============================================
-    // 8. SEARCH MODAL FUNCTIONS
+    // 9. SEARCH MODAL FUNCTIONS - FIXED
     // =============================================
     async function showSearchModal(query, results) {
         const modal = document.getElementById('searchModal');
         const title = document.getElementById('searchResultsTitle');
+        const count = document.getElementById('searchResultsCount');
         const resultsContainer = document.getElementById('combinedSearchResults');
         
-        title.innerText = `Hasil pencarian untuk "${escapeHtml(query)}"`;
+        title.textContent = `Hasil pencarian untuk "${escapeHtml(query)}"`;
+        count.textContent = `${results.length} hasil ditemukan`;
         
         if (!results || results.length === 0) {
             resultsContainer.innerHTML = `
@@ -890,18 +1076,20 @@
         modal.style.display = 'none';
         document.body.style.overflow = 'auto';
         document.getElementById('globalSearch').value = '';
+        document.getElementById('clearSearch').style.display = 'none';
+    }
+    
+    function clearSearch() {
+        document.getElementById('globalSearch').value = '';
+        document.getElementById('clearSearch').style.display = 'none';
+        closeSearchModal();
     }
     
     // =============================================
-    // 9. UTILITY FUNCTIONS
+    // 10. UTILITY FUNCTIONS
     // =============================================
-    function loadNextPage() {
-        latestPage++;
-        loadLatestContent(latestPage);
-    }
-    
     function showToast(message, type = 'info') {
-        // Hapus toast sebelumnya
+        // Remove existing toasts
         const existingToasts = document.querySelectorAll('.custom-toast');
         existingToasts.forEach(toast => toast.remove());
         
@@ -932,15 +1120,6 @@
         }, 3000);
     }
     
-    function shuffleArray(array) {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
-    }
-    
     function renderDonghuaSection(container, items, source) {
         container.innerHTML = items.map(item => `
             <div class="card" onclick="window.location.href='series.html?slug=${getCleanSlug(item.href)}&source=${source}'">
@@ -958,6 +1137,9 @@
             <div class="no-results">
                 <i data-lucide="inbox"></i>
                 <p>Tidak ada data ${sectionName} saat ini</p>
+                <button class="btn btn-primary" onclick="refreshSection('${sectionName.replace(/\s+/g, '')}')" style="margin-top: 10px; padding: 8px 16px; font-size: 0.8rem;">
+                    <i data-lucide="refresh-cw"></i> Refresh
+                </button>
             </div>
         `;
         lucide.createIcons();
@@ -968,37 +1150,82 @@
             <div class="no-results">
                 <i data-lucide="alert-circle"></i>
                 <p>Gagal memuat ${sectionName}</p>
-                <button class="btn btn-primary" onclick="window.location.reload()" style="margin-top: 10px; padding: 8px 16px; font-size: 0.8rem;">
-                    Coba Lagi
+                <button class="btn btn-primary" onclick="refreshSection('${sectionName.replace(/\s+/g, '')}')" style="margin-top: 10px; padding: 8px 16px; font-size: 0.8rem;">
+                    <i data-lucide="refresh-cw"></i> Coba Lagi
                 </button>
             </div>
         `;
         lucide.createIcons();
     }
     
+    async function refreshSection(sectionName) {
+        switch(sectionName) {
+            case 'PopularDonghua':
+                await loadPopularDonghua();
+                break;
+            case 'PopularAnime':
+                await loadPopularAnime();
+                break;
+            case 'CompletedDonghua':
+                await loadCompletedDonghua();
+                break;
+            case 'CompletedAnime':
+                await loadCompletedAnime();
+                break;
+            case 'OngoingDonghua':
+                await loadOngoingDonghua();
+                break;
+            case 'OngoingAnime':
+                await loadOngoingAnime();
+                break;
+            case 'LatestRelease':
+                await loadLatestContent(1, true);
+                break;
+        }
+        showToast('Data diperbarui', 'success');
+    }
+    
     // =============================================
-    // 10. SETUP EVENT LISTENERS
+    // 11. EVENT LISTENERS - FIXED SEARCH INPUT
     // =============================================
     function setupEventListeners() {
-        // Search input
         const searchInput = document.getElementById('globalSearch');
-        let searchTimeout;
+        const clearSearchBtn = document.getElementById('clearSearch');
         
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            const query = e.target.value.trim();
+        // Handle search input - FIXED: No reverse text
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value;
             
+            // Show/hide clear button
+            if (query.length > 0) {
+                clearSearchBtn.style.display = 'block';
+            } else {
+                clearSearchBtn.style.display = 'none';
+            }
+            
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // Only search if query is at least 2 characters
             if (query.length >= 2) {
                 searchTimeout = setTimeout(async () => {
                     const results = await performCombinedSearch(query);
                     if (results.length > 0) {
                         showSearchModal(query, results);
+                    } else if (query.length >= 2) {
+                        // Show modal even with no results
+                        showSearchModal(query, []);
                     }
                 }, 500);
+            } else if (query.length === 0) {
+                closeSearchModal();
             }
         });
         
-        searchInput.addEventListener('keydown', async (e) => {
+        // Handle Enter key
+        searchInput.addEventListener('keydown', async function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const query = searchInput.value.trim();
@@ -1022,10 +1249,18 @@
                 closeSearchModal();
             }
         });
+        
+        // Focus search input when '/' is pressed
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
     }
     
     // =============================================
-    // 11. INITIALIZE APP
+    // 12. INITIALIZE APP
     // =============================================
     async function initializeApp() {
         try {
@@ -1038,19 +1273,59 @@
             // Setup event listeners
             setupEventListeners();
             
-            // Load all sections in parallel
+            // Load all sections
             await Promise.allSettled([
                 loadGenres(),
                 loadPopularDonghua(),
                 loadPopularAnime(),
-                loadLatestContent(latestPage),
+                loadLatestContent(1),
                 loadCompletedDonghua(),
-                loadOngoingDonghua(),
                 loadCompletedAnime(),
+                loadOngoingDonghua(),
                 loadOngoingAnime()
             ]);
             
             console.log('App initialized successfully');
+            
+            // Add refresh button to header
+            const header = document.querySelector('header');
+            const refreshBtn = document.createElement('button');
+            refreshBtn.innerHTML = '<i data-lucide="refresh-cw"></i>';
+            refreshBtn.style.cssText = `
+                background: rgba(255,255,255,0.1);
+                border: none;
+                color: white;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                margin-left: 10px;
+                transition: all 0.3s;
+            `;
+            refreshBtn.title = 'Refresh semua data';
+            refreshBtn.onclick = async () => {
+                refreshBtn.style.transform = 'rotate(360deg)';
+                await Promise.allSettled([
+                    loadGenres(),
+                    loadPopularDonghua(),
+                    loadPopularAnime(),
+                    loadLatestContent(1, true),
+                    loadCompletedDonghua(),
+                    loadCompletedAnime(),
+                    loadOngoingDonghua(),
+                    loadOngoingAnime()
+                ]);
+                setTimeout(() => {
+                    refreshBtn.style.transform = 'rotate(0deg)';
+                }, 300);
+                showToast('Semua data diperbarui', 'success');
+            };
+            
+            document.getElementById('userStatus').appendChild(refreshBtn);
+            lucide.createIcons();
             
         } catch (error) {
             console.error('Error initializing app:', error);
@@ -1059,7 +1334,7 @@
     }
     
     // =============================================
-    // 12. START THE APP
+    // 13. START THE APP
     // =============================================
     document.addEventListener('DOMContentLoaded', () => {
         // Add CSS animations
@@ -1085,4 +1360,4 @@
     });
 </script>
 </body>
-    </html>
+            </html>
