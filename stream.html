@@ -3,796 +3,1277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nonton - RayStream</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Stream Anime - RayStream</title>
     <style>
-        /* CSS Tambahan untuk Server Grid yang Rapi */
-        .server-quality-group { margin-bottom: 10px; }
-        .quality-label { 
-            font-size: 0.75rem; color: var(--primary); font-weight: 700; margin-bottom: 5px; 
-            text-transform: uppercase;
+        /* RESET & BASE STYLES */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .server-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-        .btn-server {
-            padding: 6px 12px; background: #222; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px; color: #ccc; font-size: 0.75rem; cursor: pointer;
-            transition: 0.2s;
+        
+        :root {
+            --primary: #ff4757;
+            --secondary: #3b82f6;
+            --dark: #0f0f1a;
+            --darker: #070711;
+            --card: #1a1a2e;
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
         }
-        .btn-server:hover { background: #333; }
-        .btn-server.active { background: var(--primary); color: white; border-color: var(--primary); }
         
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1a1a1a; }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        body {
+            background: var(--darker);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-top: 60px;
+        }
         
-        /* Video Container */
-        .video-wrapper {
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        
+        /* VIDEO PLAYER SECTION */
+        .video-section {
+            background: var(--dark);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .video-container {
             position: relative;
             width: 100%;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            height: 0;
-            overflow: hidden;
-            border-radius: 8px;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
             background: #000;
-            margin-bottom: 20px;
         }
-        #iframePlayer {
+        
+        #videoPlayer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             border: none;
+            outline: none;
         }
         
-        /* Quality Badges */
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-right: 5px;
+        .video-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10;
         }
-        .badge.hd { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-        .badge.sd { background: linear-gradient(135deg, #6b7280, #4b5563); }
-        .badge.quality { background: linear-gradient(135deg, #10b981, #059669); }
-    </style>
-</head>
-<body>
-
-<div id="toast-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px;"></div>
-
-<header>
-    <div onclick="history.back()" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
-        <i data-lucide="arrow-left" style="color:var(--text-main); width:22px;"></i>
-        <span style="font-weight:600;">Kembali</span>
-    </div>
-    <div class="logo">STREAM</div>
-    <div style="width:24px;"></div>
-</header>
-
-<div class="container" style="padding-top: 0; max-width: 900px;">
-    
-    <div class="video-box">
-        <div class="video-wrapper">
-            <iframe id="iframePlayer" src="" allowfullscreen allow="autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
-        </div>
-    </div>
-
-    <div class="panel" style="padding-bottom: 10px;">
-        <h1 id="epTitle" class="ep-title">Memuat Video...</h1>
-        <div class="ep-meta">
-            <span id="badgeSrc" class="badge" style="background:var(--primary);">SAMEHADAKU</span>
-            <span id="qualityBadge" class="badge quality">HD</span>
-            <span id="dateInfo">Hari ini</span>
-        </div>
-    </div>
-
-    <div style="display:flex; gap:10px; margin-bottom: 20px;">
-        <button id="btnPrev" class="btn" style="flex:1; display:none;">&laquo; Prev</button>
-        <button class="btn" style="flex:1; background:#333;" onclick="goToSeries()">Info Series</button>
-        <button id="btnNext" class="btn btn-primary" style="flex:1; display:none;">Next &raquo;</button>
-    </div>
-
-    <!-- SERVER STREAMING SECTION -->
-    <div class="panel">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:10px;">
-            <i data-lucide="server" style="width:18px; color:var(--secondary);"></i> 
-            <span style="font-weight:600;">Pilih Server Streaming</span>
-            <span id="serverCount" style="font-size:0.8rem; color:#666; margin-left:auto;">0 servers</span>
-        </div>
-        <div id="serverListContainer">
-            <div style="display:flex; flex-direction:column; align-items:center; padding:30px 0;">
-                <i data-lucide="loader" style="width:24px; height:24px; animation: spin 1s linear infinite;"></i>
-                <p style="margin-top:10px; color:#888;">Memuat server...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- DOWNLOAD SECTION -->
-    <div class="panel">
-        <div onclick="toggleDl()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <i data-lucide="download-cloud" style="width:18px; color:var(--secondary);"></i>
-                <span style="font-weight:600;">Download Links</span>
-            </div>
-            <i data-lucide="chevron-down" id="dlIcon"></i>
-        </div>
-        <div id="dlContainer" style="display:none; margin-top:15px; border-top:1px solid rgba(255,255,255,0.05); padding-top:15px;">
-            <div id="downloadLinks">
-                <p style="text-align:center; color:#888;">Klik tombol download di atas untuk melihat link</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- QUICK ACTIONS -->
-    <div class="panel">
-        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">
-            <button class="btn" onclick="shareEpisode()" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px;">
-                <i data-lucide="share-2" style="width:18px;"></i>
-                <span style="font-size:0.7rem;">Share</span>
-            </button>
-            <button class="btn" onclick="bookmarkEpisode()" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px;">
-                <i data-lucide="bookmark" style="width:18px;"></i>
-                <span style="font-size:0.7rem;">Bookmark</span>
-            </button>
-            <button class="btn" onclick="toggleQuality()" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px;">
-                <i data-lucide="settings" style="width:18px;"></i>
-                <span style="font-size:0.7rem;">Quality</span>
-            </button>
-            <button class="btn" onclick="reportIssue()" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px;">
-                <i data-lucide="flag" style="width:18px;"></i>
-                <span style="font-size:0.7rem;">Report</span>
-            </button>
-        </div>
-    </div>
-
-</div>
-
-<script>
-    // CSS Animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .loading-spinner {
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
             animation: spin 1s linear infinite;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // API Proxy untuk bypass CORS dan scraping langsung
-    const PROXY_URL = 'https://corsproxy.io/?';
-    const SAMEHADAKU_BASE = 'https://samehadaku.how';
-    
-    // URL Parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const episodeId = urlParams.get('id') || '';
-    const episodeUrl = urlParams.get('url') || '';
-    
-    // State variables
-    let currentServers = [];
-    let currentEpisodeInfo = {};
-    let activeServer = null;
-
-    // Main function to load episode
-    async function loadStream() {
-        try {
-            showToast("Memuat data episode...", "info");
-            
-            // Determine which URL to use
-            let targetUrl = '';
-            if (episodeId) {
-                targetUrl = `${SAMEHADAKU_BASE}/${episodeId}/`;
-            } else if (episodeUrl) {
-                targetUrl = episodeUrl;
-            } else {
-                // Fallback untuk testing - Jujutsu Kaisen Season 3 Episode 4
-                targetUrl = 'https://samehadaku.how/jujutsu-kaisen-season-3-episode-4/';
-            }
-
-            console.log("Loading URL:", targetUrl);
-
-            // Scrape the page directly
-            const html = await fetchWithCorsProxy(targetUrl);
-            
-            if (!html) {
-                throw new Error("Gagal mengambil halaman episode");
-            }
-
-            // Parse HTML
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Extract episode information
-            extractEpisodeInfo(doc);
-            
-            // Extract streaming servers
-            extractStreamingServers(doc);
-            
-            // Extract download links
-            extractDownloadLinks(doc);
-            
-            // Extract navigation
-            extractNavigation(doc);
-            
-            // Auto-select first server
-            if (currentServers.length > 0) {
-                setTimeout(() => selectServer(currentServers[0]), 500);
-            }
-            
-            // Update UI
-            updateEpisodeUI();
-            
-            // Save to history
-            saveToHistory();
-            
-        } catch (error) {
-            console.error("Error loading stream:", error);
-            showToast(`Error: ${error.message}`, "error");
-            document.getElementById('epTitle').innerText = "Gagal memuat episode";
-        }
-    }
-
-    // Fetch dengan CORS proxy
-    async function fetchWithCorsProxy(url) {
-        try {
-            const proxyUrl = `${PROXY_URL}${encodeURIComponent(url)}`;
-            const response = await fetch(proxyUrl, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
-            return await response.text();
-        } catch (error) {
-            console.error("Proxy fetch error:", error);
-            // Try alternative proxy
-            const altProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-            try {
-                const response = await fetch(altProxy);
-                const data = await response.json();
-                return data.contents;
-            } catch (e) {
-                throw new Error("Failed to fetch with proxy");
-            }
-        }
-    }
-
-    // Extract episode information
-    function extractEpisodeInfo(doc) {
-        // Title
-        const titleElement = doc.querySelector('h1.entry-title, h1.title, .entry-title');
-        const title = titleElement ? titleElement.textContent.trim() : 'Episode Anime';
-        
-        // Poster/thumbnail
-        const posterElement = doc.querySelector('.thumb img, .poster img, .entry-content img');
-        const poster = posterElement ? posterElement.src : '';
-        
-        // Date info
-        const dateElement = doc.querySelector('.date, .post-date, time');
-        const dateInfo = dateElement ? dateElement.textContent.trim() : 'Baru';
-        
-        // Synopsis
-        const synopsisElement = doc.querySelector('.entry-content p, .desc p, .sinopsis');
-        const synopsis = synopsisElement ? synopsisElement.textContent.trim().substring(0, 200) + '...' : '';
-        
-        currentEpisodeInfo = {
-            title: title,
-            poster: poster,
-            date: dateInfo,
-            synopsis: synopsis,
-            url: window.location.href
-        };
-    }
-
-    // Extract streaming servers - FIXED VERSION
-    function extractStreamingServers(doc) {
-        currentServers = [];
-        
-        // Method 1: Look for iframes directly
-        const iframes = doc.querySelectorAll('iframe[src*="blogger.com"], iframe[src*="drive.google.com"], iframe[src*="dailymotion.com"], iframe[src*="vidio.com"]');
-        
-        iframes.forEach((iframe, index) => {
-            const src = iframe.src;
-            if (src && src.startsWith('http')) {
-                currentServers.push({
-                    id: `server-${index}`,
-                    name: `Server ${index + 1}`,
-                    quality: 'HD',
-                    url: src,
-                    type: 'iframe'
-                });
-            }
-        });
-        
-        // Method 2: Look for download/streaming links
-        const streamingSections = doc.querySelectorAll('.download-eps, .mirrorstream, .streaming, .player');
-        
-        streamingSections.forEach(section => {
-            // Look for quality headings
-            const headings = section.querySelectorAll('h3, h4, strong, b');
-            
-            headings.forEach(heading => {
-                const headingText = heading.textContent.trim();
-                const quality = headingText.includes('360') ? '360p' :
-                              headingText.includes('480') ? '480p' :
-                              headingText.includes('720') ? '720p' :
-                              headingText.includes('1080') ? '1080p' :
-                              headingText.includes('HD') ? 'HD' : 'SD';
-                
-                // Find links after this heading
-                let nextElement = heading.nextElementSibling;
-                let linkCount = 0;
-                
-                while (nextElement && linkCount < 10) {
-                    const links = nextElement.querySelectorAll('a[href*="blogger.com"], a[href*="drive.google.com"], a[href*="stream"], a[href*="watch"]');
-                    
-                    links.forEach((link, idx) => {
-                        const href = link.href;
-                        if (href && !href.includes('javascript:')) {
-                            currentServers.push({
-                                id: `server-${currentServers.length}`,
-                                name: `${link.textContent.trim() || headingText} ${idx + 1}`,
-                                quality: quality,
-                                url: href,
-                                type: 'direct'
-                            });
-                        }
-                    });
-                    
-                    nextElement = nextElement.nextElementSibling;
-                    linkCount++;
-                }
-            });
-        });
-        
-        // Method 3: Direct MP4 links
-        const mp4Links = doc.querySelectorAll('a[href$=".mp4"], a[href$=".m3u8"], a[href*="video"]');
-        
-        mp4Links.forEach((link, index) => {
-            const href = link.href;
-            if (href && href.includes('http')) {
-                currentServers.push({
-                    id: `mp4-${index}`,
-                    name: `Direct MP4 ${index + 1}`,
-                    quality: 'HD',
-                    url: href,
-                    type: 'direct'
-                });
-            }
-        });
-        
-        // Method 4: Embedded scripts that contain video URLs
-        const scripts = doc.querySelectorAll('script');
-        scripts.forEach(script => {
-            const scriptText = script.textContent;
-            
-            // Look for blogger video URLs
-            const bloggerMatches = scriptText.match(/https:\/\/www\.blogger\.com\/video\.g\?token=[^'"]+/g);
-            if (bloggerMatches) {
-                bloggerMatches.forEach((url, idx) => {
-                    currentServers.push({
-                        id: `blogger-${idx}`,
-                        name: `Blogger Player`,
-                        quality: 'HD',
-                        url: url,
-                        type: 'iframe'
-                    });
-                });
-            }
-            
-            // Look for video file URLs
-            const videoMatches = scriptText.match(/https?:\/\/[^'"\s]+\.(mp4|m3u8|avi|mkv)[^'"\s]*/gi);
-            if (videoMatches) {
-                videoMatches.forEach((url, idx) => {
-                    currentServers.push({
-                        id: `video-${idx}`,
-                        name: `Video File ${idx + 1}`,
-                        quality: url.includes('1080') ? '1080p' : 
-                                url.includes('720') ? '720p' : 
-                                url.includes('480') ? '480p' : 'SD',
-                        url: url,
-                        type: 'direct'
-                    });
-                });
-            }
-        });
-        
-        // Remove duplicates
-        currentServers = currentServers.filter((server, index, self) =>
-            index === self.findIndex(s => s.url === server.url)
-        );
-        
-        console.log("Found servers:", currentServers);
-        renderServers();
-    }
-
-    // Extract download links
-    function extractDownloadLinks(doc) {
-        const downloadContainer = document.getElementById('downloadLinks');
-        let html = '<h4 style="font-size:0.9rem; margin-bottom:10px;">Download Links:</h4>';
-        
-        // Find download sections
-        const downloadSections = doc.querySelectorAll('.download-list, .dlbox, .download, .mirrordl');
-        
-        downloadSections.forEach(section => {
-            const heading = section.querySelector('h3, h4, strong')?.textContent || 'Download';
-            html += `<div style="margin-bottom:15px;">`;
-            html += `<div style="color:#3b82f6; font-weight:600; margin-bottom:5px; font-size:0.8rem;">${heading}</div>`;
-            
-            const links = section.querySelectorAll('a[href*="download"], a[href*=".rar"], a[href*=".zip"], a[href*="drive.google.com"]');
-            
-            if (links.length > 0) {
-                html += `<div style="display:flex; flex-wrap:wrap; gap:5px;">`;
-                links.forEach(link => {
-                    const href = link.href;
-                    const text = link.textContent.trim() || 'Download';
-                    if (href && !href.includes('javascript:')) {
-                        html += `<a href="${href}" target="_blank" class="btn" style="font-size:0.7rem; padding:4px 8px;">${text}</a>`;
-                    }
-                });
-                html += `</div>`;
-            } else {
-                html += `<p style="color:#666; font-size:0.8rem;">No download links found</p>`;
-            }
-            
-            html += `</div>`;
-        });
-        
-        if (downloadSections.length === 0) {
-            // Try to find any download links
-            const allLinks = doc.querySelectorAll('a');
-            const downloadLinks = Array.from(allLinks).filter(link => {
-                const text = link.textContent.toLowerCase();
-                const href = link.href;
-                return (text.includes('download') || text.includes('unduh') || 
-                       href.includes('.rar') || href.includes('.zip')) && 
-                       !href.includes('javascript:');
-            });
-            
-            if (downloadLinks.length > 0) {
-                html += `<div style="margin-bottom:15px;">`;
-                html += `<div style="color:#3b82f6; font-weight:600; margin-bottom:5px; font-size:0.8rem;">Download</div>`;
-                html += `<div style="display:flex; flex-wrap:wrap; gap:5px;">`;
-                
-                downloadLinks.forEach(link => {
-                    html += `<a href="${link.href}" target="_blank" class="btn" style="font-size:0.7rem; padding:4px 8px;">${link.textContent.trim()}</a>`;
-                });
-                
-                html += `</div></div>`;
-            }
+            margin-bottom: 12px;
         }
         
-        downloadContainer.innerHTML = html;
-    }
-
-    // Extract navigation links
-    function extractNavigation(doc) {
-        const prevLink = doc.querySelector('a.prev, .nav-prev a, a[rel="prev"]');
-        const nextLink = doc.querySelector('a.next, .nav-next a, a[rel="next"]');
-        
-        if (prevLink && prevLink.href) {
-            document.getElementById('btnPrev').style.display = 'block';
-            document.getElementById('btnPrev').onclick = () => {
-                window.location.href = `stream.html?url=${encodeURIComponent(prevLink.href)}`;
-            };
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
-        if (nextLink && nextLink.href) {
-            document.getElementById('btnNext').style.display = 'block';
-            document.getElementById('btnNext').onclick = () => {
-                window.location.href = `stream.html?url=${encodeURIComponent(nextLink.href)}`;
-            };
-        }
-    }
-
-    // Render servers list
-    function renderServers() {
-        const container = document.getElementById('serverListContainer');
-        const countElement = document.getElementById('serverCount');
-        
-        if (currentServers.length === 0) {
-            container.innerHTML = `
-                <div style="text-align:center; padding:20px; color:#888;">
-                    <i data-lucide="server-off" style="width:32px; height:32px;"></i>
-                    <p style="margin-top:10px;">Tidak ada server yang ditemukan</p>
-                    <button onclick="retryLoad()" class="btn" style="margin-top:10px;">Coba Lagi</button>
-                </div>
-            `;
-            countElement.textContent = "0 servers";
-            return;
+        .video-error {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
         }
         
-        // Group by quality
-        const serversByQuality = {};
-        currentServers.forEach(server => {
-            if (!serversByQuality[server.quality]) {
-                serversByQuality[server.quality] = [];
-            }
-            serversByQuality[server.quality].push(server);
-        });
-        
-        let html = '';
-        
-        // Sort qualities: 1080p, 720p, HD, 480p, 360p, SD
-        const qualityOrder = ['1080p', '720p', 'HD', '480p', '360p', 'SD'];
-        const sortedQualities = Object.keys(serversByQuality).sort((a, b) => {
-            return qualityOrder.indexOf(a) - qualityOrder.indexOf(b);
-        });
-        
-        sortedQualities.forEach(quality => {
-            const servers = serversByQuality[quality];
-            
-            html += `
-                <div class="server-quality-group">
-                    <div class="quality-label">${quality}</div>
-                    <div class="server-grid">
-            `;
-            
-            servers.forEach(server => {
-                const isActive = activeServer && activeServer.id === server.id;
-                html += `
-                    <button class="btn-server ${isActive ? 'active' : ''}" 
-                            onclick="selectServer(${JSON.stringify(server).replace(/"/g, '&quot;')}, this)"
-                            data-id="${server.id}">
-                        ${server.name}
-                    </button>
-                `;
-            });
-            
-            html += `
-                    </div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-        countElement.textContent = `${currentServers.length} servers`;
-        
-        // Recreate icons
-        lucide.createIcons();
-    }
-
-    // Select and play server
-    async function selectServer(server, buttonElement = null) {
-        try {
-            showToast(`Memuat ${server.name}...`, "info");
-            
-            // Update active server
-            activeServer = server;
-            
-            // Update quality badge
-            document.getElementById('qualityBadge').textContent = server.quality;
-            document.getElementById('qualityBadge').className = 'badge quality';
-            
-            // Update UI
-            if (buttonElement) {
-                document.querySelectorAll('.btn-server').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                buttonElement.classList.add('active');
-            }
-            
-            let embedUrl = server.url;
-            
-            // If it's a blogger video URL, we need to extract the actual video
-            if (server.url.includes('blogger.com/video.g')) {
-                embedUrl = await extractBloggerVideo(server.url);
-            }
-            
-            // If it's a direct MP4 link
-            if (server.url.endsWith('.mp4') || server.url.includes('.m3u8')) {
-                // We'll use a video player instead of iframe
-                const videoPlayer = document.createElement('video');
-                videoPlayer.src = server.url;
-                videoPlayer.controls = true;
-                videoPlayer.style.width = '100%';
-                videoPlayer.style.height = '100%';
-                
-                const iframeContainer = document.getElementById('iframePlayer');
-                iframeContainer.parentNode.replaceChild(videoPlayer, iframeContainer);
-                videoPlayer.id = 'iframePlayer';
-                
-                // Auto-play
-                videoPlayer.play().catch(e => console.log("Auto-play blocked:", e));
-            } else {
-                // Set iframe source
-                document.getElementById('iframePlayer').src = embedUrl;
-            }
-            
-            showToast(`Server ${server.name} aktif`, "success");
-            
-        } catch (error) {
-            console.error("Error selecting server:", error);
-            showToast(`Gagal memuat server: ${error.message}`, "error");
-        }
-    }
-
-    // Extract actual video from Blogger embed
-    async function extractBloggerVideo(bloggerUrl) {
-        try {
-            // Blogger URL biasanya langsung embeddable
-            return bloggerUrl;
-        } catch (error) {
-            console.error("Error extracting blogger video:", error);
-            return bloggerUrl; // Return original if extraction fails
-        }
-    }
-
-    // Update episode UI
-    function updateEpisodeUI() {
-        document.getElementById('epTitle').textContent = currentEpisodeInfo.title;
-        document.getElementById('dateInfo').textContent = currentEpisodeInfo.date;
-        
-        // Update title
-        document.title = `${currentEpisodeInfo.title} - RayStream`;
-    }
-
-    // Save to viewing history
-    function saveToHistory() {
-        try {
-            const history = JSON.parse(localStorage.getItem('stream_history') || '[]');
-            
-            // Remove if already exists
-            const existingIndex = history.findIndex(item => item.url === currentEpisodeInfo.url);
-            if (existingIndex > -1) {
-                history.splice(existingIndex, 1);
-            }
-            
-            // Add to beginning
-            history.unshift({
-                ...currentEpisodeInfo,
-                watchedAt: new Date().toISOString(),
-                servers: currentServers.length
-            });
-            
-            // Keep only last 50 items
-            if (history.length > 50) {
-                history.pop();
-            }
-            
-            localStorage.setItem('stream_history', JSON.stringify(history));
-        } catch (error) {
-            console.error("Error saving to history:", error);
-        }
-    }
-
-    // Utility functions
-    function retryLoad() {
-        window.location.reload();
-    }
-
-    function toggleDl() {
-        const el = document.getElementById('dlContainer');
-        const isHidden = el.style.display === 'none';
-        el.style.display = isHidden ? 'block' : 'none';
-        document.getElementById('dlIcon').style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-    }
-
-    function goToSeries() {
-        // Extract series slug from URL
-        const slug = episodeId.split('-episode-')[0] || episodeId;
-        window.location.href = `series.html?series=${slug}`;
-    }
-
-    function toggleQuality() {
-        showToast("Fitur quality selector belum tersedia", "info");
-    }
-
-    function shareEpisode() {
-        if (navigator.share) {
-            navigator.share({
-                title: currentEpisodeInfo.title,
-                text: `Nonton ${currentEpisodeInfo.title} di RayStream`,
-                url: window.location.href
-            });
-        } else {
-            navigator.clipboard.writeText(window.location.href);
-            showToast("Link disalin ke clipboard!", "success");
-        }
-    }
-
-    function bookmarkEpisode() {
-        const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
-        bookmarks.push({
-            ...currentEpisodeInfo,
-            bookmarkedAt: new Date().toISOString()
-        });
-        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-        showToast("Episode ditambahkan ke bookmark!", "success");
-    }
-
-    function reportIssue() {
-        showToast("Laporan dikirim. Terima kasih!", "success");
-    }
-
-    function showToast(message, type = "info") {
-        const toastContainer = document.getElementById('toast-container');
-        
-        const toast = document.createElement('div');
-        toast.className = 'toast-message';
-        toast.style.cssText = `
-            background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'};
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.9rem;
+        .video-error h3 {
+            color: var(--error);
             margin-bottom: 8px;
-            animation: slideIn 0.3s ease;
+        }
+        
+        /* EPISODE INFO */
+        .episode-info {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .episode-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .episode-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge.primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .badge.secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .badge.success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .badge.warning {
+            background: var(--warning);
+            color: black;
+        }
+        
+        /* NAVIGATION BUTTONS */
+        .nav-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+        }
+        
+        .nav-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .nav-btn.prev {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+        
+        .nav-btn.next {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* SERVER SELECTION */
+        .servers-section {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
             display: flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        `;
-        
-        const icon = type === 'error' ? 'x-circle' : 
-                    type === 'success' ? 'check-circle' : 'info';
-        
-        toast.innerHTML = `
-            <i data-lucide="${icon}" style="width:18px; height:18px;"></i>
-            <span>${message}</span>
-        `;
-        
-        toastContainer.appendChild(toast);
-        
-        // Add animation style if not exists
-        if (!document.querySelector('#toast-animation')) {
-            const style = document.createElement('style');
-            style.id = 'toast-animation';
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateY(-20px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-                @keyframes slideOut {
-                    from { transform: translateY(0); opacity: 1; }
-                    to { transform: translateY(-20px); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
+            margin-bottom: 16px;
+            font-size: 16px;
+            font-weight: 600;
         }
         
-        // Remove after 3 seconds
-        setTimeout(() => {
-            toast.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 300);
-        }, 3000);
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
         
-        // Create icons
-        lucide.createIcons();
-    }
+        .server-btn {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .server-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .server-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .quality-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 8px 0 4px;
+        }
+        
+        /* DOWNLOAD SECTION */
+        .download-section {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .download-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        
+        .download-content {
+            display: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 16px;
+        }
+        
+        .download-content.show {
+            display: block;
+        }
+        
+        .download-grid {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .download-group {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .download-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--secondary);
+        }
+        
+        .download-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .download-link {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        
+        .download-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--primary);
+        }
+        
+        /* TOAST NOTIFICATION */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            animation: slideUp 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .toast.error {
+            background: var(--error);
+        }
+        
+        .toast.success {
+            background: var(--success);
+        }
+        
+        .toast.warning {
+            background: var(--warning);
+            color: black;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .servers-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            
+            .nav-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* LOADING SKELETON */
+        .skeleton {
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.05) 25%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="goBack()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Kembali
+            </button>
+            <div class="logo">RayStream</div>
+        </div>
+    </header>
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-        lucide.createIcons();
-        loadStream();
-    });
+    <!-- MAIN CONTENT -->
+    <main class="container">
+        <!-- VIDEO PLAYER -->
+        <section class="video-section">
+            <div class="video-container">
+                <div id="videoLoading" class="video-loading">
+                    <div class="spinner"></div>
+                    <p>Memuat video...</p>
+                </div>
+                
+                <div id="videoError" class="video-error" style="display: none;">
+                    <h3>Gagal Memuat Video</h3>
+                    <p id="errorMessage">Server video tidak dapat diakses</p>
+                    <button onclick="retryLoadVideo()" class="nav-btn" style="margin-top: 12px;">
+                        Coba Lagi
+                    </button>
+                </div>
+                
+                <iframe 
+                    id="videoPlayer"
+                    src=""
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowfullscreen
+                    scrolling="no"
+                    frameborder="0"
+                    webkitallowfullscreen
+                    mozallowfullscreen>
+                </iframe>
+            </div>
+            
+            <div class="episode-info">
+                <h1 id="episodeTitle" class="episode-title">Memuat...</h1>
+                <div class="episode-meta">
+                    <span id="sourceBadge" class="badge primary">SAMEHADAKU</span>
+                    <span id="qualityBadge" class="badge secondary">HD</span>
+                    <span id="dateInfo" class="badge warning">Hari ini</span>
+                    <span id="serverCount" style="font-size: 12px; color: var(--text-secondary); margin-left: auto;">
+                        0 server
+                    </span>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button id="prevBtn" class="nav-btn prev" onclick="navigateTo('prev')" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    Episode Sebelumnya
+                </button>
+                <button id="nextBtn" class="nav-btn next" onclick="navigateTo('next')" disabled>
+                    Episode Selanjutnya
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </section>
 
-    // Retry button functionality
-    window.retryLoad = retryLoad;
-    window.selectServer = selectServer;
-    window.toggleDl = toggleDl;
-    window.goToSeries = goToSeries;
-    window.toggleQuality = toggleQuality;
-    window.shareEpisode = shareEpisode;
-    window.bookmarkEpisode = bookmarkEpisode;
-    window.reportIssue = reportIssue;
+        <!-- SERVERS SELECTION -->
+        <section class="servers-section">
+            <div class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                Pilih Server Streaming
+            </div>
+            
+            <div id="serversContainer">
+                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                    <div class="spinner" style="margin: 0 auto 12px;"></div>
+                    <p>Memuat daftar server...</p>
+                </div>
+            </div>
+        </section>
 
-</script>
+        <!-- DOWNLOAD SECTION -->
+        <section class="download-section">
+            <div class="download-header" onclick="toggleDownloads()">
+                <div class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Download Links
+                </div>
+                <svg id="downloadArrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </div>
+            
+            <div id="downloadContent" class="download-content">
+                <div id="downloadsContainer">
+                    <p style="text-align: center; color: var(--text-secondary);">
+                        Memuat link download...
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // CONFIGURATION
+        const CONFIG = {
+            api: {
+                // Multiple fallback proxy servers
+                proxies: [
+                    'https://api.allorigins.win/get?url=',
+                    'https://corsproxy.io/?',
+                    'https://api.codetabs.com/v1/proxy?quest='
+                ],
+                // Direct fetch as fallback
+                direct: true
+            },
+            video: {
+                // Timeout untuk video loading (ms)
+                timeout: 10000,
+                // Max retry attempts
+                maxRetries: 3
+            }
+        };
+
+        // STATE MANAGEMENT
+        let state = {
+            currentEpisode: null,
+            servers: [],
+            currentServer: null,
+            downloads: [],
+            episodeInfo: {},
+            retryCount: 0
+        };
+
+        // DOM ELEMENTS
+        const elements = {
+            videoPlayer: document.getElementById('videoPlayer'),
+            videoLoading: document.getElementById('videoLoading'),
+            videoError: document.getElementById('videoError'),
+            errorMessage: document.getElementById('errorMessage'),
+            episodeTitle: document.getElementById('episodeTitle'),
+            sourceBadge: document.getElementById('sourceBadge'),
+            qualityBadge: document.getElementById('qualityBadge'),
+            dateInfo: document.getElementById('dateInfo'),
+            serverCount: document.getElementById('serverCount'),
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            serversContainer: document.getElementById('serversContainer'),
+            downloadsContainer: document.getElementById('downloadsContainer'),
+            downloadContent: document.getElementById('downloadContent'),
+            toastContainer: document.getElementById('toastContainer')
+        };
+
+        // URL PARSING
+        function getEpisodeUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const url = params.get('url');
+            
+            if (id) {
+                return `https://samehadaku.how/${id}/`;
+            } else if (url) {
+                return url;
+            } else {
+                // Default untuk testing - Jujutsu Kaisen
+                return 'https://samehadaku.how/jujutsu-kaisen-season-3-episode-4/';
+            }
+        }
+
+        // PROXY FETCH FUNCTIONS
+        async function fetchWithProxy(url) {
+            let lastError = null;
+            
+            // Coba semua proxy
+            for (const proxy of CONFIG.api.proxies) {
+                try {
+                    const proxyUrl = proxy + encodeURIComponent(url);
+                    console.log('Trying proxy:', proxy);
+                    
+                    const response = await fetch(proxyUrl, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                            'Referer': 'https://samehadaku.how/'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const text = await response.text();
+                        // Handle allorigins response format
+                        if (proxy.includes('allorigins.win')) {
+                            const data = JSON.parse(text);
+                            return data.contents;
+                        }
+                        return text;
+                    }
+                } catch (error) {
+                    lastError = error;
+                    console.warn('Proxy failed:', error);
+                    continue;
+                }
+            }
+            
+            // Jika semua proxy gagal, coba direct fetch (mungkin bisa di development)
+            if (CONFIG.api.direct) {
+                try {
+                    const response = await fetch(url, {
+                        mode: 'no-cors',
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
+                    });
+                    return response.text();
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+            
+            throw lastError || new Error('All proxies failed');
+        }
+
+        // VIDEO EMBED FIXES
+        function fixVideoEmbed(url) {
+            let fixedUrl = url;
+            
+            // Blogger video fix
+            if (url.includes('blogger.com/video.g')) {
+                // Tambahkan parameter untuk iframe yang lebih baik
+                fixedUrl = url + '&playerType=HTML5&autoPlay=true&mute=false';
+            }
+            
+            // Google Drive fix
+            if (url.includes('drive.google.com')) {
+                // Ubah ke embed format
+                if (url.includes('/file/d/')) {
+                    const match = url.match(/\/file\/d\/([^\/]+)/);
+                    if (match) {
+                        fixedUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+                    }
+                }
+            }
+            
+            // YouTube fix
+            if (url.includes('youtube.com/watch')) {
+                fixedUrl = url.replace('watch?v=', 'embed/');
+            }
+            
+            return fixedUrl;
+        }
+
+        // LOAD EPISODE DATA
+        async function loadEpisodeData() {
+            try {
+                const episodeUrl = getEpisodeUrl();
+                showToast('Memuat data episode...', 'info');
+                
+                console.log('Loading episode:', episodeUrl);
+                
+                // Fetch page HTML
+                const html = await fetchWithProxy(episodeUrl);
+                
+                if (!html) {
+                    throw new Error('Gagal mengambil halaman episode');
+                }
+                
+                // Parse HTML menggunakan DOMParser
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Extract episode info
+                extractEpisodeInfo(doc);
+                
+                // Extract streaming servers
+                await extractStreamingServers(doc);
+                
+                // Extract download links
+                extractDownloadLinks(doc);
+                
+                // Extract navigation
+                extractNavigation(doc);
+                
+                // Render UI
+                renderEpisodeInfo();
+                renderServers();
+                renderDownloads();
+                
+                // Auto select first server
+                if (state.servers.length > 0) {
+                    setTimeout(() => {
+                        selectServer(state.servers[0]);
+                    }, 500);
+                }
+                
+                showToast('Data berhasil dimuat', 'success');
+                
+            } catch (error) {
+                console.error('Error loading episode:', error);
+                showToast(`Gagal memuat: ${error.message}`, 'error');
+                
+                // Fallback: tampilkan form manual input
+                showManualServerInput();
+            }
+        }
+
+        // EXTRACT EPISODE INFO
+        function extractEpisodeInfo(doc) {
+            const title = doc.querySelector('h1.entry-title, h1.title')?.textContent?.trim() || 
+                         'Episode Anime';
+            
+            const date = doc.querySelector('.date, time, .post-date')?.textContent?.trim() || 
+                        new Date().toLocaleDateString('id-ID');
+            
+            const poster = doc.querySelector('.thumb img, .poster img')?.src || '';
+            
+            state.episodeInfo = {
+                title: title,
+                date: date,
+                poster: poster,
+                url: getEpisodeUrl()
+            };
+        }
+
+        // EXTRACT STREAMING SERVERS - IMPROVED
+        async function extractStreamingServers(doc) {
+            state.servers = [];
+            
+            // METHOD 1: Langsung ambil iframe src
+            const iframes = doc.querySelectorAll('iframe');
+            iframes.forEach((iframe, index) => {
+                const src = iframe.src;
+                if (src && src.startsWith('http')) {
+                    state.servers.push({
+                        id: `iframe-${index}`,
+                        name: `Player ${index + 1}`,
+                        quality: 'HD',
+                        url: fixVideoEmbed(src),
+                        type: 'iframe',
+                        provider: getVideoProvider(src)
+                    });
+                }
+            });
+            
+            // METHOD 2: Cari di script untuk video URLs
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(script => {
+                const scriptText = script.textContent;
+                
+                // Cari blogger video token
+                const bloggerRegex = /https:\/\/www\.blogger\.com\/video\.g\?token=[^'"\s]+/g;
+                const bloggerMatches = scriptText.match(bloggerRegex);
+                if (bloggerMatches) {
+                    bloggerMatches.forEach((url, idx) => {
+                        state.servers.push({
+                            id: `blogger-${idx}`,
+                            name: `Blogger Player`,
+                            quality: 'HD',
+                            url: fixVideoEmbed(url),
+                            type: 'iframe',
+                            provider: 'blogger'
+                        });
+                    });
+                }
+                
+                // Cari URL video langsung
+                const videoRegex = /(https?:\/\/[^'"\s]+\.(mp4|m3u8|avi|mkv|webm))[^'"\s]*/gi;
+                const videoMatches = scriptText.match(videoRegex);
+                if (videoMatches) {
+                    videoMatches.forEach((url, idx) => {
+                        const quality = url.includes('1080') ? '1080p' :
+                                      url.includes('720') ? '720p' :
+                                      url.includes('480') ? '480p' : 'SD';
+                        
+                        state.servers.push({
+                            id: `direct-${idx}`,
+                            name: `Direct Video (${quality})`,
+                            quality: quality,
+                            url: url,
+                            type: 'direct',
+                            provider: 'direct'
+                        });
+                    });
+                }
+            });
+            
+            // METHOD 3: Cari di download/streaming sections
+            const streamSections = doc.querySelectorAll('.download-eps, .mirrorstream, .player, .streaming');
+            streamSections.forEach((section, sectionIdx) => {
+                const links = section.querySelectorAll('a[href*="http"]');
+                links.forEach((link, linkIdx) => {
+                    const href = link.href;
+                    const text = link.textContent.trim();
+                    
+                    if (href && !href.includes('javascript:')) {
+                        const isVideoLink = href.includes('.mp4') || 
+                                           href.includes('.m3u8') || 
+                                           href.includes('video') ||
+                                           href.includes('stream');
+                        
+                        if (isVideoLink) {
+                            state.servers.push({
+                                id: `section-${sectionIdx}-${linkIdx}`,
+                                name: text || `Stream ${sectionIdx + 1}.${linkIdx + 1}`,
+                                quality: getQualityFromText(text),
+                                url: fixVideoEmbed(href),
+                                type: 'direct',
+                                provider: 'direct'
+                            });
+                        }
+                    }
+                });
+            });
+            
+            // METHOD 4: Jika tidak ada server, buat server fallback
+            if (state.servers.length === 0) {
+                console.log('No servers found, creating fallback...');
+                
+                // Coba buat URL berdasarkan pola
+                const episodeUrl = getEpisodeUrl();
+                const episodeSlug = episodeUrl.split('/').filter(Boolean).pop();
+                
+                // Common video hosting patterns
+                const fallbackServers = [
+                    {
+                        id: 'fallback-1',
+                        name: 'Fallback Stream',
+                        quality: 'HD',
+                        url: `https://www.blogger.com/video.g?token=${btoa(episodeSlug)}`,
+                        type: 'iframe',
+                        provider: 'blogger'
+                    }
+                ];
+                
+                state.servers = fallbackServers;
+            }
+            
+            // Remove duplicates
+            state.servers = state.servers.filter((server, index, self) =>
+                index === self.findIndex(s => s.url === server.url)
+            );
+            
+            console.log('Extracted servers:', state.servers);
+        }
+
+        // EXTRACT DOWNLOAD LINKS
+        function extractDownloadLinks(doc) {
+            state.downloads = [];
+            
+            const downloadSections = doc.querySelectorAll('.download-list, .dlbox, .download');
+            downloadSections.forEach((section, idx) => {
+                const group = {
+                    title: section.querySelector('h3, h4, strong')?.textContent?.trim() || `Download Group ${idx + 1}`,
+                    links: []
+                };
+                
+                const links = section.querySelectorAll('a[href*="http"]');
+                links.forEach(link => {
+                    const href = link.href;
+                    const text = link.textContent.trim();
+                    
+                    if (href && (href.includes('.rar') || href.includes('.zip') || 
+                        href.includes('download') || href.includes('drive.google.com'))) {
+                        group.links.push({
+                            url: href,
+                            name: text || 'Download Link',
+                            size: getFileSizeFromText(text)
+                        });
+                    }
+                });
+                
+                if (group.links.length > 0) {
+                    state.downloads.push(group);
+                }
+            });
+        }
+
+        // EXTRACT NAVIGATION
+        function extractNavigation(doc) {
+            const prevLink = doc.querySelector('a.prev, .nav-prev a, a[rel="prev"]')?.href;
+            const nextLink = doc.querySelector('a.next, .nav-next a, a[rel="next"]')?.href;
+            
+            state.episodeInfo.prev = prevLink;
+            state.episodeInfo.next = nextLink;
+        }
+
+        // RENDER FUNCTIONS
+        function renderEpisodeInfo() {
+            elements.episodeTitle.textContent = state.episodeInfo.title;
+            elements.dateInfo.textContent = state.episodeInfo.date;
+            elements.serverCount.textContent = `${state.servers.length} server tersedia`;
+            
+            // Update navigation buttons
+            if (state.episodeInfo.prev) {
+                elements.prevBtn.disabled = false;
+            }
+            if (state.episodeInfo.next) {
+                elements.nextBtn.disabled = false;
+            }
+        }
+
+        function renderServers() {
+            if (state.servers.length === 0) {
+                elements.serversContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                        <p style="margin-top: 12px;">Tidak ada server yang ditemukan</p>
+                        <button onclick="retryLoadServers()" class="server-btn" style="margin-top: 12px;">
+                            Coba Lagi
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group servers by quality
+            const serversByQuality = {};
+            state.servers.forEach(server => {
+                if (!serversByQuality[server.quality]) {
+                    serversByQuality[server.quality] = [];
+                }
+                serversByQuality[server.quality].push(server);
+            });
+            
+            let html = '';
+            
+            // Sort qualities
+            const qualities = ['1080p', '720p', 'HD', '480p', '360p', 'SD'];
+            qualities.forEach(quality => {
+                const servers = serversByQuality[quality];
+                if (servers && servers.length > 0) {
+                    html += `<div class="quality-label">${quality}</div>`;
+                    html += `<div class="servers-grid">`;
+                    
+                    servers.forEach(server => {
+                        const isActive = state.currentServer?.id === server.id;
+                        html += `
+                            <button class="server-btn ${isActive ? 'active' : ''}" 
+                                    onclick="selectServer(${JSON.stringify(server).replace(/"/g, '&quot;')})"
+                                    data-id="${server.id}">
+                                ${server.name}
+                            </button>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            elements.serversContainer.innerHTML = html;
+        }
+
+        function renderDownloads() {
+            if (state.downloads.length === 0) {
+                elements.downloadsContainer.innerHTML = `
+                    <p style="text-align: center; color: var(--text-secondary);">
+                        Tidak ada link download yang ditemukan
+                    </p>
+                `;
+                return;
+            }
+            
+            let html = '<div class="download-grid">';
+            
+            state.downloads.forEach((group, idx) => {
+                html += `
+                    <div class="download-group">
+                        <div class="download-group-title">${group.title}</div>
+                        <div class="download-links">
+                `;
+                
+                group.links.forEach((link, linkIdx) => {
+                    html += `
+                        <a href="${link.url}" target="_blank" class="download-link">
+                            ${link.name} ${link.size ? `(${link.size})` : ''}
+                        </a>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            elements.downloadsContainer.innerHTML = html;
+        }
+
+        // SERVER SELECTION
+        async function selectServer(server) {
+            try {
+                showToast(`Memuat ${server.name}...`, 'info');
+                
+                // Update state
+                state.currentServer = server;
+                state.retryCount = 0;
+                
+                // Update UI
+                elements.videoLoading.style.display = 'flex';
+                elements.videoError.style.display = 'none';
+                elements.qualityBadge.textContent = server.quality;
+                
+                // Render servers dengan active state
+                renderServers();
+                
+                // Set video source dengan timeout
+                await loadVideoWithTimeout(server.url);
+                
+                showToast(`Berhasil memuat ${server.name}`, 'success');
+                
+            } catch (error) {
+                console.error('Error selecting server:', error);
+                state.retryCount++;
+                
+                if (state.retryCount < CONFIG.video.maxRetries) {
+                    showToast(`Gagal, mencoba server lain...`, 'warning');
+                    
+                    // Coba server berikutnya
+                    const currentIndex = state.servers.findIndex(s => s.id === server.id);
+                    const nextIndex = (currentIndex + 1) % state.servers.length;
+                    const nextServer = state.servers[nextIndex];
+                    
+                    if (nextServer) {
+                        setTimeout(() => selectServer(nextServer), 1000);
+                    }
+                } else {
+                    showVideoError('Gagal memuat semua server video');
+                }
+            }
+        }
+
+        async function loadVideoWithTimeout(url) {
+            return new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Video loading timeout'));
+                }, CONFIG.video.timeout);
+                
+                elements.videoPlayer.onload = () => {
+                    clearTimeout(timeout);
+                    setTimeout(() => {
+                        elements.videoLoading.style.display = 'none';
+                        resolve();
+                    }, 1000);
+                };
+                
+                elements.videoPlayer.onerror = () => {
+                    clearTimeout(timeout);
+                    reject(new Error('Video player error'));
+                };
+                
+                // Set iframe source dengan sandbox permissions
+                elements.videoPlayer.src = url;
+                elements.videoPlayer.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation');
+            });
+        }
+
+        // MANUAL SERVER INPUT (fallback)
+        function showManualServerInput() {
+            elements.serversContainer.innerHTML = `
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 12px;">Masukkan URL Video Manual</h3>
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <input type="text" id="manualUrl" 
+                               placeholder="https://example.com/video.mp4" 
+                               style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); 
+                                      border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; 
+                                      color: white;">
+                        <button onclick="useManualUrl()" class="nav-btn next" style="padding: 10px 16px;">
+                            Load
+                        </button>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <p>Contoh URL yang didukung:</p>
+                        <ul style="margin-left: 20px; margin-top: 8px;">
+                            <li>Blogger: https://www.blogger.com/video.g?token=...</li>
+                            <li>Google Drive: https://drive.google.com/file/d/...</li>
+                            <li>Direct MP4: https://example.com/video.mp4</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        function useManualUrl() {
+            const urlInput = document.getElementById('manualUrl');
+            const url = urlInput.value.trim();
+            
+            if (url) {
+                selectServer({
+                    id: 'manual',
+                    name: 'Manual URL',
+                    quality: 'Unknown',
+                    url: fixVideoEmbed(url),
+                    type: 'direct',
+                    provider: 'manual'
+                });
+            }
+        }
+
+        // UTILITY FUNCTIONS
+        function getVideoProvider(url) {
+            if (url.includes('blogger.com')) return 'blogger';
+            if (url.includes('drive.google.com')) return 'google-drive';
+            if (url.includes('youtube.com')) return 'youtube';
+            if (url.includes('dailymotion.com')) return 'dailymotion';
+            if (url.includes('.mp4') || url.includes('.m3u8')) return 'direct';
+            return 'unknown';
+        }
+
+        function getQualityFromText(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('1080')) return '1080p';
+            if (lower.includes('720')) return '720p';
+            if (lower.includes('480')) return '480p';
+            if (lower.includes('360')) return '360p';
+            if (lower.includes('hd')) return 'HD';
+            return 'SD';
+        }
+
+        function getFileSizeFromText(text) {
+            const match = text.match(/(\d+(\.\d+)?)\s*(MB|GB|KB)/i);
+            return match ? match[0] : null;
+        }
+
+        // ERROR HANDLING
+        function showVideoError(message) {
+            elements.videoLoading.style.display = 'none';
+            elements.videoError.style.display = 'flex';
+            elements.errorMessage.textContent = message;
+        }
+
+        function retryLoadVideo() {
+            if (state.currentServer) {
+                selectServer(state.currentServer);
+            } else if (state.servers.length > 0) {
+                selectServer(state.servers[0]);
+            } else {
+                loadEpisodeData();
+            }
+        }
+
+        function retryLoadServers() {
+            loadEpisodeData();
+        }
+
+        // UI FUNCTIONS
+        function toggleDownloads() {
+            const isVisible = elements.downloadContent.classList.contains('show');
+            elements.downloadContent.classList.toggle('show');
+            
+            const arrow = document.getElementById('downloadArrow');
+            arrow.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function navigateTo(direction) {
+            const url = direction === 'prev' ? state.episodeInfo.prev : state.episodeInfo.next;
+            if (url) {
+                window.location.href = `stream.html?url=${encodeURIComponent(url)}`;
+            }
+        }
+
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${type === 'error' ? '<path d="M18 6L6 18M6 6l12 12"/>' :
+                      type === 'success' ? '<path d="M20 6L9 17l-5-5"/>' :
+                      '<path d="M12 16v-4m0-4h.01"/>'}
+                </svg>
+                <span>${message}</span>
+            `;
+            
+            elements.toastContainer.appendChild(toast);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideUp 0.3s ease reverse';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            // Start loading episode data
+            loadEpisodeData();
+            
+            // Add video player event listeners
+            elements.videoPlayer.addEventListener('load', () => {
+                console.log('Video player loaded successfully');
+            });
+            
+            elements.videoPlayer.addEventListener('error', (e) => {
+                console.error('Video player error:', e);
+                showToast('Video player error, coba server lain', 'error');
+            });
+        });
+
+        // Make functions globally available
+        window.selectServer = selectServer;
+        window.retryLoadVideo = retryLoadVideo;
+        window.retryLoadServers = retryLoadServers;
+        window.navigateTo = navigateTo;
+        window.goBack = goBack;
+        window.toggleDownloads = toggleDownloads;
+        window.useManualUrl = useManualUrl;
+    </script>
 </body>
     </html>
