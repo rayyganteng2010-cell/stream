@@ -1,286 +1,228 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RayStream</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://unpkg.com/lucide@latest"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RayStream - Home</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        if (!localStorage.getItem('user_info')) window.location.href = 'login.html';
+    </script>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="topbar-left">
-    <div class="brand">RAYSTREAM</div>
-    <div class="subtitle">Nonton, bukan nonton iklan</div>
-  </div>
-
-  <div class="topbar-right">
-    <div class="source-switch" id="sourceSwitch">
-      <button class="pill active" data-source="donghua">Donghua</button>
-      <button class="pill" data-source="anime">Anime</button>
-    </div>
-  </div>
+<header>
+    <div class="logo">RayStream</div>
+    <div id="userStatus" onclick="window.location.href='history.html'" style="cursor:pointer;"></div>
 </header>
 
-<main class="container">
+<div class="tab-container">
+    <button class="tab-btn active" onclick="switchTab('home')">Home</button>
+    <button class="tab-btn" onclick="switchTab('ongoing')">Ongoing</button>
+    <button class="tab-btn" onclick="switchTab('completed')">Completed</button>
+</div>
 
-  <section class="panel">
-    <div class="panel-head">
-      <div class="tabs" id="tabs">
-        <button class="tab active" data-cat="latest">Latest</button>
-        <button class="tab" data-cat="ongoing">Ongoing</button>
-        <button class="tab" data-cat="completed">Completed</button>
-      </div>
+<div id="view-home">
+    <div class="slider-container">
+        <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/475ede11cdfbde3a0ed41aceeadbd3ce%20(1).jpg" class="slider-img">
+        <img src="https://raw.githubusercontent.com/rayyganteng2010-cell/ice-gpt/refs/heads/main/ec12a7175835f59a38e9a2082bc47b29.jpg" class="slider-img">
+    </div>
 
-      <div class="pager">
-        <button class="btn btn-ghost" id="prevPage" disabled>
-          <i data-lucide="chevron-left"></i>
-        </button>
-        <div class="page-indicator">
-          Page <span id="pageNum">1</span>
+    <div class="container">
+        <div class="section-title">
+            <h3>Popular Today</h3>
         </div>
-        <button class="btn btn-ghost" id="nextPage">
-          <i data-lucide="chevron-right"></i>
-        </button>
-      </div>
+        <div id="popularData" class="grid">
+            <div class="card skeleton"></div><div class="card skeleton"></div><div class="card skeleton"></div>
+        </div>
+
+        <div class="section-title">
+            <h3>Latest Updates</h3>
+        </div>
+        <div id="homeData" class="grid"></div>
+        <div style="text-align:center; padding:20px;">
+            <button onclick="loadMixedHome()" style="background:#222; border:1px solid #333; color:white; padding:10px 20px; border-radius:20px;">Load More</button>
+        </div>
     </div>
+</div>
 
-    <div id="grid" class="grid"></div>
-
-    <div id="emptyState" class="empty" style="display:none;">
-      <div class="empty-title">Kosong.</div>
-      <div class="empty-sub">Entah API-nya yang ngambek atau kamu lagi apes.</div>
+<div id="view-ongoing" style="display:none;">
+    <div class="container">
+        <div class="section-title"><h3>Ongoing Series</h3></div>
+        <div id="ongoingData" class="grid"></div>
     </div>
+</div>
 
-    <div id="loading" class="loading">
-      <div class="spinner"></div>
-      <div>Loading...</div>
+<div id="view-completed" style="display:none;">
+    <div class="container">
+        <div class="section-title"><h3>Completed Series</h3></div>
+        <div id="completedData" class="grid"></div>
     </div>
-  </section>
+</div>
 
-</main>
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item active"><i data-lucide="home"></i></a>
+    <a href="schedule.html" class="nav-item"><i data-lucide="calendar"></i></a>
+    <a href="history.html" class="nav-item"><i data-lucide="history"></i></a>
+</nav>
 
 <script>
-  // =========================
-  // ENDPOINTS
-  // =========================
-  const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-  const API_ANIME   = "https://donghua-qnha.vercel.app/anime/samehadaku";
+    // --- API ENDPOINTS ---
+    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
+    const API_ANIME = "https://donghua-qnha.vercel.app/anime/samehadaku";
 
-  // Category mapping:
-  // - donghua: /ongoing, /completed, (latest pakai /list atau /latest yang kamu punya)
-  // - anime:   /ongoing, /completed, (latest coba /latest atau /list kalau ada)
-  const CAT_TO_PATH = {
-    latest:   { donghua: "/list",      anime: "/latest" },   // fallback handling below
-    ongoing:  { donghua: "/ongoing",   anime: "/ongoing" },
-    completed:{ donghua: "/completed", anime: "/completed" }
-  };
+    // --- USER AVATAR ---
+    const user = JSON.parse(localStorage.getItem('user_info'));
+    if(user) {
+        document.getElementById('userStatus').innerHTML = `<img src="${user.picture}" style="width:34px; height:34px; border-radius:50%; border:2px solid var(--primary);">`;
+    }
 
-  // =========================
-  // STATE
-  // =========================
-  let state = {
-    source: "donghua", // donghua | anime
-    cat: "latest",     // latest | ongoing | completed
-    page: 1
-  };
+    // --- TAB SWITCHER ---
+    function switchTab(tabName) {
+        // Hide All Views
+        document.getElementById('view-home').style.display = 'none';
+        document.getElementById('view-ongoing').style.display = 'none';
+        document.getElementById('view-completed').style.display = 'none';
+        
+        // Reset Buttons
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        // Show Selected
+        document.getElementById(`view-${tabName}`).style.display = 'block';
+        event.target.classList.add('active'); // Highlight button clicked
 
-  const els = {
-    grid: document.getElementById("grid"),
-    loading: document.getElementById("loading"),
-    empty: document.getElementById("emptyState"),
-    pageNum: document.getElementById("pageNum"),
-    prev: document.getElementById("prevPage"),
-    next: document.getElementById("nextPage"),
-    tabs: document.getElementById("tabs"),
-    switch: document.getElementById("sourceSwitch")
-  };
+        // Load Data if empty
+        if(tabName === 'ongoing' && document.getElementById('ongoingData').innerHTML === "") loadOngoing();
+        if(tabName === 'completed' && document.getElementById('completedData').innerHTML === "") loadCompleted();
+    }
 
-  function setLoading(on) {
-    els.loading.style.display = on ? "flex" : "none";
-  }
+    // --- 1. LOAD HOME (POPULAR + LATEST) ---
+    async function loadHome() {
+        // Popular (Donghua Only for simplicity)
+        fetch(`${API_DONGHUA}/popular`)
+            .then(r=>r.json())
+            .then(d => renderCards(d.data.slice(0,6), 'popularData', 'donghua'));
 
-  function setEmpty(on) {
-    els.empty.style.display = on ? "block" : "none";
-  }
+        loadMixedHome();
+    }
 
-  function safeText(s) {
-    return (s ?? "").toString().trim();
-  }
+    let homePage = 1;
+    async function loadMixedHome() {
+        const container = document.getElementById('homeData');
+        // Fetch Donghua List & Anime Recent secara paralel
+        const [resD, resA] = await Promise.all([
+            fetch(`${API_DONGHUA}/list?page=${homePage}`).then(r=>r.json()),
+            fetch(`${API_ANIME}/home`).then(r=>r.json()) // Anime recent
+        ]);
 
-  function buildUrl() {
-    const base = state.source === "donghua" ? API_DONGHUA : API_ANIME;
-    const path = CAT_TO_PATH[state.cat]?.[state.source];
+        const listD = normalizeDonghua(resD.data);
+        // Hati-hati, struktur anime recent bisa beda
+        const listA = resA.data?.recent?.animeList ? normalizeAnime(resA.data.recent.animeList) : [];
 
-    // page query: kebanyakan endpoint list support ?page=
-    // ongoing/completed kadang support page juga, kita coba aja
-    return `${base}${path}?page=${state.page}`;
-  }
+        // Gabung & Render
+        const mixed = [...listA, ...listD]; 
+        renderCards(mixed, 'homeData', 'mixed');
+        homePage++;
+    }
 
-  async function fetchJsonTry(url) {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
-  }
+    // --- 2. LOAD ONGOING ---
+    async function loadOngoing() {
+        const container = document.getElementById('ongoingData');
+        container.innerHTML = '<p style="color:#666;">Loading Ongoing...</p>';
 
-  async function fetchList() {
-    setEmpty(false);
-    setLoading(true);
-    els.grid.innerHTML = "";
-    els.pageNum.innerText = state.page;
-
-    // Prev disable logic
-    els.prev.disabled = state.page <= 1;
-
-    let url = buildUrl();
-    let json;
-
-    try {
-      json = await fetchJsonTry(url);
-    } catch (e) {
-      // Fallback untuk "latest" karena kamu punya berbagai varian endpoint.
-      if (state.cat === "latest") {
         try {
-          const base = state.source === "donghua" ? API_DONGHUA : API_ANIME;
-          const fallback = state.source === "donghua"
-            ? `${base}/latest?page=${state.page}`
-            : `${base}/list?page=${state.page}`;
+            const [resD, resA] = await Promise.all([
+                fetch(`${API_DONGHUA}/ongoing?page=1`).then(r=>r.json()),
+                fetch(`${API_ANIME}/ongoing?page=1`).then(r=>r.json())
+            ]);
 
-          json = await fetchJsonTry(fallback);
-        } catch (e2) {
-          setLoading(false);
-          setEmpty(true);
-          return;
-        }
-      } else {
-        setLoading(false);
-        setEmpty(true);
-        return;
-      }
+            const listD = normalizeDonghua(resD.data);
+            // Cek struktur Anime Ongoing (biasanya data.animeList)
+            const listA = resA.data?.animeList ? normalizeAnime(resA.data.animeList) : [];
+
+            renderCards([...listA, ...listD], 'ongoingData', 'mixed');
+        } catch(e) { console.error(e); }
     }
 
-    // Normalisasi data: beberapa API pakai data, beberapa list
-    const list =
-      json?.data ||
-      json?.results ||
-      json?.animeList ||
-      json?.donghuaList ||
-      json?.list ||
-      [];
+    // --- 3. LOAD COMPLETED ---
+    async function loadCompleted() {
+        const container = document.getElementById('completedData');
+        container.innerHTML = '<p style="color:#666;">Loading Completed...</p>';
 
-    if (!Array.isArray(list) || list.length === 0) {
-      setLoading(false);
-      setEmpty(true);
-      return;
+        try {
+            const [resD, resA] = await Promise.all([
+                fetch(`${API_DONGHUA}/completed?page=1`).then(r=>r.json()),
+                fetch(`${API_ANIME}/completed?page=1`).then(r=>r.json())
+            ]);
+
+            const listD = normalizeDonghua(resD.data);
+            const listA = resA.data?.animeList ? normalizeAnime(resA.data.animeList) : [];
+
+            renderCards([...listA, ...listD], 'completedData', 'mixed');
+        } catch(e) { console.error(e); }
     }
 
-    renderCards(list);
-    setLoading(false);
-    lucide.createIcons();
-  }
+    // --- HELPERS: NORMALISASI DATA BIAR SAMA ---
+    function normalizeDonghua(list) {
+        if(!list) return [];
+        return list.map(item => ({
+            title: item.title,
+            poster: item.poster,
+            ep: item.episode || "Ep ?", 
+            slug: getCleanSlug(item.href),
+            type: 'donghua'
+        }));
+    }
 
-  function pickCardFields(item) {
-    // donghua (anichin-seven) biasanya: { title, poster, status, type, anichinUrl }
-    // anime (samehadaku proxy) bisa: { title, poster, type, score, animeId, href, samehadakuUrl }
-    const title = safeText(item.title) || safeText(item.name);
-    const poster = item.poster || item.thumbnail || item.image || "";
-    const type = safeText(item.type);
-    const status = safeText(item.status);
-    const score = safeText(item.score);
+    function normalizeAnime(list) {
+        if(!list) return [];
+        return list.map(item => ({
+            title: item.title,
+            poster: item.poster,
+            ep: item.episodes || "Ep ?",
+            slug: item.animeId, // Anime ID biasanya sudah bersih
+            type: 'anime'
+        }));
+    }
 
-    // target link:
-    // - donghua series: series.html?slug=...&source=donghua
-    // - anime series: series.html?slug=...&source=anime
-    let rawUrl = item.anichinUrl || item.samehadakuUrl || item.href || item.url || "";
+    function getCleanSlug(url) {
+        if(!url) return "";
+        return url.replace(/\/$/, '').split('/').pop().replace(/-episode-\d+.*$/i, '');
+    }
 
-    return { title, poster, type, status, score, rawUrl, item };
-  }
+    // --- RENDERER KARTU ---
+    function renderCards(list, elementId, mode) {
+        const container = document.getElementById(elementId);
+        if(container.innerHTML.includes('Loading')) container.innerHTML = ""; // Clear loader
 
-  function resolveSeriesSlug(rawUrl, item) {
-    // Kalau punya animeId langsung bagus
-    if (item.animeId) return item.animeId;
+        const html = list.map(item => {
+            // Tentukan link tujuan
+            let link = `series.html?slug=${item.slug}&source=${item.type}`;
+            
+            // Badge Class
+            let badgeClass = item.type === 'anime' ? 'tag-anime' : 'tag-donghua';
+            let label = item.type.toUpperCase();
 
-    // fallback: ambil path terakhir
-    if (!rawUrl) return "";
-    const clean = rawUrl.replace(/\/$/, "").split("/").pop();
-    // buang "-episode-xx" kalau nyasar episode
-    return clean.replace(/-episode-\d+.*$/i, "");
-  }
-
-  function renderCards(list) {
-    els.grid.innerHTML = list.map((it) => {
-      const { title, poster, type, status, score, rawUrl, item } = pickCardFields(it);
-      const slug = resolveSeriesSlug(rawUrl, item);
-
-      const metaLeft = status || type || "—";
-      const metaRight = score ? `⭐ ${score}` : "";
-
-      return `
-        <article class="card" onclick="goSeries('${encodeURIComponent(slug)}')">
-          <div class="thumb">
-            <img loading="lazy" src="${poster}" alt="${title}">
-          </div>
-          <div class="card-body">
-            <div class="card-title" title="${title}">${title}</div>
-            <div class="card-meta">
-              <span>${metaLeft}</span>
-              <span>${metaRight}</span>
+            return `
+            <div class="card" onclick="window.location.href='${link}'">
+                <span class="type-tag ${badgeClass}">${label}</span>
+                <img src="${item.poster}" loading="lazy">
+                <div class="card-info">
+                    <div class="card-title">${item.title}</div>
+                    <div class="card-ep">${item.ep}</div>
+                </div>
             </div>
-          </div>
-        </article>
-      `;
-    }).join("");
-  }
+            `;
+        }).join('');
 
-  window.goSeries = function(slugEnc) {
-    const slug = decodeURIComponent(slugEnc || "");
-    if (!slug) return;
-    window.location.href = `series.html?slug=${encodeURIComponent(slug)}&source=${state.source}`;
-  };
+        if (mode === 'popularData') container.innerHTML = html; // Replace
+        else container.insertAdjacentHTML('beforeend', html); // Append
+    }
 
-  // =========================
-  // UI EVENTS
-  // =========================
-  els.switch.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-source]");
-    if (!btn) return;
-
-    document.querySelectorAll("#sourceSwitch .pill").forEach(x => x.classList.remove("active"));
-    btn.classList.add("active");
-
-    state.source = btn.dataset.source;
-    state.page = 1;
-    fetchList();
-  });
-
-  els.tabs.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-cat]");
-    if (!btn) return;
-
-    document.querySelectorAll("#tabs .tab").forEach(x => x.classList.remove("active"));
-    btn.classList.add("active");
-
-    state.cat = btn.dataset.cat;
-    state.page = 1;
-    fetchList();
-  });
-
-  els.prev.addEventListener("click", () => {
-    if (state.page <= 1) return;
-    state.page--;
-    fetchList();
-  });
-
-  els.next.addEventListener("click", () => {
-    state.page++;
-    fetchList();
-  });
-
-  // start
-  fetchList();
-  lucide.createIcons();
+    // Init
+    loadHome();
+    lucide.createIcons();
 </script>
-
 </body>
-        </html>
+</html>
