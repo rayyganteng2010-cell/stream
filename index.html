@@ -3,587 +3,443 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RayStream - Pilih Konten</title>
-    <link rel="stylesheet" href="style.css">
+    <title>RayStream - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <script>
-        // Cek Login
+        // Cek Login (Simulasi)
         if (!localStorage.getItem('user_info')) {
-            window.location.href = 'login.html';
+            // Uncomment baris di bawah jika file login.html sudah ada
+            // window.location.href = 'login.html';
         }
     </script>
+
     <style>
-        /* Dashboard Styling */
-        .dashboard-container {
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --primary: #6366f1; /* Indigo */
+            --accent-anime: #f59e0b; /* Amber */
+            --accent-donghua: #3b82f6; /* Blue */
+            --accent-schedule: #10b981; /* Emerald */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: linear-gradient(135deg, var(--bg-main) 0%, #1a1a2e 100%);
         }
-        
-        .logo-large {
-            font-size: 3.5rem;
+
+        /* Navbar Sederhana */
+        .navbar {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.5rem;
             font-weight: 800;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background: linear-gradient(to right, var(--primary), #a855f7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-align: center;
+            letter-spacing: -0.5px;
         }
-        
-        .tagline {
-            color: var(--text-dim);
-            margin-bottom: 50px;
-            text-align: center;
-            font-size: 1.1rem;
-            max-width: 400px;
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 15px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
         }
-        
-        /* Content Cards */
-        .content-cards {
+
+        .user-profile:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Container Utama */
+        .main-container {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 40px 20px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            max-width: 400px;
+            justify-content: center;
         }
-        
-        .content-card {
-            background: var(--bg-surface);
-            border-radius: 20px;
-            padding: 30px;
+
+        .hero-text {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .hero-desc {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Grid Menu Utama */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        .menu-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 35px 25px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            box-shadow: var(--shadow-lg);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
         }
-        
-        .content-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: var(--shadow-xl);
+
+        .menu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-glow);
+            border-color: rgba(255, 255, 255, 0.2);
         }
-        
-        .content-card:active {
-            transform: translateY(-2px);
-        }
-        
-        .card-icon {
-            width: 60px;
-            height: 60px;
+
+        .card-icon-bg {
+            width: 70px;
+            height: 70px;
             margin: 0 auto 20px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            font-size: 2rem;
+            transition: transform 0.3s ease;
         }
-        
+
+        .menu-card:hover .card-icon-bg {
+            transform: scale(1.1) rotate(5deg);
+        }
+
         .card-title {
             font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 10px;
-            color: var(--text-main);
         }
-        
+
         .card-desc {
-            color: var(--text-dim);
+            color: var(--text-muted);
             font-size: 0.9rem;
-            margin-bottom: 20px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
-        
-        .card-stats {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 15px;
+
+        /* Tema Warna Per Card */
+        .card-anime .card-icon-bg { background: rgba(245, 158, 11, 0.15); color: var(--accent-anime); }
+        .card-anime:hover { border-color: var(--accent-anime); }
+
+        .card-donghua .card-icon-bg { background: rgba(59, 130, 246, 0.15); color: var(--accent-donghua); }
+        .card-donghua:hover { border-color: var(--accent-donghua); }
+
+        .card-schedule .card-icon-bg { background: rgba(16, 185, 129, 0.15); color: var(--accent-schedule); }
+        .card-schedule:hover { border-color: var(--accent-schedule); }
+
+        /* History Section */
+        .history-section {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
         }
-        
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .stat-value {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-        
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            margin-top: 5px;
-        }
-        
-        /* Anime Card */
-        .anime-card {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-        }
-        
-        .anime-card:hover {
-            border-color: #f59e0b;
-        }
-        
-        .anime-icon {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-        
-        /* Donghua Card */
-        .donghua-card {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-        }
-        
-        .donghua-card:hover {
-            border-color: #3b82f6;
-        }
-        
-        .donghua-icon {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
-        }
-        
-        /* User Info */
-        .user-info-bar {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+
+        .history-header {
             display: flex;
             align-items: center;
             gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
         }
-        
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--text-dim);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s;
-        }
-        
-        .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-        
-        /* Recent History */
-        .history-section {
-            margin-top: 50px;
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .history-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--text-main);
-            text-align: center;
-        }
-        
+
         .history-list {
-            background: var(--bg-surface);
-            border-radius: 15px;
-            padding: 20px;
-            max-height: 200px;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
-        
+
         .history-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            background: rgba(255, 255, 255, 0.05);
+            gap: 15px;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
             cursor: pointer;
-            transition: background 0.3s;
         }
-        
+
         .history-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
         }
-        
-        .history-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .history-img {
-            width: 40px;
-            height: 55px;
-            object-fit: cover;
+
+        .history-poster {
+            width: 50px;
+            height: 70px;
             border-radius: 8px;
+            object-fit: cover;
+            background: #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
-        
-        .history-info {
+
+        .history-content {
             flex: 1;
-            overflow: hidden;
+            min-width: 0; /* Prevent text overflow */
         }
-        
-        .history-info-title {
-            font-size: 0.85rem;
+
+        .history-title {
             font-weight: 600;
-            margin-bottom: 3px;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
-        .history-info-meta {
-            font-size: 0.7rem;
-            color: var(--text-dim);
+
+        .history-meta {
             display: flex;
-            gap: 8px;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
-        
-        .history-type {
-            font-size: 0.6rem;
-            padding: 2px 6px;
+
+        .tag {
+            padding: 2px 8px;
             border-radius: 4px;
             font-weight: 700;
+            font-size: 0.65rem;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        .history-type.anime {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
+
+        .tag-anime { background: rgba(245, 158, 11, 0.2); color: var(--accent-anime); }
+        .tag-donghua { background: rgba(59, 130, 246, 0.2); color: var(--accent-donghua); }
+
+        .btn-play {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            transition: 0.2s;
         }
-        
-        .history-type.donghua {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
+
+        .history-item:hover .btn-play {
+            background: var(--primary);
+            color: white;
         }
-        
-        /* No History */
+
         .no-history {
             text-align: center;
-            padding: 20px;
-            color: var(--text-dim);
+            padding: 30px;
+            color: var(--text-muted);
+            font-style: italic;
         }
-        
-        .no-history i {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 10px;
-            color: var(--text-dim);
-        }
-        
-        /* Footer */
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            color: var(--text-dim);
-            font-size: 0.8rem;
+
+        @media (max-width: 768px) {
+            .menu-grid { grid-template-columns: 1fr; }
+            .hero-title { font-size: 2rem; }
+            .navbar { padding: 15px 20px; }
         }
     </style>
 </head>
 <body>
 
-<div class="dashboard-container">
-    <!-- User Info & Logout -->
-    <div class="user-info-bar" id="userBar"></div>
-    
-    <!-- Logo & Tagline -->
-    <div style="text-align: center; margin-bottom: 40px;">
-        <div class="logo-large">RayStream</div>
-        <p class="tagline">Streaming anime dan donghua favoritmu dalam satu tempat</p>
-    </div>
-    
-    <!-- Content Selection Cards -->
-    <div class="content-cards">
-        <!-- Anime Card -->
-        <div class="content-card anime-card" onclick="goToAnime()">
-            <div class="card-icon anime-icon">
-                <i data-lucide="tv" style="width: 30px; height: 30px;"></i>
-            </div>
-            <div class="card-title">Anime</div>
-            <p class="card-desc">Jelajahi koleksi anime terlengkap dari berbagai genre. Streaming dengan kualitas HD.</p>
-            <div class="card-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="animeCount">0</div>
-                    <div class="stat-label">Series</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="ongoingAnimeCount">0</div>
-                    <div class="stat-label">Ongoing</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="completedAnimeCount">0</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-            </div>
+    <nav class="navbar">
+        <div class="brand">RayStream</div>
+        <div class="user-profile" id="userProfileBtn" onclick="toggleLogout()">
+            <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User" class="user-avatar" id="userAvatar">
+            <span class="user-name" id="userName">Guest</span>
+            <i data-lucide="chevron-down" style="width: 16px; margin-left: 5px;"></i>
         </div>
-        
-        <!-- Donghua Card -->
-        <div class="content-card donghua-card" onclick="goToDonghua()">
-            <div class="card-icon donghua-icon">
-                <i data-lucide="tv-2" style="width: 30px; height: 30px;"></i>
-            </div>
-            <div class="card-title">Donghua</div>
-            <p class="card-desc">Nikmati donghua China terbaru dan terpopuler dengan subtitle bahasa Indonesia.</p>
-            <div class="card-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="donghuaCount">0</div>
-                    <div class="stat-label">Series</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="ongoingDonghuaCount">0</div>
-                    <div class="stat-label">Ongoing</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="completedDonghuaCount">0</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Recent History -->
-    <div class="history-section">
-        <div class="history-title">
-            <i data-lucide="history" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;"></i>
-            Riwayat Terakhir
-        </div>
-        <div class="history-list" id="historyList">
-            <!-- History items will be loaded here -->
-        </div>
-    </div>
-    
-    <!-- Footer -->
-    <div class="footer">
-        <p>© 2024 RayStream. All rights reserved.</p>
-        <p style="font-size: 0.7rem; margin-top: 5px;">Pilih konten favoritmu untuk mulai menonton</p>
-    </div>
-</div>
+    </nav>
 
-<script>
-    // =============================================
-    // API ENDPOINTS
-    // =============================================
-    const API_DONGHUA = "https://anichin-seven.vercel.app/api";
-    const API_ANIME = "https://donghua-qnha.vercel.app/anime/samehadaku";
-    
-    // =============================================
-    // 1. USER MANAGEMENT
-    // =============================================
-    function displayUserInfo() {
-        try {
-            const userData = localStorage.getItem('user_info');
-            if (!userData) {
-                window.location.href = 'login.html';
+    <div class="main-container">
+        <div class="hero-text">
+            <h1 class="hero-title">Mau nonton apa hari ini?</h1>
+            <p class="hero-desc">Platform streaming Anime dan Donghua terlengkap dengan update tercepat.</p>
+        </div>
+
+        <div class="menu-grid">
+            
+            <div class="menu-card card-anime" onclick="window.location.href='anime.html'">
+                <div class="card-icon-bg">
+                    <i data-lucide="tv"></i>
+                </div>
+                <h3 class="card-title">Anime</h3>
+                <p class="card-desc">Koleksi anime Jepang dari musim terbaru hingga klasik legendaris.</p>
+            </div>
+
+            <div class="menu-card card-donghua" onclick="window.location.href='donghua.html'">
+                <div class="card-icon-bg">
+                    <i data-lucide="flame"></i>
+                </div>
+                <h3 class="card-title">Donghua</h3>
+                <p class="card-desc">Serial animasi China 3D/2D penuh aksi kultivasi dan martial arts.</p>
+            </div>
+
+            <div class="menu-card card-schedule" onclick="window.location.href='schedule.html'">
+                <div class="card-icon-bg">
+                    <i data-lucide="calendar-clock"></i>
+                </div>
+                <h3 class="card-title">Jadwal Rilis</h3>
+                <p class="card-desc">Cek kapan episode terbaru anime dan donghua favoritmu tayang.</p>
+            </div>
+
+        </div>
+
+        <div class="history-section">
+            <div class="history-header">
+                <i data-lucide="history" style="color: var(--primary)"></i>
+                <h3 style="font-weight: 600;">Lanjutkan Menonton</h3>
+            </div>
+            <div id="historyContainer" class="history-list">
+                </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Inisialisasi Ikon
+        lucide.createIcons();
+
+        // 1. User Logic
+        function loadUser() {
+            const userData = JSON.parse(localStorage.getItem('user_info'));
+            if (userData) {
+                document.getElementById('userName').textContent = userData.name || 'User';
+                if(userData.picture) {
+                    document.getElementById('userAvatar').src = userData.picture;
+                }
+            }
+        }
+
+        function toggleLogout() {
+            if(confirm('Ingin keluar dari akun?')) {
+                localStorage.removeItem('user_info');
+                window.location.reload(); // Atau redirect ke login
+            }
+        }
+
+        // 2. Load History with Thumbnails
+        function loadHistory() {
+            const container = document.getElementById('historyContainer');
+            // Mengambil data dari localStorage (asumsi format array object)
+            // Pastikan saat save history di page nonton, property 'poster' ikut disimpan
+            const history = JSON.parse(localStorage.getItem('my_history')) || [];
+
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="no-history">
+                        <p>Belum ada riwayat tontonan.</p>
+                    </div>`;
                 return;
             }
-            
-            const user = JSON.parse(userData);
-            const userBar = document.getElementById('userBar');
-            
-            if (userBar) {
-                userBar.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${user.picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=36&h=36&fit=crop&crop=face'}" 
-                             style="width:36px; height:36px; border-radius:50%; border:2px solid var(--primary); object-fit:cover;">
-                        <span style="font-size:0.9rem; font-weight:600;">${user.name || 'User'}</span>
-                    </div>
-                    <button class="logout-btn" onclick="logout()">
-                        <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
-                        Logout
-                    </button>
-                `;
-                lucide.createIcons();
-            }
-        } catch (error) {
-            console.error('Error displaying user info:', error);
-        }
-    }
-    
-    function logout() {
-        if (confirm('Yakin ingin logout?')) {
-            localStorage.removeItem('user_info');
-            window.location.href = 'login.html';
-        }
-    }
-    
-    // =============================================
-    // 2. NAVIGATION
-    // =============================================
-    function goToAnime() {
-        window.location.href = 'anime.html';
-    }
-    
-    function goToDonghua() {
-        window.location.href = 'donghua.html';
-    }
-    
-    // =============================================
-    // 3. LOAD STATS
-    // =============================================
-    async function loadStats() {
-        try {
-            // Load anime stats
-            const animeRes = await fetch(`${API_ANIME}/popular`);
-            if (animeRes.ok) {
-                const animeData = await animeRes.json();
-                if (animeData && animeData.status === "success" && animeData.data && animeData.data.animeList) {
-                    document.getElementById('animeCount').textContent = animeData.data.animeList.length;
-                }
-            }
-            
-            // Load donghua stats
-            const donghuaRes = await fetch(`${API_DONGHUA}/popular`);
-            if (donghuaRes.ok) {
-                const donghuaData = await donghuaRes.json();
-                if (donghuaData && donghuaData.data) {
-                    document.getElementById('donghuaCount').textContent = donghuaData.data.length;
-                }
-            }
-            
-            // Load ongoing anime
-            const ongoingAnimeRes = await fetch(`${API_ANIME}/ongoing`);
-            if (ongoingAnimeRes.ok) {
-                const ongoingData = await ongoingAnimeRes.json();
-                if (ongoingData && ongoingData.status === "success" && ongoingData.data && ongoingData.data.animeList) {
-                    document.getElementById('ongoingAnimeCount').textContent = ongoingData.data.animeList.length;
-                }
-            }
-            
-            // Load completed anime
-            const completedAnimeRes = await fetch(`${API_ANIME}/completed`);
-            if (completedAnimeRes.ok) {
-                const completedData = await completedAnimeRes.json();
-                if (completedData && completedData.status === "success" && completedData.data && completedData.data.animeList) {
-                    document.getElementById('completedAnimeCount').textContent = completedData.data.animeList.length;
-                }
-            }
-            
-            // Load ongoing donghua
-            const ongoingDonghuaRes = await fetch(`${API_DONGHUA}/ongoing`);
-            if (ongoingDonghuaRes.ok) {
-                const ongoingData = await ongoingDonghuaRes.json();
-                if (ongoingData && ongoingData.data) {
-                    document.getElementById('ongoingDonghuaCount').textContent = ongoingData.data.length;
-                }
-            }
-            
-            // Load completed donghua
-            const completedDonghuaRes = await fetch(`${API_DONGHUA}/completed`);
-            if (completedDonghuaRes.ok) {
-                const completedData = await completedDonghuaRes.json();
-                if (completedData && completedData.data) {
-                    document.getElementById('completedDonghuaCount').textContent = completedData.data.length;
-                }
-            }
-            
-        } catch (error) {
-            console.error('Error loading stats:', error);
-            // Set fallback numbers
-            document.getElementById('animeCount').textContent = '100+';
-            document.getElementById('donghuaCount').textContent = '50+';
-            document.getElementById('ongoingAnimeCount').textContent = '20+';
-            document.getElementById('completedAnimeCount').textContent = '80+';
-            document.getElementById('ongoingDonghuaCount').textContent = '15+';
-            document.getElementById('completedDonghuaCount').textContent = '35+';
-        }
-    }
-    
-    // =============================================
-    // 4. LOAD RECENT HISTORY
-    // =============================================
-    function loadRecentHistory() {
-        const historyList = document.getElementById('historyList');
-        const history = JSON.parse(localStorage.getItem('my_history')) || [];
-        
-        if (history.length === 0) {
-            historyList.innerHTML = `
-                <div class="no-history">
-                    <i data-lucide="history"></i>
-                    <p>Belum ada riwayat tontonan</p>
-                </div>
-            `;
-            lucide.createIcons();
-            return;
-        }
-        
-        // Take only last 5 items
-        const recentHistory = history.slice(0, 5);
-        
-        historyList.innerHTML = recentHistory.map(item => {
-            const typeClass = item.source === 'anime' ? 'anime' : 'donghua';
-            const typeText = item.source === 'anime' ? 'ANIME' : 'DONGHUA';
-            
-            let episodeText = 'Episode';
-            if (item.episode) {
-                episodeText = item.episode;
-            }
-            
-            return `
-                <div class="history-item" onclick="goToHistoryItem('${item.url}', '${item.source}')">
-                    <img src="${item.poster || 'https://via.placeholder.com/40x55/1a1a2e/ffffff?text=Img'}" 
-                         class="history-img" 
-                         onerror="this.src='https://via.placeholder.com/40x55/1a1a2e/ffffff?text=Img'">
-                    <div class="history-info">
-                        <div class="history-info-title">${item.title || 'Unknown'}</div>
-                        <div class="history-info-meta">
-                            <span class="history-type ${typeClass}">${typeText}</span>
-                            <span>${episodeText}</span>
-                            <span>${item.date || ''}</span>
+
+            // Ambil 4 history terakhir
+            const recentHistory = history.slice(0, 4);
+
+            container.innerHTML = recentHistory.map(item => {
+                // Fallback image jika poster tidak ada/broken
+                const posterUrl = item.poster || 'https://via.placeholder.com/50x70/1e293b/94a3b8?text=?';
+                const tagClass = item.source === 'anime' ? 'tag-anime' : 'tag-donghua';
+                const link = item.source === 'anime' 
+                    ? `stream.html?id=${item.url}&source=anime` 
+                    : `stream.html?url=${item.url}&source=donghua`;
+
+                return `
+                <div class="history-item" onclick="window.location.href='${link}'">
+                    <img src="${posterUrl}" class="history-poster" alt="Poster" onerror="this.src='https://via.placeholder.com/50x70'">
+                    
+                    <div class="history-content">
+                        <div class="history-title">${item.title || 'Judul Tidak Diketahui'}</div>
+                        <div class="history-meta">
+                            <span class="tag ${tagClass}">${item.source || 'VIDEO'}</span>
+                            <span>${item.episode || 'Episode Terakhir'}</span>
                         </div>
                     </div>
-                    <i data-lucide="play-circle" style="color: var(--text-dim); width: 18px; height: 18px;"></i>
+                    
+                    <div class="btn-play">
+                        <i data-lucide="play" style="width: 14px;"></i>
+                    </div>
                 </div>
-            `;
-        }).join('');
-        
-        lucide.createIcons();
-    }
-    
-    function goToHistoryItem(url, source) {
-        if (source === 'anime') {
-            window.location.href = `stream.html?id=${url}&source=anime`;
-        } else {
-            window.location.href = `stream.html?url=${url}&source=donghua`;
-        }
-    }
-    
-    // =============================================
-    // 5. INITIALIZE DASHBOARD
-    // =============================================
-    async function initializeDashboard() {
-        try {
-            // Load icons first
+                `;
+            }).join('');
+            
+            // Re-init icons for dynamic content
             lucide.createIcons();
-            
-            // Display user info
-            displayUserInfo();
-            
-            // Load stats
-            await loadStats();
-            
-            // Load recent history
-            loadRecentHistory();
-            
-        } catch (error) {
-            console.error('Error initializing dashboard:', error);
         }
-    }
-    
-    // =============================================
-    // 6. START THE APP
-    // =============================================
-    document.addEventListener('DOMContentLoaded', initializeDashboard);
-</script>
+
+        // Jalankan saat load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUser();
+            loadHistory();
+        });
+    </script>
 </body>
 </html>
