@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ray QuickEdit Pro Max</title>
+    <style>
+        /* --- RESET --- */
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #ffffff;
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden; 
+        }
+        body { display: flex; flex-direction: column; }
+
+        /* --- CONFIG --- */
+        #setup-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; padding: 30px;
+        }
+        #setup-layer h2 { color: #444; margin-bottom: 20px; }
+        #setup-layer textarea {
+            width: 100%; padding: 15px; margin-bottom: 15px;
+            background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;
+            font-family: monospace; font-size: 14px;
+        }
+        #setup-layer button {
+            padding: 15px; background: #4CAF50; color: white; border: none;
+            font-weight: bold; border-radius: 4px; font-size: 16px;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            height: 56px; background: #f5f5f5; border-bottom: 1px solid #e0e0e0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 12px; flex-shrink: 0;
+        }
+        .header-left, .header-right { display: flex; align-items: center; gap: 18px; }
+        .app-title { font-size: 18px; color: #444; font-weight: 500; }
+        .icon-top { width: 24px; height: 24px; fill: #757575; }
+
+        /* --- TABS --- */
+        .tabs-bar {
+            height: 42px; background: #e0e0e0; display: flex; align-items: flex-end;
+            border-bottom: 1px solid #ccc; flex-shrink: 0; overflow-x: auto;
+        }
+        .tab {
+            padding: 0 18px; height: 40px; display: flex; align-items: center;
+            font-size: 14px; color: #444; border-right: 1px solid #ccc;
+            position: relative; background: #e0e0e0; min-width: 120px;
+            white-space: nowrap; font-weight: 500;
+        }
+        .tab.active {
+            background: #f5f5f5; height: 41px; margin-bottom: -1px; color: #000;
+        }
+        .tab.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%;
+            height: 3px; background: #4CAF50;
+        }
+
+        /* --- EDITOR --- */
+        .editor-container {
+            flex: 1; position: relative; overflow-y: scroll; background: #f5f5f5;
+            display: flex;
+        }
+        
+        #line-highlighter {
+            position: absolute; left: 46px; width: calc(100% - 46px); height: 24px; 
+            background: rgba(76, 175, 80, 0.12); z-index: 1; pointer-events: none;
+            top: 5px; transition: top 0.05s ease-out;
+        }
+
+        .gutter {
+            width: 45px; background: #f5f5f5; text-align: right; padding-right: 8px;
+            color: #999; font-family: 'Fira Code', Consolas, monospace;
+            font-size: 13px; line-height: 24px; padding-top: 5px; 
+            border-right: 1px solid #e0e0e0; user-select: none; z-index: 3;
+        }
+        
+        .code-content {
+            flex: 1; padding-left: 8px; padding-top: 5px;
+            font-family: 'Fira Code', Consolas, monospace; font-size: 13px; line-height: 24px;
+            color: #333; white-space: pre-wrap; word-break: break-all;
+            padding-bottom: 100px; position: relative; z-index: 2;
+        }
+
+        /* Syntax Highlight */
+        .tag { color: #006400; font-weight: bold; }
+        .attr { color: #7f0055; font-weight: bold; }
+        .str { color: #0000FF; }
+        .kwd { color: #7f0055; font-weight: bold; }
+
+        .cursor {
+            display: inline-block; width: 2px; height: 17px; background: #4CAF50;
+            animation: blink 1s infinite; vertical-align: text-bottom;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* --- BOTTOM TOOLBAR --- */
+        .toolbar-bottom {
+            height: 48px; background: #f5f5f5; border-top: 1px solid #ccc;
+            display: flex; align-items: center; justify-content: space-evenly;
+            flex-shrink: 0; padding: 0 10px;
+        }
+        .icon-btm { width: 22px; height: 22px; fill: #757575; }
+
+        /* --- KEYBOARD --- */
+        #keyboard-frame {
+            height: 38vh; min-height: 260px; max-height: 330px;
+            background: #1c1c1c; width: 100%; display: flex; flex-direction: column;
+            padding: 6px 3px; flex-shrink: 0; z-index: 100;
+            box-shadow: 0 -3px 8px rgba(0,0,0,0.3);
+        }
+        .kb-row { display: flex; width: 100%; justify-content: center; flex: 1; margin-bottom: 5px; }
+        .key {
+            background: #333; color: #fff; border-radius: 5px; margin: 0 2px;
+            flex-grow: 1; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-family: sans-serif; position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            transition: all 0.1s;
+        }
+        .key-num { font-size: 14px; color: #aaa; background: transparent; box-shadow: none; height: auto; margin-bottom: 0;}
+        .key-func { background: #2a2a2a; font-size: 14px; flex-grow: 1.5; color: #ccc;}
+        .key-enter { background: #009688; flex-grow: 2; color: white; }
+        .key-space { flex-grow: 6; background: #333; }
+        .hidden { display: none !important; }
+        
+        /* Active State */
+        .key.active { background: #ccc; color: #000; transform: scale(1.15) translateY(-8px); z-index: 50; }
+        
+        /* SHIFT STATE VISUALS */
+        #kb-main.shift-active .key-letter { text-transform: uppercase; }
+        .key-shift-active { background-color: #eee !important; color: #000 !important; }
+
+        .row-numbers { max-height: 28px; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+    <div id="setup-layer">
+        <h2>Ray QuickEdit Setup</h2>
+        <textarea id="inp-code" rows="15" placeholder="Paste kode HTML/JS lengkap disini..."></textarea>
+        <button onclick="initSystem()">MULAI SIMULASI</button>
+    </div>
+
+    <div class="header">
+        <div class="header-left">
+            <svg class="icon-top" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+            <span class="app-title">Tidak berjudul</span>
+        </div>
+        <div class="header-right">
+            <svg class="icon-top" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+            <svg class="icon-top" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            <svg class="icon-top" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        </div>
+    </div>
+
+    <div class="tabs-bar">
+        <div class="tab active">*Tidak berjudul</div>
+        <div class="tab">*Tidak berjudul</div>
+        <div class="tab">style.css</div>
+    </div>
+
+    <div class="editor-container" id="scroller">
+        <div id="line-highlighter"></div>
+        <div class="gutter" id="gutter">1</div>
+        <div class="code-content" id="content"><span class="cursor"></span></div>
+    </div>
+
+    <div class="toolbar-bottom">
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg>
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+        <svg class="icon-btm" style="transform: scaleX(-1);" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="icon-btm" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </div>
+
+    <div id="keyboard-frame">
+        <div id="kb-main" style="display:flex; flex-direction:column; height:100%;">
+            <div class="kb-row row-numbers">
+                <div class="key key-num">1</div><div class="key key-num">2</div><div class="key key-num">3</div><div class="key key-num">4</div><div class="key key-num">5</div><div class="key key-num">6</div><div class="key key-num">7</div><div class="key key-num">8</div><div class="key key-num">9</div><div class="key key-num">0</div>
+            </div>
+            <div class="kb-row">
+                <div class="key key-letter" data-k="q">q</div><div class="key key-letter" data-k="w">w</div><div class="key key-letter" data-k="e">e</div><div class="key key-letter" data-k="r">r</div><div class="key key-letter" data-k="t">t</div><div class="key key-letter" data-k="y">y</div><div class="key key-letter" data-k="u">u</div><div class="key key-letter" data-k="i">i</div><div class="key key-letter" data-k="o">o</div><div class="key key-letter" data-k="p">p</div>
+            </div>
+            <div class="kb-row" style="padding: 0 5%;">
+                <div class="key key-letter" data-k="a">a</div><div class="key key-letter" data-k="s">s</div><div class="key key-letter" data-k="d">d</div><div class="key key-letter" data-k="f">f</div><div class="key key-letter" data-k="g">g</div><div class="key key-letter" data-k="h">h</div><div class="key key-letter" data-k="j">j</div><div class="key key-letter" data-k="k">k</div><div class="key key-letter" data-k="l">l</div>
+            </div>
+            <div class="kb-row">
+                <div class="key key-func" id="key-shift">⇧</div>
+                <div class="key key-letter" data-k="z">z</div><div class="key key-letter" data-k="x">x</div><div class="key key-letter" data-k="c">c</div><div class="key key-letter" data-k="v">v</div><div class="key key-letter" data-k="b">b</div><div class="key key-letter" data-k="n">n</div><div class="key key-letter" data-k="m">m</div>
+                <div class="key key-func" id="key-bs">⌫</div>
+            </div>
+            <div class="kb-row">
+                <div class="key key-func" onclick="switchLayer('sym')">?123</div><div class="key key-func" data-k=",">,</div><div class="key key-space"></div><div class="key key-func" data-k=".">.</div><div class="key key-enter">↵</div>
+            </div>
+        </div>
+        
+        <div id="kb-sym" class="hidden" style="display:none; flex-direction:column; height:100%;">
+            <div class="kb-row row-numbers"><div class="key key-num">1</div><div class="key key-num">2</div><div class="key key-num">3</div><div class="key key-num">4</div><div class="key key-num">5</div><div class="key key-num">6</div><div class="key key-num">7</div><div class="key key-num">8</div><div class="key key-num">9</div><div class="key key-num">0</div></div>
+            <div class="kb-row"><div class="key" data-k="+">+</div><div class="key" data-k="1">1</div><div class="key" data-k="2">2</div><div class="key" data-k="3">3</div><div class="key" data-k="(">(</div><div class="key" data-k=")">)</div><div class="key" data-k="-">-</div><div class="key" data-k="_">_</div><div class="key" data-k="/">/</div><div class="key" data-k=":">:</div></div>
+            <div class="kb-row"><div class="key" data-k="@">@</div><div class="key" data-k="4">4</div><div class="key" data-k="5">5</div><div class="key" data-k="6">6</div><div class="key" data-k="&">&</div><div class="key" data-k="*">*</div><div class="key" data-k=";">;</div><div class="key" data-k="'">'</div><div class="key" data-k='"' data-char='"'>"</div><div class="key" data-k="!">!</div></div>
+            <div class="kb-row"><div class="key key-func" onclick="switchLayer('sym2')">=\&lt;</div><div class="key" data-k="7">7</div><div class="key" data-k="8">8</div><div class="key" data-k="9">9</div><div class="key" data-k="?">?</div><div class="key" data-k="#">#</div><div class="key key-func" id="key-bs-sym">⌫</div></div>
+            <div class="kb-row"><div class="key key-func" onclick="switchLayer('main')">ABC</div><div class="key key-func" data-k=",">,</div><div class="key key-space"></div><div class="key key-func" data-k=".">.</div><div class="key key-enter">↵</div></div>
+        </div>
+
+        <div id="kb-sym2" class="hidden" style="display:none; flex-direction:column; height:100%;">
+            <div class="kb-row"><div class="key" data-k="~">~</div><div class="key" data-k="`">`</div><div class="key" data-k="|">|</div><div class="key" data-k="•">•</div><div class="key" data-k="√">√</div></div>
+            <div class="kb-row"><div class="key" data-k="{">{</div><div class="key" data-k="}">}</div><div class="key" data-k="[">[</div><div class="key" data-k="]">]</div><div class="key" data-k="<">&lt;</div><div class="key" data-k=">">&gt;</div><div class="key" data-k="=">=</div><div class="key" data-k="%">%</div><div class="key" data-k="\">/</div></div>
+            <div class="kb-row"><div class="key key-func" onclick="switchLayer('sym')">?123</div><div class="key key-space"></div><div class="key key-enter">↵</div></div>
+        </div>
+    </div>
+
+    <script>
+        let fullScript = ""; let currentIndex = 0; let lineCount = 1; let currentLayer = 'main';
+        const TYPO_RATE = 0.08; const REACTION_TIME = 400;
+        const nearbyKeys = { 'q':'w', 'w':'e', 'e':'r', 'r':'t', 't':'y', 'y':'u', 'u':'i', 'i':'o', 'o':'p', 'a':'s', 's':'d', 'd':'f', 'f':'g', 'g':'h', 'h':'j', 'j':'k', 'k':'l', 'z':'x', 'x':'c', 'c':'v', 'v':'b', 'b':'n', 'n':'m' };
+        const symMap1 = "+123()-_/:@456&*;'\".!?,#"; const symMap2 = "{}[]<>=\\%|~`\\";
+
+        function initSystem() {
+            fullScript = document.getElementById('inp-code').value;
+            if(!fullScript) return alert("Kosong!");
+            document.getElementById('setup-layer').style.display = 'none';
+            document.getElementById('content').innerHTML = '<span id="text-node"></span><span class="cursor"></span>';
+            // Reset
+            lineCount = 1; document.getElementById('gutter').innerHTML = '1';
+            updateHighlighter();
+            setTimeout(typeLoop, 500);
+        }
+
+        async function typeLoop() {
+            if (currentIndex >= fullScript.length) return;
+            const char = fullScript[currentIndex]; const lower = char.toLowerCase();
+
+            // TYPO
+            if (Math.random() < TYPO_RATE && nearbyKeys[lower] && /[a-zA-Z]/.test(char)) {
+                const wrongChar = nearbyKeys[lower];
+                await animateKey(wrongChar); writeToDom(wrongChar);
+                await sleep(REACTION_TIME);
+                visualizeBackspace(); deleteLastChar();
+                await sleep(150);
+            }
+
+            // CORRECT
+            try { writeToDom(char); } catch(e) {}
+            try { await animateKey(char); } catch(e) {}
+
+            const sc = document.getElementById('scroller'); sc.scrollTop = sc.scrollHeight;
+            currentIndex++;
+            let speed = 40 + Math.random() * 50; if(char === '\n') speed = 250;
+            setTimeout(typeLoop, speed);
+        }
+
+        function writeToDom(c) {
+            let html = c;
+            if(c === '\n') { 
+                html = '<br>'; lineCount++; 
+                document.getElementById('gutter').innerHTML += `<br>${lineCount}`;
+                updateHighlighter();
+            }
+            else if(c === ' ') html = '&nbsp;'; else if(c === '<') html = '&lt;'; else if(c === '>') html = '&gt;'; else if(c === '&') html = '&amp;';
+
+            if (c === '<' || c === '>') html = `<span class="tag">${html}</span>`;
+            else if (c === '"' || c === "'") html = `<span class="str">${html}</span>`;
+
+            document.getElementById('text-node').insertAdjacentHTML('beforeend', html);
+            setTimeout(updateHighlighter, 0);
+        }
+
+        function updateHighlighter() {
+            const cursor = document.querySelector('.cursor');
+            const highlighter = document.getElementById('line-highlighter');
+            const scroller = document.getElementById('scroller');
+            if (cursor && highlighter && scroller) {
+                 const cursorRect = cursor.getBoundingClientRect();
+                 const scrollerRect = scroller.getBoundingClientRect();
+                 let exactTop = cursorRect.top - scrollerRect.top + scroller.scrollTop - 4;
+                 exactTop = Math.max(exactTop, 5);
+                 highlighter.style.top = `${exactTop}px`;
+            }
+        }
+
+        function deleteLastChar() {
+            let el = document.getElementById('text-node'); let html = el.innerHTML;
+            if (html.endsWith('<br>')) {
+                lineCount--; document.getElementById('gutter').innerHTML = document.getElementById('gutter').innerHTML.substring(0, document.getElementById('gutter').innerHTML.lastIndexOf('<br>'));
+            }
+            if (html.endsWith('&gt;')) el.innerHTML = html.slice(0, -4);
+            else if (html.endsWith('&lt;')) el.innerHTML = html.slice(0, -4);
+            else if (html.endsWith('&nbsp;')) el.innerHTML = html.slice(0, -6);
+            else if (html.endsWith('<br>')) el.innerHTML = html.slice(0, -4);
+            else if (html.endsWith('</span>')) { let txt = el.innerText; el.innerText = txt.slice(0, -1); }
+            else el.innerHTML = html.slice(0, -1);
+            setTimeout(updateHighlighter, 0);
+        }
+
+        function visualizeBackspace() {
+             let div = document.getElementById('kb-'+currentLayer);
+             let bs = div.querySelector('#key-bs') || div.querySelector('.key-func:last-child');
+             if (bs) { bs.classList.add('active'); setTimeout(()=>bs.classList.remove('active'), 120); }
+        }
+
+        async function animateKey(c) {
+            let isUpper = /[A-Z]/.test(c);
+            let targetLayer = 'main';
+            if (symMap1.includes(c)) targetLayer = 'sym'; else if (symMap2.includes(c)) targetLayer = 'sym2'; else if (/[0-9]/.test(c)) targetLayer = currentLayer; 
+            
+            // Switch Layer
+            if (targetLayer !== currentLayer) switchLayer(targetLayer);
+
+            // Shift Logic
+            if (isUpper && targetLayer === 'main') {
+                toggleShift(true); await sleep(80);
+            }
+
+            let layoutDiv = document.getElementById('kb-' + currentLayer); let btn = null; let searchChar = c.toLowerCase();
+            if (c === ' ') btn = layoutDiv.querySelector('.key-space');
+            else if (c === '\n') btn = layoutDiv.querySelector('.key-enter');
+            else {
+                let keys = layoutDiv.querySelectorAll('.key');
+                for (let k of keys) { if (k.getAttribute('data-k') === searchChar) { btn = k; break; } }
+            }
+            if (btn) { btn.classList.add('active'); setTimeout(() => btn.classList.remove('active'), 120); }
+
+            // Release Shift
+            if (isUpper && targetLayer === 'main') {
+                setTimeout(() => toggleShift(false), 120);
+            }
+        }
+
+        function toggleShift(active) {
+            const shiftKey = document.getElementById('key-shift');
+            const mainKb = document.getElementById('kb-main');
+            if(active) {
+                shiftKey.classList.add('key-shift-active');
+                mainKb.classList.add('shift-active');
+            } else {
+                shiftKey.classList.remove('key-shift-active');
+                mainKb.classList.remove('shift-active');
+            }
+        }
+
+        function switchLayer(l) {
+            document.getElementById('kb-main').classList.add('hidden'); document.getElementById('kb-main').style.display = 'none';
+            document.getElementById('kb-sym').classList.add('hidden'); document.getElementById('kb-sym').style.display = 'none';
+            document.getElementById('kb-sym2').classList.add('hidden'); document.getElementById('kb-sym2').style.display = 'none';
+            let target = document.getElementById('kb-' + l); target.style.display = 'flex'; target.classList.remove('hidden');
+            currentLayer = l;
+        }
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    </script>
+</body>
+</html>
